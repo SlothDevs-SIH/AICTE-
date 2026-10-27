@@ -1,9 +1,15 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { qs } from '../api'
+import { api, ApiError, qs } from '../api'
+import { useAuth } from '../auth'
 import { Empty, ErrorBox, Loading, Severity, StatePill, fmtDate, useFetch } from '../components/ui'
 
 export default function Colleges() {
+  const { me } = useAuth()
+  const [adding, setAdding] = useState(false)
+  const blank = { canonical_name: '', aicte_id: '', state: '', district: '', region_code: '' }
+  const [nf, setNf] = useState<Record<string, string>>(blank)
+  const [addErr, setAddErr] = useState('')
   const [q, setQ] = useState('')
   const [state, setState] = useState('')
   const list = useFetch<any>(`/institutions${qs({ q, state, limit: 60 })}`, [q, state])
@@ -18,6 +24,24 @@ export default function Colleges() {
           <input value={state} onChange={(e) => setState(e.target.value)} placeholder="e.g. Maharashtra" />
         </label>
       </div>
+      {me?.role === 'admin' && <p><button className="btn sm" onClick={() => setAdding(!adding)}>{adding ? 'Close' : 'Add a college'}</button></p>}
+      {adding && (
+        <form className="card grid2" style={{ marginBottom: '1rem' }} onSubmit={async (e) => {
+          e.preventDefault()
+          setAddErr('')
+          const body: Record<string, string> = {}
+          Object.entries(nf).forEach(([k, v]) => { if (v) body[k] = v })
+          try { await api('/institutions', { method: 'POST', body }); setAdding(false); setNf(blank); list.reload() } catch (x) { setAddErr((x as ApiError).message) }
+        }}>
+          <label className="f">College name<input required value={nf.canonical_name} onChange={(e) => setNf({ ...nf, canonical_name: e.target.value })} /></label>
+          <label className="f">AICTE permanent ID<input value={nf.aicte_id} onChange={(e) => setNf({ ...nf, aicte_id: e.target.value })} /></label>
+          <label className="f">State<input value={nf.state} onChange={(e) => setNf({ ...nf, state: e.target.value })} /></label>
+          <label className="f">District<input value={nf.district} onChange={(e) => setNf({ ...nf, district: e.target.value })} /></label>
+          <label className="f">Region code (NR, WR, SR, ER, CR)<input value={nf.region_code} onChange={(e) => setNf({ ...nf, region_code: e.target.value })} /></label>
+          {addErr && <div className="notice err" role="alert">{addErr}</div>}
+          <div><button className="btn primary">Save college</button></div>
+        </form>
+      )}
       {list.error && <ErrorBox error={list.error} retry={list.reload} />}
       {list.loading && !list.data && <Loading what="colleges" />}
       {list.data && list.data.items.length === 0 && <Empty>No college matches.</Empty>}
@@ -45,6 +69,8 @@ export function College360() {
   const { id } = useParams()
   const d = useFetch<any>(`/institutions/${id}/360`)
   const inst = useFetch<any>(`/institutions/${id}`)
+  const { me: who } = useAuth()
+  const risk = useFetch<any>(who && ['management', 'competent_authority', 'admin', 'auditor'].includes(who.role) ? `/institutions/${id}/risk` : null)
   if (d.error) return <ErrorBox error={d.error} retry={d.reload} />
   if (!d.data) return <Loading what="college" />
   const i = d.data.institution
@@ -64,6 +90,14 @@ export function College360() {
         <div className="tile"><div className="n">{d.data.summary.disposed}</div><div className="l">Disposed</div></div>
         <div className="tile"><div className="n">{d.data.overlaps.length}</div><div className="l">Overlaps</div></div>
       </div>
+      {risk.data && (
+        <section className="card" style={{ marginBottom: '1rem' }}>
+          <h2>Attention score: {risk.data.score} / 100</h2>
+          <p className="muted" style={{ margin: 0 }}>
+            {risk.data.components.map((c: any) => `${c.name.replace('_', ' ')} ${c.points}`).join(' · ')}. {risk.data.note}
+          </p>
+        </section>
+      )}
       {d.data.overlaps.length > 0 && (
         <section>
           <h2>Overlaps</h2>

@@ -12,6 +12,7 @@ from app.core.audit import write_audit
 from app.db.models import Complaint, ComplaintEvent, CoordinationThread, Notification, User
 from app.services.settings import get_setting
 
+AUTOMATIC = ("REMINDER", "SLA_APPROACHING", "SLA_BREACHED", "ESCALATION_SUGGESTED", "COORDINATION_EXPIRED")
 OPEN = ("RECEIVED", "ASSIGNED", "UNDER_PROCESS", "ESCALATED", "REOPENED", "TRANSFERRED")
 
 
@@ -32,9 +33,11 @@ def notify(db: Session, user_id: str | None, kind: str, ref_type: str, ref_id: s
         return None
     day = _now() - timedelta(hours=24)
     sent = db.scalar(select(func.count()).select_from(Notification).where(
-        Notification.user_id == user_id, Notification.created_at >= day, Notification.kind != "CONFLICT")) or 0
-    if kind != "CONFLICT" and sent >= int(get_setting(db, "alert_budget_per_day")):
-        return None  # alert budget (P8); CONFLICT alerts are never suppressed
+        Notification.user_id == user_id, Notification.created_at >= day, Notification.kind.in_(AUTOMATIC))) or 0
+    # The budget (P8) limits automatic alerts only. A request or note from another officer, and CONFLICT
+    # alerts, are never suppressed.
+    if kind in AUTOMATIC and sent >= int(get_setting(db, "alert_budget_per_day")):
+        return None
     n = Notification(user_id=user_id, kind=kind, ref_type=ref_type, ref_id=ref_id, message=message)
     db.add(n)
     return n

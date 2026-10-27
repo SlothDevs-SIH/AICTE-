@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { qs } from '../api'
 import { Empty, ErrorBox, Loading, Severity, StatePill, fmtDate, useFetch } from '../components/ui'
 
-const KEYS = ['q', 'case_id', 'aicte_id', 'unit', 'region', 'category', 'state', 'received_from', 'received_to', 'overdue', 'escalated', 'has_overlap', 'due_soon', 'institution_id']
+const KEYS = ['q', 'case_id', 'aicte_id', 'unit', 'region', 'category', 'state', 'received_from', 'received_to', 'overdue', 'escalated', 'has_overlap', 'due_soon', 'institution_id', 'older_than_days']
 
 export default function Complaints() {
   const [sp, setSp] = useSearchParams()
@@ -41,6 +41,7 @@ export default function Complaints() {
             <select value={params.state} onChange={(e) => set('state', e.target.value)}><option value="">Any</option>{ref.data?.states.map((s: string) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}</select></label>
           <label className="f">Received from<input type="date" value={params.received_from} onChange={(e) => set('received_from', e.target.value)} /></label>
           <label className="f">Received to<input type="date" value={params.received_to} onChange={(e) => set('received_to', e.target.value)} /></label>
+          <label className="f">Older than (days)<input type="number" min={1} value={params.older_than_days} onChange={(e) => set('older_than_days', e.target.value)} /></label>
           <label className="f">Beyond timeline{tri('overdue')}</label>
           <label className="f">Escalated{tri('escalated')}</label>
           <label className="f">Has overlap{tri('has_overlap')}</label>

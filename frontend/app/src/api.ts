@@ -60,6 +60,62 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
   return j as T
 }
 
+export async function upload<T = any>(path: string, form: FormData): Promise<T> {
+  const go = () => fetch('/api/v1' + path, { method: 'POST', headers: access ? { Authorization: `Bearer ${access}` } : {}, body: form })
+  let r = await go()
+  if (r.status === 401) {
+    refreshing ??= refresh().finally(() => { refreshing = null })
+    if (await refreshing) r = await go()
+  }
+  const j = await r.json().catch(() => ({}))
+  if (!r.ok) {
+    const e = j.error ?? {}
+    throw new ApiError(r.status, e.code ?? 'error', e.message ?? 'Upload failed', e.details ?? {})
+  }
+  return j as T
+}
+
+export async function download(path: string, filename: string) {
+  const res: Response = await api(path, { raw: true })
+  if (!res.ok) throw new ApiError(res.status, 'download_failed', 'Could not download the file.')
+  const blob = await res.blob()
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+export function openStream(onEvent: (kind: string, data: any) => void, onFail: () => void): () => void {
+  const ctl = new AbortController()
+  ;(async () => {
+    try {
+      const r = await fetch('/api/v1/stream', { headers: access ? { Authorization: `Bearer ${access}` } : {}, signal: ctl.signal })
+      if (!r.ok || !r.body) return onFail()
+      const reader = r.body.getReader()
+      const dec = new TextDecoder()
+      let buf = ''
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += dec.decode(value, { stream: true })
+        let i
+        while ((i = buf.indexOf("\n\n")) >= 0) {
+          const block = buf.slice(0, i)
+          buf = buf.slice(i + 2)
+          const kind = /event: (.*)/.exec(block)?.[1] ?? 'message'
+          const data = /data: (.*)/.exec(block)?.[1]
+          try { onEvent(kind, data ? JSON.parse(data) : null) } catch {}
+        }
+      }
+      onFail()
+    } catch {
+      if (!ctl.signal.aborted) onFail()
+    }
+  })()
+  return () => ctl.abort()
+}
+
 export const qs = (o: Record<string, string | number | boolean | undefined | null>) => {
   const p = new URLSearchParams()
   Object.entries(o).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') p.set(k, String(v)) })

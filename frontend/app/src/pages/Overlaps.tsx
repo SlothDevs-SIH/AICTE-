@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { api, ApiError } from '../api'
+import { api, ApiError, download } from '../api'
 import { OFFICER_ROLES, useAuth } from '../auth'
-import { Empty, ErrorBox, Loading, MatchReceipt, Modal, Severity, useFetch } from '../components/ui'
+import { AiLabel, Empty, ErrorBox, Loading, MatchReceipt, Modal, Severity, useFetch } from '../components/ui'
+import { useNavigate } from 'react-router-dom'
 
 export default function Overlaps() {
   const { me } = useAuth()
@@ -69,6 +70,8 @@ export default function Overlaps() {
 
 function Review({ id, canDecide, onClose, onDone }: { id: string; canDecide: boolean; onClose: () => void; onDone: () => void }) {
   const o = useFetch<any>(`/overlaps/${id}`)
+  const nav = useNavigate()
+  const [sum, setSum] = useState<any>(null)
   const [reason, setReason] = useState('')
   const [err, setErr] = useState<ApiError | null>(null)
   const decide = async (decision: string) => {
@@ -87,6 +90,19 @@ function Review({ id, canDecide, onClose, onDone }: { id: string; canDecide: boo
         <>
           <p><strong>{o.data.institution}</strong> <Severity s={o.data.severity} /></p>
           <MatchReceipt receipt={o.data.receipt} />
+          <div className="row" style={{ margin: '.8rem 0' }}>
+            <button className="btn sm" onClick={async () => setSum(await api(`/overlaps/${id}/summary`, { method: 'POST' }))}>Summarise</button>
+            <button className="btn sm" onClick={() => download(`/overlaps/${id}/brief.pdf`, 'joint-case-brief.pdf').catch((e) => setErr(e))}>Download joint brief (PDF)</button>
+            {canDecide && o.data.status === 'SUGGESTED' && o.data.a.unit !== o.data.b.unit && (
+              <button className="btn sm" onClick={async () => {
+                try {
+                  const t = await api('/coordination', { method: 'POST', body: { complaint_ids: [o.data.a.id, o.data.b.id], message: reason.trim().length >= 3 ? reason : 'Please coordinate before either unit acts on this college.' } })
+                  nav(`/app/coordination/${t.id}`)
+                } catch (e) { setErr(e as ApiError) }
+              }}>Ask the other unit to coordinate</button>
+            )}
+          </div>
+          {sum && <div className="notice"><p style={{ margin: '0 0 .4rem' }}>{sum.text}</p><AiLabel kind={sum.kind} reason={sum.reason} /></div>}
           {canDecide && o.data.status === 'SUGGESTED' && (
             <>
               <label className="f" style={{ marginTop: '1rem' }}>Reason for your decision

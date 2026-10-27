@@ -315,3 +315,22 @@ def test_issue_similarity_is_lexical_and_says_so():
     # issue, both score far below the 0.5 threshold, and the scores are not ordered by meaning.
     assert ev["method"].startswith("lexical")
     assert s_ab < 0.5 and s_ac < 0.5
+
+
+def test_older_than_days_filter(client, tokens):
+    allc = client.get(f"{API}/complaints?limit=200", headers=tokens["management"]).json()["total"]
+    old = client.get(f"{API}/complaints?older_than_days=60&limit=200", headers=tokens["management"]).json()
+    assert 0 < old["total"] < allc
+    assert all((date.today() - date.fromisoformat(c["received_on"])).days > 60 for c in old["items"])
+
+
+def test_budget_never_blocks_a_request_from_a_colleague(client, tokens):
+    from app.services.notifications import notify
+    with session_factory()() as db:
+        uid = db.scalar(select(Complaint.owner_user_id).where(Complaint.owner_user_id.is_not(None)).limit(1))
+        for i in range(40):
+            notify(db, uid, "REMINDER", "complaint", f"fill-{i}", "x")
+        db.flush()
+        n = notify(db, uid, "COORDINATION_REQUEST", "coordination", "req-1", "A colleague asks to coordinate")
+        assert n is not None
+        db.rollback()

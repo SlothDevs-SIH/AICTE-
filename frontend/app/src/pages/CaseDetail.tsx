@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { api, ApiError } from '../api'
+import { api, ApiError, upload } from '../api'
 import { OFFICER_ROLES, useAuth } from '../auth'
 import { ErrorBox, Loading, Modal, Severity, StatePill, fmtDate, fmtDateTime, useFetch } from '../components/ui'
 
-type Dlg = null | 'transition' | 'remark' | 'next' | 'escalate' | 'transfer' | 'reveal'
+type Dlg = null | 'transition' | 'remark' | 'next' | 'escalate' | 'transfer' | 'reveal' | 'edit'
 
 export default function CaseDetail() {
   const { id } = useParams()
@@ -12,6 +12,8 @@ export default function CaseDetail() {
   const c = useFetch<any>(`/complaints/${id}`)
   const ev = useFetch<any>(c.data?.detail_visible ? `/complaints/${id}/events` : null, [c.data?.detail_visible])
   const ref = useFetch<any>('/reference')
+  const atts = useFetch<any>(c.data?.detail_visible ? `/complaints/${id}/attachments` : null, [c.data?.detail_visible])
+  const [upErr, setUpErr] = useState('')
   const ovs = useFetch<any>(`/overlaps${''}`)
   const [dlg, setDlg] = useState<Dlg>(null)
   const [revealed, setRevealed] = useState<any>(null)
@@ -73,6 +75,7 @@ export default function CaseDetail() {
         <div className="row" style={{ margin: '1rem 0' }}>
           <button className="btn" onClick={() => setDlg('transition')}>Change status</button>
           <button className="btn" onClick={() => setDlg('remark')}>Add remark</button>
+          <button className="btn" onClick={() => setDlg('edit')}>Edit details</button>
           <button className="btn" onClick={() => setDlg('next')}>Set next action</button>
           <button className="btn" onClick={() => setDlg('transfer')}>Transfer</button>
           <button className="btn" onClick={() => setDlg('escalate')}>Escalate</button>
@@ -80,6 +83,32 @@ export default function CaseDetail() {
         </div>
       )}
       {d.state === 'DISPOSED' && mine && me?.role === 'unit_supervisor' && <p><button className="btn" onClick={() => setDlg('transition')}>Reopen…</button></p>}
+
+      {d.detail_visible && (
+        <section className="card" style={{ marginTop: '1rem' }}>
+          <h2>Supporting documents</h2>
+          {atts.data?.items.length === 0 && <p className="muted">No documents attached.</p>}
+          <ul>
+            {atts.data?.items.map((a: any) => (
+              <li key={a.id}>{a.filename} <span className="muted">({Math.ceil(a.size_bytes / 1024)} KB · sha256 {a.sha256.slice(0, 10)}…)</span></li>
+            ))}
+          </ul>
+          {mine && (
+            <label className="f" style={{ maxWidth: 380 }}>Attach a file (PDF, PNG, JPEG or text, up to 10 MB)
+              <input type="file" accept=".pdf,.png,.jpg,.jpeg,.txt" onChange={async (e) => {
+                const f = e.target.files?.[0]
+                if (!f) return
+                const form = new FormData()
+                form.append('file', f)
+                setUpErr('')
+                try { await upload(`/complaints/${d.id}/attachments`, form); atts.reload(); ev.reload() } catch (x) { setUpErr((x as ApiError).message) }
+                e.target.value = ''
+              }} />
+            </label>
+          )}
+          {upErr && <div className="notice err" role="alert">{upErr}</div>}
+        </section>
+      )}
 
       {d.detail_visible && (
         <section className="card" style={{ marginTop: '1rem' }}>
@@ -102,10 +131,34 @@ export default function CaseDetail() {
       {dlg === 'reveal' && <Reveal id={d.id} onClose={() => setDlg(null)} onDone={(v) => { setRevealed(v); setDlg(null) }} />}
       {dlg === 'transition' && <Transition d={d} onClose={() => setDlg(null)} onDone={done} role={me!.role} />}
       {dlg === 'remark' && <Simple title="Add remark" label="Remark" path={`/complaints/${d.id}/remarks`} field="text" onClose={() => setDlg(null)} onDone={done} />}
+      {dlg === 'edit' && <EditCase d={d} onClose={() => setDlg(null)} onDone={done} />}
       {dlg === 'next' && <NextAction id={d.id} onClose={() => setDlg(null)} onDone={done} />}
       {dlg === 'escalate' && <Escalate id={d.id} onClose={() => setDlg(null)} onDone={done} />}
       {dlg === 'transfer' && <Transfer id={d.id} units={ref.data?.units.filter((u: any) => u.code !== d.unit) ?? []} onClose={() => setDlg(null)} onDone={done} />}
     </>
+  )
+}
+
+function EditCase({ d, onClose, onDone }: any) {
+  const [title, setTitle] = useState(d.title)
+  const [desc, setDesc] = useState(d.description ?? '')
+  const [exp, setExp] = useState(d.expected_disposal_on ?? '')
+  const [remark, setRemark] = useState('')
+  const [err, setErr] = useState<ApiError | null>(null)
+  const save = async () => {
+    const body: any = { title, description: desc, remark: remark || undefined }
+    if (exp && exp !== d.expected_disposal_on) body.expected_disposal_on = exp
+    try { await api(`/complaints/${d.id}`, { method: 'PATCH', body }); onDone() } catch (e) { setErr(e as ApiError) }
+  }
+  return (
+    <Modal title="Edit case details" onClose={onClose}>
+      <label className="f">Title<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+      <label className="f">Description<textarea value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
+      <label className="f">Expected disposal date<small>Changing it needs a remark</small><input type="date" value={exp} onChange={(e) => setExp(e.target.value)} /></label>
+      <label className="f">Remark<input value={remark} onChange={(e) => setRemark(e.target.value)} /></label>
+      <Err e={err} />
+      <p className="row"><button className="btn primary" onClick={save}>Save</button><button className="btn" onClick={onClose}>Cancel</button></p>
+    </Modal>
   )
 }
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { api, ApiError } from '../api'
+import { Link } from 'react-router-dom'
+import { api, ApiError, openStream } from '../api'
 
 export function Logo({ size = 32 }: { size?: number }) {
   return (
@@ -126,4 +127,64 @@ export function LiveIndicator({ age, stale }: { age: number | null; stale: boole
   return stale
     ? <span className="badge b-warn" role="status">⚠ Stale — last update {age} s ago</span>
     : <span className="badge b-ok" role="status">● Live · updated {age} s ago</span>
+}
+
+export function AiLabel({ kind, reason }: { kind: string; reason?: string | null }) {
+  const ai = kind === 'AI-written'
+  return (
+    <span className={`badge ${ai ? 'b-info' : 'b-neutral'}`} title={reason ?? ''}>
+      {ai ? '✦ AI-written' : '▤ Template summary'}{reason ? ` — ${reason}` : ''}
+    </span>
+  )
+}
+
+/** Live updates over Server-Sent Events; if the stream fails the caller keeps polling. */
+export function useStream(onChange: () => void) {
+  const [lastAt, setLastAt] = useState<number | null>(null)
+  const [ok, setOk] = useState(false)
+  const cb = useRef(onChange)
+  cb.current = onChange
+  useEffect(() => {
+    let stop = () => {}
+    let retry: ReturnType<typeof setTimeout>
+    const start = () => {
+      setOk(true)
+      stop = openStream(
+        (kind) => { setLastAt(Date.now()); if (kind === 'counters_changed') cb.current() },
+        () => { setOk(false); retry = setTimeout(start, 15000) },
+      )
+    }
+    start()
+    return () => { stop(); clearTimeout(retry) }
+  }, [])
+  return { lastAt, ok }
+}
+
+export function AskBar() {
+  const [q, setQ] = useState('')
+  const [res, setRes] = useState<any>(null)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const go = async (e: React.FormEvent) => {
+    e.preventDefault(); setBusy(true); setErr('')
+    try { setRes(await api('/ask', { method: 'POST', body: { question: q } })) } catch (x) { setErr((x as ApiError).message) } finally { setBusy(false) }
+  }
+  const params = res && !res.needs_manual_filters ? new URLSearchParams(Object.entries(res.parsed_filters).map(([k, v]) => [k, String(v)])).toString() : ''
+  return (
+    <form onSubmit={go} className="card" style={{ marginBottom: '1rem' }} aria-label="Ask the dashboard">
+      <div className="row">
+        <label className="f" style={{ flex: 1, minWidth: 220 }}>Ask the dashboard
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. overdue PGRC cases older than 60 days" maxLength={300} />
+        </label>
+        <button className="btn primary" disabled={busy || q.trim().length < 3} style={{ alignSelf: 'end' }}>Find cases</button>
+      </div>
+      {err && <div className="notice err" role="alert" style={{ marginTop: '.6rem' }}>{err}</div>}
+      {res && (
+        <p style={{ margin: '.6rem 0 0' }} aria-live="polite">
+          {res.needs_manual_filters ? res.explanation : (<>{res.explanation}. <Link to={`/app/complaints?${params}`}>Show these cases →</Link></>)}{' '}
+          <span className="badge b-neutral">{res.used_ai ? '✦ AI-assisted' : 'Rule-based'} · filters only, nothing was run from the text</span>
+        </p>
+      )}
+    </form>
+  )
 }

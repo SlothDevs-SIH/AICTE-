@@ -209,6 +209,7 @@ def list_complaints(
     overdue: bool | None = None, escalated: bool | None = None, has_overlap: bool | None = None,
     received_from: date | None = None, received_to: date | None = None,
     q: str | None = None, case_id: str | None = None, due_soon: bool | None = None,
+    older_than_days: int | None = None,
     limit: int = Query(50, le=200), offset: int = 0,
     db: Session = Depends(get_db), user: User = Depends(current_user),
 ):
@@ -233,6 +234,7 @@ def list_complaints(
         if has_overlap is not None and (c.id in ov) != has_overlap: return False
         if received_from and c.received_on < received_from: return False
         if received_to and c.received_on > received_to: return False
+        if older_than_days is not None and (today - c.received_on).days <= older_than_days: return False
         if case_id and case_id.casefold() not in c.case_id.casefold() and case_id.casefold() not in c.reference_no.casefold(): return False
         if due_soon and not (c.due_on and c.state != "DISPOSED" and 0 <= (c.due_on - today).days <= 7): return False
         if q:

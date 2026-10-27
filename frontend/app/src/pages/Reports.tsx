@@ -6,17 +6,27 @@ const KINDS = [
   ['by_unit', 'Bureau / Cell-wise'], ['by_region', 'Region-wise'], ['by_status', 'Status-wise'],
   ['by_category', 'Category-wise'], ['by_institution', 'Institution-wise'], ['ageing', 'Pending-case ageing'],
   ['disposal_rate', 'Disposal rate'], ['overlaps', 'Overlapping cases'],
+  ['performance?period=monthly', 'Monthly performance'], ['performance?period=quarterly', 'Quarterly performance'],
 ]
 
 export default function Reports() {
   const [kind, setKind] = useState('by_unit')
   const r = useFetch<any>(`/reports/${kind}`, [kind])
   const download = async () => {
-    const res: Response = await api(`/reports/${kind}?format=csv`, { raw: true })
+    if (kind.startsWith('performance')) {
+      const lines = ['# SYNTHETIC DATA - generated for demonstration only', 'period,received,disposed,open,overdue,disposal_rate',
+        ...rows.map((x) => [x.period, x.received, x.disposed, x.open, x.overdue, x.disposal_rate].join(','))]
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }))
+      link.download = 'performance.csv'
+      link.click()
+      return
+    }
+    const res: Response = await api(`/reports/${kind}${kind.includes('?') ? '&' : '?'}format=csv`, { raw: true })
     const blob = await res.blob()
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `${kind}.csv`
+    a.download = `${kind.split('?')[0]}.csv`
     a.click()
     URL.revokeObjectURL(a.href)
   }

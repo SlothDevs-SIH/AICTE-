@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { OFFICER_ROLES, ROLE_LABEL, useAuth } from './auth'
-import { Logo, SyntheticBadge } from './components/ui'
+import { Logo, SyntheticBadge, useFetch } from './components/ui'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -15,6 +15,11 @@ import Escalations from './pages/Escalations'
 import Reports from './pages/Reports'
 import Audit from './pages/Audit'
 import Status from './pages/Status'
+import { CoordinationList, CoordinationThread } from './pages/Coordination'
+import Notifications from './pages/Notifications'
+import Imports from './pages/Imports'
+import Management from './pages/Management'
+import Admin from './pages/Admin'
 
 const ALL = ['unit_officer', 'unit_supervisor', 'regional_officer', 'management', 'competent_authority', 'admin', 'auditor']
 const NAV: { to: string; label: string; icon: string; roles: string[] }[] = [
@@ -23,10 +28,14 @@ const NAV: { to: string; label: string; icon: string; roles: string[] }[] = [
   { to: '/app/new', label: 'New complaint', icon: '＋', roles: [...OFFICER_ROLES, 'admin'] },
   { to: '/app/overlaps', label: 'Overlaps', icon: '⇄', roles: [...OFFICER_ROLES, 'management', 'competent_authority', 'admin', 'auditor'] },
   { to: '/app/gate', label: 'Action Gate', icon: '⛨', roles: [...OFFICER_ROLES, 'competent_authority'] },
+  { to: '/app/coordination', label: 'Coordination', icon: '⇋', roles: [...OFFICER_ROLES, 'management', 'competent_authority', 'admin', 'auditor'] },
+  { to: '/app/management', label: 'Management view', icon: '◈', roles: ['management', 'competent_authority', 'admin', 'auditor'] },
+  { to: '/app/imports', label: 'Import cases', icon: '⇪', roles: [...OFFICER_ROLES, 'admin'] },
   { to: '/app/colleges', label: 'Colleges', icon: '🏛', roles: ALL },
   { to: '/app/escalations', label: 'Escalations', icon: '↑', roles: ['unit_supervisor', 'competent_authority', 'management', 'admin'] },
   { to: '/app/reports', label: 'Reports', icon: '▤', roles: ALL },
   { to: '/app/audit', label: 'Audit & Verify', icon: '🔒', roles: ['auditor', 'admin', 'competent_authority'] },
+  { to: '/app/admin', label: 'Admin', icon: '⚙', roles: ['admin'] },
   { to: '/app/status', label: 'System status', icon: '◉', roles: ALL },
 ]
 
@@ -35,6 +44,7 @@ function Shell() {
   const nav = useNavigate()
   const loc = useLocation()
   const [open, setOpen] = useState(false)
+  const notes = useFetch<any>(me ? '/notifications' : null, [loc.pathname])
   const [dark, setDark] = useState(document.documentElement.getAttribute('data-theme') === 'dark')
   useEffect(() => setOpen(false), [loc.pathname])
   if (!ready) return <p style={{ padding: '2rem' }} role="status">Loading…</p>
@@ -63,6 +73,7 @@ function Shell() {
             <SyntheticBadge />
           </div>
           <div className="row">
+            <Link className="btn sm" to="/app/notifications" aria-label={`Notifications, ${notes.data?.unread ?? 0} unread`}>🔔 {notes.data?.unread ? <strong>{notes.data.unread} unread</strong> : 'Notifications'}</Link>
             <button className="btn sm" onClick={toggle} aria-pressed={dark}>{dark ? '☀ Light' : '☾ Dark'}</button>
             <span><strong>{me.name}</strong> <span className="badge b-neutral">{ROLE_LABEL[me.role]}</span></span>
             <button className="btn sm" onClick={async () => { await logout(); nav('/') }}>Sign out</button>
@@ -92,6 +103,12 @@ export default function App() {
         <Route path="reports" element={<Reports />} />
         <Route path="audit" element={<Audit />} />
         <Route path="status" element={<Status />} />
+        <Route path="coordination" element={<CoordinationList />} />
+        <Route path="coordination/:id" element={<CoordinationThread />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="imports" element={<Imports />} />
+        <Route path="management" element={<Management />} />
+        <Route path="admin" element={<Admin />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

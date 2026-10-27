@@ -6,7 +6,7 @@ Team **SlothDevs** · Smart India Hackathon · AICTE (Regulation Bureau) problem
 
 ## Status
 
-🔨 **Working prototype of the core flow (synthetic data).** Built and tested: sign-in for seven roles, dashboard, case tracking and lifecycle, escalation, overlap detection with a Match Receipt, the Action Gate, College 360°, reports with CSV export, and a tamper-evident audit chain. 19 backend tests pass. Not built yet: bulk import, coordination threads, notifications, risk score and clusters, matching on different wording (language model), Hindi-script names, PDF briefs, automated frontend tests. The exact list is in the "Designed vs. Built" tables of the two plans.
+🔨 **Working prototype (synthetic data).** Every route in the backend plan is built, and 25 backend tests pass. Built: sign-in for seven roles, dashboard with live updates and Ask the Dashboard, case tracking and lifecycle, escalation, overlap detection with a Match Receipt, the Action Gate, coordination threads, notifications and time-limit alerts, College 360 with an attention score, Management view, CSV import wizard, reports (CSV, monthly and quarterly), PDF joint brief, admin screen, and a tamper-evident audit chain. Not built: matching of different wording (needs embeddings; only a weak word-overlap score is shown for information), Hindi-script names, PostgreSQL, a background scheduler (an admin runs the time-limit check), PDF reports, and automated frontend tests. The language-model features (summary, Ask) are off and were never run against the real service. The exact list is in the "Designed vs. Built" tables of the two plans.
 
 ## Run it
 

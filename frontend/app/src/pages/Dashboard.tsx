@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { Empty, ErrorBox, LiveIndicator, Loading, Severity, useFetch, useLive } from '../components/ui'
+import { AskBar, Empty, ErrorBox, LiveIndicator, Loading, Severity, useFetch, useLive, useStream } from '../components/ui'
 
 const TILES: [string, string, string, string?][] = [
   ['total_received', 'Total received', ''], ['pending', 'Pending', '?state=RECEIVED'], ['under_process', 'Under process', '?state=UNDER_PROCESS'],
@@ -17,7 +17,9 @@ export default function Dashboard() {
   const conf = useFetch<any>('/overlaps?severity=CONFLICT&status=SUGGESTED')
   const work = useFetch<any>(me && me.role !== 'auditor' ? '/dashboard/workload' : null)
   const reloadAll = () => { sum.reload(); age.reload(); inst.reload(); conf.reload(); work.reload() }
-  const live = useLive(20000, reloadAll, sum.stamp)
+  const stream = useStream(reloadAll)
+  // the stream gives instant updates; polling every 20 s is the fallback if it fails
+  const live = useLive(stream.ok ? 60000 : 20000, reloadAll, stream.lastAt && sum.stamp ? Math.max(stream.lastAt, sum.stamp) : sum.stamp)
 
   return (
     <>
@@ -26,6 +28,7 @@ export default function Dashboard() {
         <LiveIndicator {...live} />
       </div>
       {sum.data && <p className="muted">{sum.data.caption}</p>}
+      <AskBar />
       {sum.error && <ErrorBox error={sum.error} retry={sum.reload} />}
       {sum.loading && !sum.data && <Loading what="counters" />}
       {sum.data && (

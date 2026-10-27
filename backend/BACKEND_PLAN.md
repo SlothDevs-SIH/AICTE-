@@ -631,27 +631,27 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 4 | Seed generator + ground truth (§11.1) | B1 | ⚠️ | app/seed.py, `python -m app.cli seed`, data/ground_truth.json. Limits: 60 institutions not 40; no Devanagari variants; no 70/30 split; scenarios counts differ slightly from MASTER_PLAN §8 |
 | 5 | Auth, roles, masking, role-matrix test | B1/B4 | ⚠️ | app/core/security.py, app/api/deps.py, app/core/crypto.py; tests test_role_enforced_on_backend, test_reveal_pii_needs_reason_and_is_audited, test_other_unit_detail_is_hidden_but_summary_visible. Not built: the matrix-driven endpoint x role test, rate limiting by IP, admin user management |
 | 6 | Audit log with hash chain + Verify | B2 | ✅ | app/core/audit.py; test_audit_chain_intact_and_tamper_detected (edit detected). Delete/reorder detection is by the same check but not separately tested |
-| 7 | Institution registry, aliases, suggest endpoint | B2 | ⚠️ | app/api/v1/records.py; test_unmatched_case_can_be_linked_and_alias_is_remembered. Not built: create/update/delete institution, alias delete |
-| 8 | Complaint lifecycle, events, transfer, deadlines fields | B2 | ⚠️ | app/services/complaints.py; test_lifecycle_rules. Not built: PATCH edit, attachments, receiving-unit acceptance step |
+| 7 | Institution registry, aliases, suggest endpoint | B2 | ✅ | records.py, extras.py; test_unmatched_case_can_be_linked_and_alias_is_remembered, test_institution_admin_and_complaint_edit_and_attachment |
+| 8 | Complaint lifecycle, events, transfer, deadlines fields | B2 | ⚠️ | services/complaints.py, extras.py; test_lifecycle_rules, test_institution_admin_and_complaint_edit_and_attachment (edit, attachments). Not built: receiving-unit acceptance step; attachments are stored on local disk only |
 | 9 | Dashboard summary/ageing/workload, search/filters | B2 | ✅ | app/services/dashboard.py; test_dashboard_counters_equal_database, test_unit_officer_dashboard_is_scoped. Filters in GET /complaints (tested through the UI flow, not every filter by unit test) |
-| 10 | Import Wizard (map, dry-run, commit) | B2 | 📋 | — |
+| 10 | Import Wizard (map, dry-run, commit) | B2 | ⚠️ | services/imports.py; tests test_import_wizard_reports_bad_rows_and_commit_is_idempotent, test_import_unquoted_comma_is_a_row_error_not_a_crash, test_import_rejects_bad_files. CSV only (no Excel); no saved column mappings; commit is admin-only |
 | 11 | Engine L1/L2/L4 + Match Receipt + evaluation harness | B3 | ⚠️ | app/engine/, app/evaluate.py. L1, L2 and L4 built; no held-out split; thresholds not tuned. Measured on our own generated data: see Appendix B |
 | 12 | Overlap scan on intake, overlap queue, decisions, Alias Memory | B3 | ✅ | app/engine/overlap.py, records.py; test_create_complaint_resolves_variant_and_flags_overlap, test_overlap_always_has_receipt_and_label |
 | 13 | Action Gate (check + decision) | B3 | ✅ | records.py gate endpoints; test_gate_requires_justification_on_conflict_and_close_is_gated |
-| 14 | Issue matching (L3) with embeddings + fallback | B4 | 📋 | — |
-| 15 | Coordination Handshake | B4 | 📋 | — |
-| 16 | SLA job, notifications, alert budget | B4 | 📋 | — |
-| 17 | Reports + CSV/PDF export | B5 | ⚠️ | JSON and CSV only (reports/{kind}); no PDF, no monthly/quarterly performance report |
-| 18 | Risk score, clusters | B5 | 📋 | — |
-| 19 | AI summary with validation + template fallback | B5 | 📋 | — |
-| 20 | Ask the Dashboard (validated filters) | B5 | 📋 | — |
-| 21 | Joint Case Brief PDF | B5 | 📋 | — |
-| 22 | Scenario loader (synthetic only) | B5 | 📋 | — |
+| 14 | Issue matching (L3) with embeddings + fallback | B4 | ⚠️ | services/intelligence.py issue_similarity is LEXICAL (word overlap), not embeddings. It is shown in the receipt for information and is NOT used to decide, because test_issue_similarity_is_lexical_and_says_so shows it cannot tell synonyms from unrelated text. Embeddings: not built |
+| 15 | Coordination Handshake | B4 | ✅ | extras.py coordination routes; test_coordination_handshake_two_users, test_coordination_expiry_alerts_supervisor |
+| 16 | SLA job, notifications, alert budget | B4 | ⚠️ | services/notifications.py; test_sla_job_creates_alerts_and_respects_advisory_escalation, test_alert_budget_caps_non_conflict_alerts, test_budget_never_blocks_a_request_from_a_colleague. In-app only. The job runs when an admin triggers it (POST /admin/jobs/sla); there is no background scheduler |
+| 17 | Reports + CSV/PDF export | B5 | ⚠️ | JSON and CSV for all kinds, plus /reports/performance (monthly, quarterly); test_performance_report_and_overlaps_for_case, test_csv_report_declares_synthetic. No PDF reports |
+| 18 | Risk score, clusters | B5 | ⚠️ | services/intelligence.py; test_risk_components_and_fairness, test_clusters_found. Clusters group by college and category only (wording is not compared). No stored score history |
+| 19 | AI summary with validation + template fallback | B5 | ⚠️ | services/summary.py; test_summary_template_and_llm_guard. The language-model path was tested only with a fake; it has never run against the real service (no API key was available) |
+| 20 | Ask the Dashboard (validated filters) | B5 | ⚠️ | services/ask.py; test_ask_returns_filters_only, test_older_than_days_filter. Rule-based path tested; the language-model path was not run against the real service |
+| 21 | Joint Case Brief PDF | B5 | ✅ | services/pdfbrief.py; test_brief_pdf (checks the file is a PDF and the role guard; page content was not inspected automatically) |
+| 22 | Scenario loader (synthetic only) | B5 | ✅ | extras.py scenarios; test_admin_users_and_scenarios (loads, and refuses when non-synthetic data exists) |
 | 23 | Performance measurement, security review, PostgreSQL run | B6 | 📋 | — |
 | 24 | System Case ID and case tracking fields: last/next action, date of last action, expected disposal date (F-30) | B1 | ✅ | app/services/complaints.py (case ID, last/next action, expected disposal); test_lifecycle_rules |
-| 25 | Escalation workflow: status, history, escalate endpoint, escalations queue; alerts in B4 (F-29) | B2/B4 | ⚠️ | escalate endpoint and /escalations built and tested (test_lifecycle_rules). Not built: escalation alerts and notifications |
-| 26 | Live updates stream with polling fallback (F-31); institution-wise dashboard endpoint | B2 | ⚠️ | institution-wise endpoint built. Live updates are polling every 20 s in the UI; no Server-Sent Events stream (GET /stream returns 501) |
-| 27 | Extended reports: status-wise, institution history, overlaps, monthly/quarterly (F-32) | B5 | 📋 | — |
+| 25 | Escalation workflow: status, history, escalate endpoint, escalations queue; alerts in B4 (F-29) | B2/B4 | ✅ | escalate + /escalations + advisory alerts; auto-escalation off by default and audited when on; test_lifecycle_rules, test_auto_escalation_off_by_default_and_audited_when_on |
+| 26 | Live updates stream with polling fallback (F-31); institution-wise dashboard endpoint | B2 | ✅ | GET /stream (Server-Sent Events) and by-institution endpoint; test_stream_sends_counters_and_heartbeat |
+| 27 | Extended reports: status-wise, institution history, overlaps, monthly/quarterly (F-32) | B5 | ⚠️ | status-wise, institution history, overlaps, monthly/quarterly built (JSON/CSV); no PDF |
 
 ---
 
@@ -740,4 +740,4 @@ All figures are from `python -m app.cli evaluate` on the generated dataset (seed
 | Planted conflicting-action pairs flagged Conflict | 8 of 8 |
 | Different-wording pairs flagged (by institution + category rules, not wording) | 15 of 15 (they share a category by construction, so this does not test wording matching) |
 | Look-alike decoys wrongly merged | 0 of 10; all 10 resolved to their own record |
-| Automated tests | 19 passed (backend/tests) |
+| Automated tests | 25 passed (backend/tests) |
