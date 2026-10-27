@@ -1,0 +1,596 @@
+{
+  "seed": 42,
+  "synthetic": true,
+  "scenarios": [
+    {
+      "kind": "variant_overlap",
+      "institution": "Anand Institute of Management Studies, Pune",
+      "cases": [
+        "SMV-2026-000001",
+        "SMV-2026-000002"
+      ],
+      "typed_name": "Anand Institute of Managemen Studies, Pune",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": false,
+      "resolution_status": "needs_review"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Vindhya Polytechnic, Bhopal",
+      "cases": [
+        "SMV-2026-000003",
+        "SMV-2026-000004"
+      ],
+      "typed_name": "Vindhya Polytchnic, Bhopal",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": false,
+      "resolution_status": "needs_review"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Sant Gadge Institute of Engineering and Technology, Raipur",
+      "cases": [
+        "SMV-2026-000005",
+        "SMV-2026-000006"
+      ],
+      "typed_name": "Sant Gadge Institute o Engineering and Technology, Raipur",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Sunrise Institute of Technology, Patna",
+      "cases": [
+        "SMV-2026-000007",
+        "SMV-2026-000008"
+      ],
+      "typed_name": "Sunrise Institute of Tehnology, Patna",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": false,
+      "resolution_status": "needs_review"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Prabhat Institute of Management Studies, Noida",
+      "cases": [
+        "SMV-2026-000009",
+        "SMV-2026-000010"
+      ],
+      "typed_name": "Institute Prabhat of Management Studies Noida",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Indira Institute of Technology, Kochi",
+      "cases": [
+        "SMV-2026-000011",
+        "SMV-2026-000012"
+      ],
+      "typed_name": "Indira Institute of Technology Kochi (Kochi)",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Shivaji School of Pharmacy, Surat",
+      "cases": [
+        "SMV-2026-000013",
+        "SMV-2026-000014"
+      ],
+      "typed_name": "Shivaji School of Parmacy, Surat",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": false,
+      "resolution_status": "needs_review"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Malwa College of Engineering, Pune",
+      "cases": [
+        "SMV-2026-000015",
+        "SMV-2026-000016"
+      ],
+      "typed_name": "Malwa College of Engineering, une",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Jawahar Polytechnic, Ahmedabad",
+      "cases": [
+        "SMV-2026-000017",
+        "SMV-2026-000018"
+      ],
+      "typed_name": "Jawahar Polytehnic, Ahmedabad",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Awadh School of Pharmacy, Ludhiana",
+      "cases": [
+        "SMV-2026-000019",
+        "SMV-2026-000020"
+      ],
+      "typed_name": "Awadh School of Pharmacy Ludhiana (Ludhiana)",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Tulsi Polytechnic, Noida",
+      "cases": [
+        "SMV-2026-000021",
+        "SMV-2026-000022"
+      ],
+      "typed_name": "Tulsi Polyechnic, Noida",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Lakshmi Narayan Institute of Technology, Bengaluru",
+      "cases": [
+        "SMV-2026-000023",
+        "SMV-2026-000024"
+      ],
+      "typed_name": "Narayan Lakshmi Institute of Technology Bengaluru",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Orchid School of Pharmacy, New Delhi",
+      "cases": [
+        "SMV-2026-000025",
+        "SMV-2026-000026"
+      ],
+      "typed_name": "Orchid School of Pharmacy New Delhi (New Delhi)",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Indira College of Engineering, Bhubaneswar",
+      "cases": [
+        "SMV-2026-000027",
+        "SMV-2026-000028"
+      ],
+      "typed_name": "Indira College of ngineering, Bhubaneswar",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": false,
+      "resolution_status": "needs_review"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Lotus Institute of Engineering and Technology, Indore",
+      "cases": [
+        "SMV-2026-000029",
+        "SMV-2026-000030"
+      ],
+      "typed_name": "Lotus Instiute of Engineering and Technology, Indore",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Prabhat Institute of Technology, Kolkata",
+      "cases": [
+        "SMV-2026-000031",
+        "SMV-2026-000032"
+      ],
+      "typed_name": "Prabhat Institute of Technology Kolkata (Kolkata)",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Subhas Institute of Engineering and Technology, Ahmedabad",
+      "cases": [
+        "SMV-2026-000033",
+        "SMV-2026-000034"
+      ],
+      "typed_name": "Subhas Institut of Engineering and Technology, Ahmedabad",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": false,
+      "resolution_status": "needs_review"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Orchid Institute of Engineering and Technology, Panaji",
+      "cases": [
+        "SMV-2026-000035",
+        "SMV-2026-000036"
+      ],
+      "typed_name": "Orchid Insitute of Engineering and Technology, Panaji",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Tulsi Institute of Technology, Bhubaneswar",
+      "cases": [
+        "SMV-2026-000037",
+        "SMV-2026-000038"
+      ],
+      "typed_name": "Tulsi Institute of Technoloy, Bhubaneswar",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": false,
+      "resolution_status": "needs_review"
+    },
+    {
+      "kind": "variant_overlap",
+      "institution": "Apex School of Pharmacy, Bhopal",
+      "cases": [
+        "SMV-2026-000039",
+        "SMV-2026-000040"
+      ],
+      "typed_name": "Apex School of Pharmac, Bhopal",
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "resolved": true,
+      "resolution_status": "linked"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Prabhat College of Engineering, Ludhiana",
+      "cases": [
+        "SMV-2026-000041",
+        "SMV-2026-000042"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Peepal Institute of Management Studies, Pune",
+      "cases": [
+        "SMV-2026-000043",
+        "SMV-2026-000044"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Bharat School of Pharmacy, Bhopal",
+      "cases": [
+        "SMV-2026-000045",
+        "SMV-2026-000046"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Kaveri College of Engineering, Gurugram",
+      "cases": [
+        "SMV-2026-000047",
+        "SMV-2026-000048"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Raman School of Pharmacy, Ludhiana",
+      "cases": [
+        "SMV-2026-000049",
+        "SMV-2026-000050"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Lakshmi Narayan Institute of Technology, Nagpur",
+      "cases": [
+        "SMV-2026-000051",
+        "SMV-2026-000052"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "National School of Pharmacy, Lucknow",
+      "cases": [
+        "SMV-2026-000053",
+        "SMV-2026-000054"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Narmada College of Engineering, Bengaluru",
+      "cases": [
+        "SMV-2026-000055",
+        "SMV-2026-000056"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Himalaya Polytechnic, New Delhi",
+      "cases": [
+        "SMV-2026-000057",
+        "SMV-2026-000058"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Patanjali Institute of Management Studies, Panaji",
+      "cases": [
+        "SMV-2026-000059",
+        "SMV-2026-000060"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Raman School of Pharmacy, Pune",
+      "cases": [
+        "SMV-2026-000061",
+        "SMV-2026-000062"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Dr. Ambedkar Polytechnic, Indore",
+      "cases": [
+        "SMV-2026-000063",
+        "SMV-2026-000064"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Vidya Bharati School of Pharmacy, Kolkata",
+      "cases": [
+        "SMV-2026-000065",
+        "SMV-2026-000066"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Ganga College of Engineering, Durgapur",
+      "cases": [
+        "SMV-2026-000067",
+        "SMV-2026-000068"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "wording_overlap",
+      "institution": "Peepal Polytechnic, Patna",
+      "cases": [
+        "SMV-2026-000069",
+        "SMV-2026-000070"
+      ],
+      "expected_same_institution": true,
+      "expected_overlap": "O2",
+      "note": "same issue, different words; wording match (L3) is not built, so only the institution and category rules apply"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Gyan Ganga Institute of Technology, Ludhiana",
+      "cases": [
+        "SMV-2026-000071",
+        "SMV-2026-000072"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Vidya Bharati Institute of Engineering and Technology, Bengaluru",
+      "cases": [
+        "SMV-2026-000073",
+        "SMV-2026-000074"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Zenith College of Engineering, Bhopal",
+      "cases": [
+        "SMV-2026-000075",
+        "SMV-2026-000076"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Orchid Institute of Engineering and Technology, Kolkata",
+      "cases": [
+        "SMV-2026-000077",
+        "SMV-2026-000078"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Peepal Institute of Management Studies, Patna",
+      "cases": [
+        "SMV-2026-000079",
+        "SMV-2026-000080"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Malwa School of Pharmacy, Bhubaneswar",
+      "cases": [
+        "SMV-2026-000081",
+        "SMV-2026-000082"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Nilgiri Institute of Engineering and Technology, Ahmedabad",
+      "cases": [
+        "SMV-2026-000083",
+        "SMV-2026-000084"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "conflict_pair",
+      "institution": "Peepal Institute of Management Studies, Mysuru",
+      "cases": [
+        "SMV-2026-000085",
+        "SMV-2026-000086"
+      ],
+      "expected_overlap_severity": "CONFLICT",
+      "expected_gate_for_pgrc": "CONFLICT"
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000087",
+      "typed_name": "Anand Institute College of Engineering, Pune",
+      "must_not_link_to": "Anand Institute of Management Studies, Pune",
+      "expected_institution": "Anand Institute College of Engineering, Pune",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000088",
+      "typed_name": "Vindhya Polytechnic Institute of Management Studies, Bhopal",
+      "must_not_link_to": "Vindhya Polytechnic, Bhopal",
+      "expected_institution": "Vindhya Polytechnic Institute of Management Studies, Bhopal",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000089",
+      "typed_name": "Sant Gadge School of Pharmacy, Raipur",
+      "must_not_link_to": "Sant Gadge Institute of Engineering and Technology, Raipur",
+      "expected_institution": "Sant Gadge School of Pharmacy, Raipur",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000090",
+      "typed_name": "Sunrise Institute Institute of Management Studies, Patna",
+      "must_not_link_to": "Sunrise Institute of Technology, Patna",
+      "expected_institution": "Sunrise Institute Institute of Management Studies, Patna",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000091",
+      "typed_name": "Prabhat Institute Institute of Technology, Noida",
+      "must_not_link_to": "Prabhat Institute of Management Studies, Noida",
+      "expected_institution": "Prabhat Institute Institute of Technology, Noida",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000092",
+      "typed_name": "Indira Institute Institute of Engineering and Technology, Kochi",
+      "must_not_link_to": "Indira Institute of Technology, Kochi",
+      "expected_institution": "Indira Institute Institute of Engineering and Technology, Kochi",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000093",
+      "typed_name": "Shivaji School Institute of Management Studies, Surat",
+      "must_not_link_to": "Shivaji School of Pharmacy, Surat",
+      "expected_institution": "Shivaji School Institute of Management Studies, Surat",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000094",
+      "typed_name": "Malwa College Institute of Engineering and Technology, Pune",
+      "must_not_link_to": "Malwa College of Engineering, Pune",
+      "expected_institution": "Malwa College Institute of Engineering and Technology, Pune",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000095",
+      "typed_name": "Jawahar Polytechnic College of Engineering, Ahmedabad",
+      "must_not_link_to": "Jawahar Polytechnic, Ahmedabad",
+      "expected_institution": "Jawahar Polytechnic College of Engineering, Ahmedabad",
+      "resolved_ok": true
+    },
+    {
+      "kind": "decoy",
+      "case": "SMV-2026-000096",
+      "typed_name": "Awadh School Institute of Management Studies, Ludhiana",
+      "must_not_link_to": "Awadh School of Pharmacy, Ludhiana",
+      "expected_institution": "Awadh School Institute of Management Studies, Ludhiana",
+      "resolved_ok": true
+    }
+  ],
+  "counts": {
+    "approaching_sla": 12,
+    "beyond_sla": 8,
+    "escalated": 6
+  }
+}

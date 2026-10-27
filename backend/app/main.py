@@ -1,0 +1,46 @@
+import uuid
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.api.v1 import auth, records, stubs, system
+from app.core.errors import ApiError, envelope
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="SAMANVAY API", version="0.1.0",
+        docs_url="/api/docs", openapi_url="/api/openapi.json",
+    )
+
+    @app.middleware("http")
+    async def request_context(request: Request, call_next):
+        request.state.request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request.state.request_id
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.exception_handler(ApiError)
+    async def _api_error(request: Request, exc: ApiError):
+        return envelope(request, exc.status, exc.code, exc.message, **exc.details)
+
+    @app.exception_handler(RequestValidationError)
+    async def _validation(request: Request, exc: RequestValidationError):
+        fields = [{"loc": [str(p) for p in e["loc"]], "msg": e["msg"]} for e in exc.errors()]
+        return envelope(request, 422, "validation_error", "Request is invalid.", fields=fields)
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _http(request: Request, exc: StarletteHTTPException):
+        code = "not_found" if exc.status_code == 404 else "http_error"
+        return envelope(request, exc.status_code, code, str(exc.detail))
+
+    for r in (system.router, auth.router, records.router, stubs.router):
+        app.include_router(r, prefix="/api/v1")
+    return app
+
+
+app = create_app()
