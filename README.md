@@ -13,7 +13,7 @@ Team **SlothDevs** · Smart India Hackathon · AICTE (Regulation Bureau) problem
 Needs Python 3 and Node.js. From the repository root, in PowerShell:
 
 ```
-cd frontend\app; npm install; npm run build; cd ....
+cd frontend\app; npm install; npm run build; cd ..\..
 cd backend; py -m venv .venv; .\.venv\Scripts\pip install -r requirements.txt
 copy .env.example .env      # then set SECRET_KEY and PII_ENCRYPTION_KEY to long random values
 .\.venv\Scripts\python -m app.cli seed
