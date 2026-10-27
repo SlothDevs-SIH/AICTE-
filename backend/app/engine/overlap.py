@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import write_audit
 from app.db.models import Category, Complaint, Overlap
+from app.services.intelligence import issue_similarity
 
 ENGINE_VERSION = "rules-1.0"
 OPEN_STATES = ("RECEIVED", "ASSIGNED", "UNDER_PROCESS", "ESCALATED", "REOPENED", "TRANSFERRED")
@@ -75,8 +76,10 @@ def scan_complaint(db: Session, c: Complaint, actor_id: str | None = None) -> li
                 },
                 "L3_issue": {
                     "used": False,
-                    "formula": "not built - wording similarity is not evaluated; this overlap "
-                    "uses institution and category rules only",
+                    "lexical_score": issue_similarity(a, b)[0],
+                    "formula": "wording is compared by word overlap only, and that score is shown for "
+                    "information but NOT used to decide: it cannot see that different words mean the same "
+                    "thing (embeddings are not built). This overlap uses institution and category rules only",
                 },
                 "L4_rules": {"type": kind, "severity": sev, "reasons": reasons},
             },

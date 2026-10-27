@@ -58,3 +58,54 @@ class AuditLog(RowMixin, Base):
     payload_json: Mapped[dict] = mapped_column(JSON)
     prev_hash: Mapped[str] = mapped_column(String(64))
     entry_hash: Mapped[str] = mapped_column(String(64))
+
+
+class CoordinationThread(RowMixin, Base):
+    __tablename__ = "coordination_threads"
+    institution_id: Mapped[str] = mapped_column(ForeignKey("institutions.id"))
+    opened_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[str] = mapped_column(String(10), default="OPEN")  # OPEN | RESOLVED | EXPIRED
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    outcome: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class CoordinationThreadComplaint(RowMixin, Base):
+    __tablename__ = "coordination_thread_complaints"
+    thread_id: Mapped[str] = mapped_column(ForeignKey("coordination_threads.id"), index=True)
+    complaint_id: Mapped[str] = mapped_column(ForeignKey("complaints.id"), index=True)
+
+
+class CoordinationMessage(RowMixin, Base):
+    __tablename__ = "coordination_messages"
+    thread_id: Mapped[str] = mapped_column(ForeignKey("coordination_threads.id"), index=True)
+    author_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    body: Mapped[str] = mapped_column(Text)
+    posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class Attachment(RowMixin, Base):
+    __tablename__ = "attachments"
+    complaint_id: Mapped[str] = mapped_column(ForeignKey("complaints.id"), index=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    content_type: Mapped[str] = mapped_column(String(100))
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(64))
+    storage_key: Mapped[str] = mapped_column(String(120))
+    uploaded_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+
+
+class ImportJob(RowMixin, Base):
+    __tablename__ = "import_jobs"
+    unit_id: Mapped[str] = mapped_column(ForeignKey("units.id"))
+    filename: Mapped[str] = mapped_column(String(255))
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(12), default="UPLOADED")  # UPLOADED|DRY_RUN|COMMITTED|FAILED
+    columns_json: Mapped[list] = mapped_column(JSON, default=list)
+    mapping_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    raw_rows_json: Mapped[list] = mapped_column(JSON, default=list)
+    rows_total: Mapped[int] = mapped_column(Integer, default=0)
+    rows_ok: Mapped[int] = mapped_column(Integer, default=0)
+    rows_error: Mapped[int] = mapped_column(Integer, default=0)
+    report_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))

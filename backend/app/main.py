@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1 import auth, records, stubs, system
+from app.api.v1 import auth, extras, records, stubs, system
 from app.core.errors import ApiError, envelope
 
 
@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
         code = "not_found" if exc.status_code == 404 else "http_error"
         return envelope(request, exc.status_code, code, str(exc.detail))
 
-    for r in (system.router, auth.router, records.router, stubs.router):
+    for r in (system.router, auth.router, extras.router, records.router, stubs.router):
         app.include_router(r, prefix="/api/v1")
     dist = Path(__file__).resolve().parents[2] / 'frontend' / 'app' / 'dist'
     if dist.exists():  # one-process demo: serve the built single-page app

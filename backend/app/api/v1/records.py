@@ -80,7 +80,15 @@ def can_see_detail(db: Session, user: User, c: Complaint) -> bool:
         Overlap.status.in_(("CONFIRMED", "LINKED")),
         or_(Overlap.complaint_a_id == c.id, Overlap.complaint_b_id == c.id)))
     mine = {x.id for x in db.scalars(select(Complaint).where(Complaint.unit_id == user.unit_id))}
-    return any((o.complaint_a_id in mine or o.complaint_b_id in mine) for o in linked)
+    if any((o.complaint_a_id in mine or o.complaint_b_id in mine) for o in linked):
+        return True
+    # a unit taking part in a coordination thread about this case may read it
+    from app.db.models import CoordinationThreadComplaint as TC
+    for tc in db.scalars(select(TC).where(TC.complaint_id == c.id)):
+        sibling = db.scalars(select(TC).where(TC.thread_id == tc.thread_id))
+        if any(s.complaint_id in mine for s in sibling):
+            return True
+    return False
 
 
 def get_complaint(db: Session, cid: str) -> Complaint:
