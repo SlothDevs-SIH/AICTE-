@@ -1,8 +1,8 @@
 # SAMANVAY Frontend — Plan & Build Record
 
-**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** not recorded yet (MASTER_PLAN V-M1)
+**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** not supplied yet (MASTER_PLAN V-M1) · **Official text:** [`../docs/PROBLEM_STATEMENT.md`](../docs/PROBLEM_STATEMENT.md)
 **Parent documents:** [`../MASTER_PLAN.md`](../MASTER_PLAN.md) (product) · [`../backend/BACKEND_PLAN.md`](../backend/BACKEND_PLAN.md) (API, data, engine). This document is the source of truth for the web app. When they disagree, fix all three in the same commit.
-**Document date:** 2026-10-27 (v1.0)
+**Document date:** 2026-10-27 (v1.1 — reconciled with the official problem statement)
 **Frontend phase:** **F0 — Planning: ✅ this document.** Nothing is built. Next: **F1 — Skeleton.**
 
 > ⚠️ **Honesty rule:** a "✅" must point to a file and a test that passed. Everything here is **📋 Planned** until code exists. Measured numbers go into Appendix B only after they are measured.
@@ -21,7 +21,7 @@
 | V-F5 | Strict Content-Security-Policy | Inline scripts and third-party hosts break under a strict policy | Same-origin only, no inline scripts, no CDN assets; every exception is recorded here | ✅ Decided |
 | V-F6 | "shadcn/ui" | It is a copy-in component convention, not a dependency | Hand-write components in that convention (`cn()` = `clsx` + `tailwind-merge`) as needed | ✅ Decided |
 | V-F7 | Source maps in the production image | They expose source | Build with hidden source maps and strip `*.map` from the image before any real pilot | ⏳ F6 |
-| V-F8 | Official PS text not available | Requirement IDs `R-xx` are working IDs | Re-map when MASTER_PLAN V-M1 closes | ⏳ Open |
+| V-F8 | Requirement IDs | Earlier working IDs `R-xx` were replaced by the official IDs (`OBJ`, `KF`, `INN`, `OUT`, `TU`). The comparison found UI gaps (MASTER_PLAN V-M7), fixed here: Escalated status and Escalations screen, last/next action and expected disposal date on cases, Case ID, institution-wise status on the dashboard, live indicator, extra reports, Competent Authority user | Done; coverage matrix in MASTER_PLAN §1.3 | ✅ Resolved 2026-10-27 |
 
 ---
 
@@ -161,6 +161,9 @@ public/theme-init.js         pre-paint theme (external file for the strict CSP)
 | Other API error | Message plus copyable `request_id` |
 | Empty | Say why and what to do ("No open cases for this institution in the last 24 months — widen the date range") |
 
+### 3.6 Live data rule
+Dashboards and queues are live (MASTER_PLAN F-31). The page header shows a **Live indicator** driven by the stream's heartbeat. **Never show stale values as live:** after 30 s without an update or heartbeat the indicator changes to "Stale — last update N s ago" with icon and text, numbers are dimmed, and the client polls at the interval from the server settings until the stream returns. Stream events carry identifiers and counters only; the client re-fetches details through the normal endpoints.
+
 ---
 
 ## 4. Screen Designs
@@ -173,27 +176,29 @@ Each screen: **Purpose · Roles · Layout · Data · Key components · States an
 - **Data:** `POST /auth/login`, `GET /me`.
 - **Rules:** error messages do not reveal whether the email exists; lockout message shows when the server reports it; no autofill of stored credentials by the app.
 - **Tests:** wrong password, locked account, success redirect to the role's home, token kept in memory only.
-- **Done when:** each of the six roles can sign in and lands on its home screen.
+- **Done when:** each of the seven roles (unit officer, unit supervisor, regional officer, management, Competent Authority, admin, auditor) can sign in and lands on its home screen.
 
-### 4.2 Dashboard — R-02, R-03
+### 4.2 Dashboard — OBJ-6, KF4, KF7
 - **Purpose:** the first screen for officers and management. **Roles:** all.
 - **Layout:**
-  - Row of **counter tiles**: Total, Pending, Under process, Disposed, Transferred, **Overdue** — each a link to the Complaints list with the matching filter in the URL.
+  - Row of **counter tiles**: Total received, Pending, Under process, Disposed, Transferred, **Escalated**, **Beyond timeline** — each a link to the Complaints list with the matching filter in the URL.
   - **Conflicts needing attention** panel (CONFLICT overlaps assigned to my unit), pinned at the top and never collapsed.
   - **Ageing** bar chart (age buckets of open cases) and **workload by unit** chart, each with "View as table".
   - **Due soon** list (SLA clock).
+  - **Institution-wise case status** table (KF4.7): institution, open cases by status, units involved, open overlaps; each row links to College 360°.
+  - **Live indicator** next to the page title: "Live · updated 8 s ago". If no update or heartbeat arrives for 30 s it changes to "Stale — last update 42 s ago" with an icon and text, and the numbers are dimmed (§3.6).
   - **Ask the Dashboard** bar (§4.17) above the tiles.
-- **Data:** `GET /dashboard/summary`, `/dashboard/ageing`, `/dashboard/workload`, `GET /overlaps?severity=CONFLICT&status=SUGGESTED`, `GET /complaints?due_soon=true`.
+- **Data:** `GET /dashboard/summary`, `/dashboard/by-institution`, `/dashboard/ageing`, `/dashboard/workload`, `GET /stream` (live events, polling fallback), `GET /overlaps?severity=CONFLICT&status=SUGGESTED`, `GET /complaints?due_soon=true`.
 - **Rules:** counts reflect the user's scope (stated in a caption: "Showing: RB, all regions"); empty state explains the scope.
 - **Tests:** tile numbers equal mocked API values; each tile link sets the right URL filters; charts have the table alternative.
 - **Done when:** tile numbers equal the database counts in an e2e check against seeded data.
 
-### 4.3 Complaints list — R-01, R-03
-- **Layout:** left filter column (institution picker, AICTE ID, unit, region, category, state, overdue toggle, received-date range, owner, "has overlap"), top search/Ask bar, results table (reference no, institution, category, unit, state, owner, received, due, overlap badge), pagination or virtualisation, "Export CSV" button (calls the report endpoint).
+### 4.3 Complaints list — OBJ-1, KF2, KF6
+- **Layout:** left filter column (institution picker, AICTE ID, **Case ID / reference no**, Bureau/Cell, region, category, status, overdue toggle, **escalated toggle**, received-date range, owner, "has overlap"), top search/Ask bar, results table (Case ID, reference no, institution, category, Bureau/Cell, status, owner, **last action, next action**, received, **expected disposal**, overlap badge), pagination or virtualisation, "Export CSV" button (calls the report endpoint).
 - **Data:** `GET /complaints` with the filter parameters.
 - **Rules:** **filter state lives in the URL** (`/complaints?unit=RB&state=UNDER_PROCESS&overdue=true`) so views are shareable; personal fields never appear in the list; a row with a CONFLICT overlap shows a red badge with icon and text.
 - **Tests:** URL ↔ filter sync both ways; sort; keyboard row navigation; export link.
-- **Done when:** every filter in R-03 works and is reflected in the URL.
+- **Done when:** every filter in KF6.1–KF6.8 works and is reflected in the URL.
 
 ### 4.4 New Complaint
 - **Purpose:** create a complaint and see overlaps immediately.
@@ -204,10 +209,10 @@ Each screen: **Purpose · Roles · Layout · Data · Key components · States an
 - **Tests:** suggest list for "VIT Pune", "Vishwakarma Inst. of Tech", a Devanagari spelling; possible-match confirmation; submit shows the resulting overlap alert.
 - **Done when:** the spelling-variant demo scenario works end to end.
 
-### 4.5 Complaint Detail — R-05
-- **Layout:** header (reference, institution, unit, owner, state, due clock, badges including "On hold for coordination"), actions menu (transition, transfer, add remark, add attachment), tabs: **Summary**, **Timeline**, **Documents**, **Overlaps**, **Audit**.
-- **Summary:** description, category, dates, masked complainant block (`MaskedValue` + Reveal).
-- **Timeline:** `TimelineList` of workflow events with actor, time, remark and state change.
+### 4.5 Complaint Detail — KF2, KF5
+- **Layout:** header (Case ID, reference, institution, Bureau/Cell, owner, status, due clock, escalation level badge, badges including "On hold for coordination"), actions menu (transition, transfer, **escalate**, set next action, add remark, add attachment), tabs: **Summary**, **Timeline**, **Documents**, **Overlaps**, **Audit**.
+- **Summary:** description, category, dates, masked complainant block (`MaskedValue` + Reveal), and a **Tracking block** (KF2.7–KF2.9): last action taken with who and when, next action required with its due date, date of last action, expected disposal date. The owner can edit next action and expected disposal date in place (the change is recorded in the history).
+- **Timeline:** `TimelineList` of workflow events with actor, time, remark and state change, including transfers and escalations (who escalated to whom, level, reason).
 - **Overlaps:** cards for each overlap (receipt, other case summary, decision buttons).
 - **Documents:** attachment list with SHA-256 shown.
 - **Data:** `GET /complaints/{id}`, `/events`, `/overlaps`, attachments endpoint, `/audit?entity=…` (auditor/admin).
@@ -215,7 +220,7 @@ Each screen: **Purpose · Roles · Layout · Data · Key components · States an
 - **Tests:** transition menu shows only legal next states; Gate opens before close; masked fields; "summary only" view hides description.
 - **Done when:** every number and status on the page can be traced to a timeline or audit entry.
 
-### 4.6 College 360° — R-04
+### 4.6 College 360° — KF1
 - **Purpose:** one institution across all units.
 - **Layout:** header (canonical name, AICTE ID, state/district, aliases with source badges, risk score tile for management/auditor roles), then:
   - **Cross-unit timeline:** one vertical timeline, each complaint a lane-coloured entry with unit badge, category, state, owner; overlaps drawn as connectors between entries labelled with severity icon+text.
@@ -227,7 +232,7 @@ Each screen: **Purpose · Roles · Layout · Data · Key components · States an
 - **Tests:** timeline order, connector list equivalence, risk tile hidden for officer roles.
 - **Done when:** a college with two units' cases and one overlap displays all of it from one page.
 
-### 4.7 Overlaps queue and Overlap review — R-06, R-07
+### 4.7 Overlaps queue and Overlap review — KF3, KF7.1, INN
 - **Queue:** table of overlaps (severity, institution, units, categories, match score, age, status) with filters; CONFLICT first. Title text on the page and any export: **"Potential Overlapping Cases – Coordination Required"** for suggested overlaps.
 - **Review (`/overlaps/:id`):** two-column **side-by-side** case summaries (`CaseSummaryCard`) with differences highlighted (institution as typed, category, dates, owner, state); **Match Receipt** below spanning both columns; decision bar: **Confirm**, **Dismiss** (reason required), **Link cases**, **Save as alias** (shown when spellings differ), **Request coordination**, **Open Joint Case Brief (PDF)**; AI/Template summary block with `AiLabel`.
 - **Data:** `GET /overlaps`, `GET /overlaps/{id}`, `POST /overlaps/{id}/decision`, `POST /overlaps/{id}/summary`, `GET /overlaps/{id}/brief.pdf`, `POST /coordination`.
@@ -266,9 +271,9 @@ Each screen: **Purpose · Roles · Layout · Data · Key components · States an
 - **Tests:** components sum to the displayed score (within rounding); ordering; note present.
 - **Done when:** selecting any ranked institution shows every component with its definition.
 
-### 4.11 Reports — R-09
-- **Layout:** report kind picker (by unit, region, institution, ageing, disposal rate), filters, preview table/chart (with table alternative), **Export CSV** and **Export PDF** buttons.
-- **Data:** `GET /reports/{kind}?format=json|csv|pdf`.
+### 4.11 Reports — OBJ-7, KF8
+- **Layout:** report kind picker (Bureau/Cell-wise, region-wise, status-wise, institution-wise, institution complaint history, pending-case ageing, disposal rate, overlapping/duplicate cases, monthly/quarterly performance with a period selector), filters, preview table/chart (with table alternative), **Export CSV** and **Export PDF** buttons.
+- **Data:** `GET /reports/{kind}?format=json|csv|pdf` (plus `period=monthly|quarterly` and `institution_id` where the kind needs them).
 - **Rules:** exports carry the SYNTHETIC DATA line and the filters used; the preview and the export come from the same endpoint so they cannot disagree.
 - **Tests:** preview totals equal the export's totals; filters appear in export header.
 - **Done when:** a report's grand total reconciles with the dashboard counter for the same filters.
@@ -314,7 +319,16 @@ Readiness per backend dependency with latency, backend version/build/environment
 - **Tests:** chips match response; removing a chip re-queries; fallback messages.
 
 ### 4.18 Notifications
-Bell in the header with an unread count (text, not colour only); a panel listing notifications with links; mark as read. Toasts for new CONFLICT items only. No sounds; browser notifications are not used in the prototype.
+Bell in the header with an unread count (text, not colour only); a panel listing notifications with links; mark as read. Notification kinds: overlap alerts (KF7.1), pending-case reminders (KF7.2), escalation alerts (KF7.3), SLA approaching/breached (KF7.4); each is labelled with text and an icon. Toasts appear only for new CONFLICT items and for escalations addressed to the user. No sounds; browser notifications are not used in the prototype.
+
+### 4.19 Escalations — OBJ-6, KF5.5, KF7.3
+- **Roles:** supervisor, Competent Authority, management, admin (read), officers see escalations on their own cases in Complaint Detail.
+- **Layout:** queue table of escalated cases (Case ID, institution, Bureau/Cell, level badge "Level 2/3" with text, escalated by, reason, escalated on, age since escalation, due clock), filters (level, unit, institution), and an **Escalate** dialog reachable from Complaint Detail.
+- **Escalate dialog (`EscalateDialog`):** choose level (2 = supervisor, 3 = Competent Authority), optional named recipient, reason (required, minimum length); shows who will be notified; the action is recorded in history and the audit trail. The wording is advisory: "Escalate for decision". Nothing in the UI escalates automatically; if the administrator has switched on automatic escalation, system escalations appear with actor "system" and a note.
+- **Acting on an escalated case:** the recipient can add instructions and **Return to officer** (back to Under process), escalate to Level 3, or **Dispose** (the Action Gate runs first).
+- **Data:** `GET /escalations`, `POST /complaints/{id}/escalate`, `POST /complaints/{id}/transition`.
+- **Tests:** level and reason validation; queue shows only the caller's scope; return-to-officer updates the badge and timeline; disposal opens the Gate; system-actor display.
+- **Done when:** an officer escalates a case, the supervisor returns it with instructions, and the full movement shows in the timeline.
 
 ---
 
@@ -334,6 +348,9 @@ Bell in the header with an unread count (text, not colour only); a panel listing
 | `GateDialog` | F3 | Headline feature |
 | `ChartWithTable` | F2 | Every chart wrapped, with text summary and table toggle |
 | `AuditVerifyPanel` | F3 | U3 |
+| `EscalateDialog` | F2 | §4.19 |
+| `LiveIndicator` | F2 | §3.6 |
+| `TrackingBlock` (last action, next action, dates) | F2 | KF2.7–KF2.9 |
 | `AskBar` | F5 | U10 |
 | `ImportStepper` | F2 | U8 |
 
@@ -369,6 +386,9 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 22 | Management View, Reports | F5 | 📋 | §4.10, §4.11 |
 | 23 | AskBar, AI summary UI, Joint Case Brief link, Scenario loader UI | F5 | 📋 | §4.7, §4.17 |
 | 24 | Usability walkthrough, performance measurement, hidden source maps, security headers review | F6 | 📋 | — |
+| 25 | Escalate dialog and Escalations screen, escalation badge and history in the timeline (F-29) | F2 | 📋 | §4.19 |
+| 26 | Live indicator and live dashboard updates, institution-wise status table, Tracking block (F-30, F-31) | F2 | 📋 | §3.6, §4.2, §4.5 |
+| 27 | Extended reports UI: status-wise, institution history, overlapping cases, monthly/quarterly (F-32) | F5 | 📋 | §4.11 |
 
 ---
 
@@ -379,11 +399,11 @@ Frontend phases follow the backend phases they depend on, starting once real end
 | Phase | Needs backend | Scope | Exit criteria |
 |---|---|---|---|
 | **F0 Planning** | — | This document | ✅ Committed |
-| **F1 Skeleton** | B1 | Items 1–9 | App runs in the Compose stack; Login for all six roles; System Status shows live readiness; every other screen is a planned page showing its backend phase; axe has zero serious/critical violations; CI green |
-| **F2 Records & visibility** | B2 | Items 10–16 | Dashboard numbers equal seeded database counts (e2e); filters round-trip through the URL; import with bad rows reports exact rows; picker handles the variant and Devanagari names; keyboard pass recorded |
+| **F1 Skeleton** | B1 | Items 1–9 | App runs in the Compose stack; Login for all seven roles; System Status shows live readiness; every other screen is a planned page showing its backend phase; axe has zero serious/critical violations; CI green |
+| **F2 Records & visibility** | B2 | Items 10–16, 25–26 | Dashboard numbers equal seeded database counts (e2e); filters round-trip through the URL; import with bad rows reports exact rows; picker handles the variant and Devanagari names; keyboard pass recorded |
 | **F3 Overlap core** | B3 | Items 17–19 | Every planted scenario renders the right receipt and Gate result; Verify shows intact and broken states; overlap without receipt cannot render (test) |
-| **F4 Coordination & roles** | B4 | Items 20–21 | Two-user handshake e2e passes; role-visibility tests pass for all six roles; masking verified on every screen showing personal fields |
-| **F5 Management & AI** | B5 | Items 22–23 | Report totals reconcile with the dashboard; every AI element shows its label and fallback state with AI disabled (e2e) |
+| **F4 Coordination & roles** | B4 | Items 20–21 | Two-user handshake e2e passes; role-visibility tests pass for all seven roles; masking verified on every screen showing personal fields |
+| **F5 Management & AI** | B5 | Items 22–23, 27 | Report totals reconcile with the dashboard; every AI element shows its label and fallback state with AI disabled (e2e) |
 | **F6 Hardening** | B6 | Item 24 | Usability walkthrough recorded (≥ 80% task success, SUS ≥ 70); budgets in §10 measured and recorded; source maps hidden |
 
 ### 7.1 F1 task breakdown (next up — ordered)
@@ -411,6 +431,7 @@ Frontend phases follow the backend phases they depend on, starting once real end
 | Related | amber | alert-triangle | "Related" |
 | Conflict | red | shield-alert | "Conflict" |
 | Systemic | violet | layers | "Systemic" |
+| Escalated | orange | arrow-up-circle | "Escalated (Level 2)" / "(Level 3)" |
 | Synthetic data | neutral outline | flask | "SYNTHETIC DATA" |
 | AI-written | blue outline | sparkles | "AI-written" |
 | Template | grey outline | file-text | "Template summary" |
@@ -489,6 +510,7 @@ Measured values are recorded in Appendix B; the table above is a target only.
 | ADR-F11 | In-memory tokens | `localStorage` tokens | Reduces theft through script injection |
 | ADR-F12 | Axe from F1, not later | Accessibility at the end | Cheaper to keep correct than to fix |
 | ADR-F13 | Responsive web app | Native app | One codebase; no installation in an office setting |
+| ADR-F14 | Explicit Live and Stale indicator driven by the stream heartbeat | Silent polling with no indicator | Officials must know whether the numbers are current (OUT-6) |
 
 ---
 
@@ -506,6 +528,8 @@ Measured values are recorded in Appendix B; the table above is a target only.
 | RF8 | Bundle bloat | Medium | Medium | Lazy routes from F1; budgets in §10 |
 | RF9 | Over-reliance on colour for severity | Medium | Medium | Icon + text mandatory; screenshot test in greyscale |
 | RF10 | Session expiry loses a half-written remark | Medium | Low | Keep form text in memory across the re-login |
+| RF11 | Dashboard looks live while the data is stale | Medium | Medium | Heartbeat-driven indicator, dimmed numbers after 30 s, polling fallback, e2e test that cuts the stream |
+| RF12 | Escalation misunderstood as automatic | Low | Medium | Wording "Escalate for decision"; system escalations labelled with actor "system"; Q&A entry |
 
 ---
 
@@ -536,10 +560,10 @@ Types are generated from the backend's OpenAPI schema, and CI fails on drift in 
 
 ## 15. Immediate Next Actions (frontend)
 
-1. Close MASTER_PLAN V-M1 — paste the official problem statement into `docs/PROBLEM_STATEMENT.md`; re-map requirement IDs.
+1. Add the PS number to `docs/PROBLEM_STATEMENT.md` and to the three plan headers (MASTER_PLAN V-M1). The official text is already saved there and the requirement IDs are mapped.
 2. **F1 kickoff:** §7.1 tasks 1–4 (project, tokens, registry, shell) — can start now against fixtures.
 3. Decide the demo machine and test Devanagari rendering on it (V-F3).
-4. Write the six demo-user role names into the seed docs (passwords live there, not in the UI).
+4. Write the seven demo-user role names into the seed docs (passwords live there, not in the UI).
 5. Agree the shared fixtures with the backend (the seeded dataset and ground truth) so tests describe the same world.
 
 ---

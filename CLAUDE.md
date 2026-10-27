@@ -39,4 +39,4 @@ If they disagree, fix **all three in the same commit**.
 - Product principles P1–P9 in `MASTER_PLAN.md` §3 are non-negotiable (explain every flag, assist never decide, fail safe, audit everything, mask personal data, honest numbers, human correction, alert budget, declare synthetic data).
 - Synthetic data only. Never add real complaint data, personal data, secrets or keys to the repository.
 - A bug fix starts with a failing test.
-- The official problem-statement text is not yet in the repo (`MASTER_PLAN.md` V-M1). When the user provides it, save it as `docs/PROBLEM_STATEMENT.md` and re-map requirement IDs.
+- The official problem statement is in `docs/PROBLEM_STATEMENT.md`; requirement IDs (`OBJ`, `KF`, `INN`, `OUT`, `TU`) come from it and are mapped to features in `MASTER_PLAN.md` §1.3. Keep that matrix in step with any change. The PS number is still missing (`MASTER_PLAN.md` V-M1).

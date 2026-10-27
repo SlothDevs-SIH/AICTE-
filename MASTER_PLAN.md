@@ -1,9 +1,9 @@
 # SAMANVAY — Master Plan
 
 **Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY, Hindi for "coordination" · **Domain:** Governance / Regulatory technology
-**Problem statement:** AICTE (Regulation Bureau) — an integrated institution complaint monitoring and status dashboard
-**PS number:** *not recorded yet* (see V-M1)
-**Document date:** 2026-10-27 (v1.0)
+**Problem statement:** AICTE (Regulation Bureau) — *Integrated Institution Complaint Monitoring and Status Dashboard*. Official text: [`docs/PROBLEM_STATEMENT.md`](docs/PROBLEM_STATEMENT.md)
+**PS number:** *not supplied yet* (see V-M1)
+**Document date:** 2026-10-27 (v1.1 — reconciled with the official problem statement)
 **Companion documents:** [`backend/BACKEND_PLAN.md`](backend/BACKEND_PLAN.md) (data, API, engine) · [`frontend/FRONTEND_PLAN.md`](frontend/FRONTEND_PLAN.md) (web app)
 **Project phase:** **M0 — Planning: ✅ this document set.** Nothing is built yet. Next: **M1 — Foundations.**
 
@@ -16,8 +16,9 @@
 
 | # | Item | Detail | Resolution / action | Status |
 |---|---|---|---|---|
-| V-M1 | The exact problem-statement text and PS number are not in this repo | The official portal was unavailable when this plan was written. Requirements below were reconstructed from the team's own reading of the statement (listed in §1.3) | The first person with access pastes the official text into `docs/PROBLEM_STATEMENT.md`; then re-map every requirement ID `R-xx` in §5 to the official wording and fix the PS number in all three headers | ⏳ Open |
-| V-M2 | Requirement IDs `R-01…` are **working IDs**, not official ones | They come from V-M1's reconstruction | Re-map when V-M1 is closed | ⏳ Open |
+| V-M1 | Official problem-statement text, and the PS number | Text was supplied on 2026-10-27 and saved in `docs/PROBLEM_STATEMENT.md`. **The PS number was not in the pasted text.** | Text: done. Number: the team adds it to `docs/PROBLEM_STATEMENT.md` and the three plan headers | ✅ Text resolved · ⏳ number open |
+| V-M2 | Earlier working requirement IDs `R-01…R-11` | They were reconstructed before the official text was available and **missed several official items** (see V-M7) | Replaced everywhere by official IDs (`OBJ-n`, `KFn.m`, `INN`, `OUT-n`, `TU-n`) — §1.3 | ✅ Resolved 2026-10-27 |
+| V-M7 | Gaps found when comparing the earlier plan with the official text | (1) **Escalated** cases were not a status, counter, history item or alert; (2) case fields *last action*, *next action*, *date of last action*, *expected disposal date* were missing, and there was no unique **Case ID**; (3) reports for **status-wise**, **overlapping/duplicate cases**, **institution-wise history** and **monthly/quarterly performance** were missing; (4) **Competent Authority** was not a user type; (5) the dashboard was not defined as **real-time**; (6) **institution-wise case status** was not on the dashboard; (7) *pending case reminders* and *escalation alerts* were not separate alert types | Fixed in this version in all three plans: F-29 to F-32 added, F-17 and F-18 widened, states, tables, routes and screens updated | ✅ Resolved 2026-10-27 |
 | V-M3 | The product name SAMANVAY is a working name | It must be checked for clashes before any public use | Decide before the final presentation | ⏳ Open |
 | V-M4 | No real AICTE data is available | Complaint data is sensitive and not public | Use **synthetic data only** and say so on every screen that shows it (§8) | ✅ Decided |
 | V-M5 | Embedding model and LLM are optional dependencies | They may be unavailable offline or on the demo machine | Every AI feature has a **non-AI fallback** (§4.3, backend plan §6) | ✅ Decided |
@@ -45,25 +46,66 @@ One dashboard where authorised officials can:
 - see **who holds each complaint**, its status and its full history;
 - get a **warning when more than one unit is dealing with the same institution**, even if the complaint wording, case numbers or college spellings differ.
 
-### 1.3 Requirements as understood (working list — see V-M1)
+### 1.3 Requirements — official items and how we cover them
 
-| ID | Requirement (reconstructed) |
-|---|---|
-| R-01 | Central repository of complaints from all units (RB, PGRC, others) |
-| R-02 | Dashboard of counts: total, pending, under process, disposed, transferred, overdue |
-| R-03 | Search and filters: institution, AICTE ID, unit, region, category, status, date range |
-| R-04 | Per-institution view of all complaints across units |
-| R-05 | Workflow history per case: who did what, when, with remarks and documents |
-| R-06 | Detect overlapping cases for the same institution, including with different wording or references |
-| R-07 | Raise an alert titled **"Potential Overlapping Cases – Coordination Required"** |
-| R-08 | Reminders / alerts for cases close to their deadline or overdue |
-| R-09 | Reports by unit, region and institution (ageing, disposal rate, workload) |
-| R-10 | Role-based access for authorised officials |
-| R-11 | Innovation expected: intelligent (AI-assisted) analytics beyond plain filters |
+The official statement is saved in [`docs/PROBLEM_STATEMENT.md`](docs/PROBLEM_STATEMENT.md). Its items carry the IDs used everywhere in these plans: `OBJ-n` (objectives), `KFn.m` (key features), `INN` (innovation), `OUT-n` (expected outcomes), `TU-n` (target users). Feature IDs (`F-nn`) are defined in §5. **Every cell below is 📋 Planned** until code and tests exist.
+
+| Official item | Covered by | Where the user meets it |
+|---|---|---|
+| **OBJ-1** All cases in one place | F-02, F-03, F-05, F-06 | Dashboard, Complaints list, Import Wizard |
+| **OBJ-2** Which Bureau/Cell holds each case | F-04 | Unit and owner on every list row and detail |
+| **OBJ-3** Full status and movement of a case | F-04, F-29, F-30 | Complaint Detail timeline |
+| **OBJ-4** Detect RB/PGRC and multi-unit overlap | F-08, F-09, F-15 | Overlaps queue and review |
+| **OBJ-5** Avoid duplicate action, ensure coordination | F-10, F-11, F-16 | Action Gate, Coordination Thread |
+| **OBJ-6** Monitor pending, disposed, under-process, transferred, **escalated** | F-05, F-29 | Dashboard counters |
+| **OBJ-7** Institution-, region-, Bureau/Cell- and status-wise reports | F-18, F-32 | Reports |
+| **OBJ-8** Alerts for pending cases and approaching timelines | F-17 | Notifications, Dashboard "due soon" |
+| **KF1.1** Unique Institution / AICTE Permanent ID | F-01 | Institution Registry, College 360° |
+| **KF1.2** Name, address, region, other details | F-01 | Institution Registry, College 360° |
+| **KF1.3** Consolidated complaint history per institution | F-07 | College 360° |
+| **KF2.1** Unique Complaint/Case ID | F-02 (system-generated Case ID, in addition to each unit's own reference number) | Every screen showing a case |
+| **KF2.2** Date of receipt | F-02 | Complaint Detail, lists |
+| **KF2.3** Nature/category | F-02 | Complaint Detail, lists, filters |
+| **KF2.4** Current status | F-04, F-29 | Badge on every case |
+| **KF2.5** Presently assigned Bureau/Cell | F-04 | Lists, detail, transfer |
+| **KF2.6** Assigned officer/official | F-04 | Lists, detail |
+| **KF2.7** Last action taken | F-30 | Complaint Detail, list column |
+| **KF2.8** Next action required | F-30 | Complaint Detail, list column |
+| **KF2.9** Date of last action and expected disposal date | F-30 | Complaint Detail, list columns |
+| **KF3.1** Automatic overlap identification | F-08, F-15 | Overlap Engine |
+| **KF3.2** Overlap alert to authorised officials | F-09 | Dashboard panel, notifications, Overlaps queue |
+| **KF3.3** Link / map related cases | F-11 | Overlap review "Link cases", link groups |
+| **KF4.1–KF4.6** Total, pending, under process, disposed, transferred, beyond timelines | F-05, F-31 | Dashboard tiles (live) |
+| **KF4.7** Institution-wise case status | F-05 | Dashboard table, College 360° |
+| **KF4.8** Bureau/Cell-wise workload | F-05 | Dashboard chart, Management View |
+| **KF5.1–KF5.5** Chronological history, responsible officer/Bureau, time stamps, remarks and documents, transfer/escalation history | F-04, F-13, F-29 | Complaint Detail (Timeline, Documents, Audit tabs) |
+| **KF6.1–KF6.8** Search by institution name, AICTE ID, case ID, Bureau/Cell, region, category, status, date range | F-06 | Complaints list filters, Ask bar |
+| **KF7.1** Duplicate/overlapping case alerts | F-09 | Notifications, Overlaps |
+| **KF7.2** Pending case reminders | F-17 | Notifications |
+| **KF7.3** Escalation alerts | F-17, F-29 | Notifications |
+| **KF7.4** Timeline/SLA alerts | F-17 | Notifications, due clocks |
+| **KF8.1** Bureau-wise reports | F-18 | Reports |
+| **KF8.2** Region-wise reports | F-18 | Reports |
+| **KF8.3** Institution-wise complaint history | F-32 | Reports, College 360° export |
+| **KF8.4** Pending case ageing analysis | F-18 | Dashboard, Reports |
+| **KF8.5** Disposal rate | F-18 | Reports |
+| **KF8.6** Overlapping/duplicate cases | F-32 | Reports |
+| **KF8.7** Monthly/quarterly performance reports | F-32 | Reports |
+| **INN** Matching beyond identical wording; alert "Potential Overlapping Cases – Coordination Required" | F-08, F-09, F-12, F-15, F-19, F-20, F-21 | Overlap Engine, Match Receipt |
+| **OUT-1** Reduce duplication | F-10 | Action Gate |
+| **OUT-2** Prevent conflicting or parallel actions | F-10, F-16 | Action Gate, Coordination |
+| **OUT-3** Better coordination between Bureaus/Cells | F-16 | Coordination Thread |
+| **OUT-4** Timely disposal | F-17, F-29 | SLA clocks, escalation |
+| **OUT-5** Accountability and transparency | F-13, F-14 | Audit trail with Verify, roles |
+| **OUT-6** Management monitors status in real time | F-20, F-31 | Management View, live dashboard |
+| **OUT-7** Data-driven decisions | F-18, F-20, F-32 | Reports, risk ranking |
+| **TU-1…TU-6** Target users | F-14 | Roles in §2 (RB, PGRC, other Bureaus/Cells, Regional Offices, senior management, Competent Authority) |
+
+Our own additions beyond the statement (the USPs U1–U11) are listed in §4.5; they support these items and do not replace any of them.
 
 ### 1.4 Honest assessment of where the difficulty lies
 
-Dashboards, filters, status counts and reports are standard work; most teams will build them. The hard, judged part is **R-06/R-07/R-11: finding that two cases are "about the same institution and issue" when the data does not say so directly.** That is an entity-resolution problem plus a text-similarity problem, and it must be **explainable** because the users are government officials who must trust and defend what the system tells them.
+Dashboards, filters, status counts and reports are standard work; most teams will build them. The hard, judged part is **KF3.1–KF3.3 and INN: finding that two cases are "about the same institution and issue" when the data does not say so directly.** That is an entity-resolution problem plus a text-similarity problem, and it must be **explainable** because the users are government officials who must trust and defend what the system tells them.
 
 ---
 
@@ -77,6 +119,9 @@ Dashboards, filters, status counts and reports are standard work; most teams wil
 | **Senior Management** | Leadership | Where are the problems? Which colleges repeat? Which unit is overloaded? | Management View, Reports, Hotspots |
 | **Data Steward / Admin** | Support team | Import data, fix institution records, manage users and thresholds | Import, Institution Registry, Admin |
 | **Auditor (read-only)** | Vigilance / audit | Prove who did what and that records were not altered | Audit Trail, Verify Chain |
+| **Unit Supervisor** | Any Bureau/Cell | Oversee the unit's queue, reassign cases, receive escalations from officers and overdue alerts | Unit queue, Escalations, Overlaps |
+| **Other Bureau/Cell Officer** | Any other AICTE Bureau/Cell | Same needs as RB and PGRC officers for their own cases | My Cases, Pre-Action Check, Overlaps |
+| **Competent Authority / AICTE administration** | Top management | Final decision on top-level escalations; an overall view of how every Bureau/Cell and institution is doing | Management View, Escalations, Reports |
 
 Role rules are enforced by the **backend**; the UI only hides what a role cannot use (backend plan §9).
 
@@ -169,34 +214,38 @@ Priority: **C** = core, **F** = full build, **R** = roadmap (described, not buil
 
 | ID | Feature | Req | Prio | Phase |
 |---|---|---|---|---|
-| F-01 | Institution registry with canonical records, AICTE IDs and aliases | R-04, R-06 | C | M1 |
-| F-02 | Complaint intake (manual form) with unit, category, institution, details, dates | R-01 | C | M1 |
-| F-03 | Import Wizard (CSV/Excel with column mapping, preview, dry-run) | R-01 | C | M2 |
-| F-04 | Complaint lifecycle: states, owner, transfer, remarks, attachments (metadata) | R-05 | C | M1 |
-| F-05 | Dashboard counters with drill-down | R-02 | C | M2 |
-| F-06 | Search and filters (all listed fields) with URL-shareable state | R-03 | C | M2 |
-| F-07 | College 360° (timeline across units, owner per case, open overlaps, risk, past actions) | R-04 | C | M2 |
-| F-08 | Overlap Engine L1–L4 (ID, fuzzy institution, rules) | R-06 | C | M3 |
-| F-09 | Overlap alert "Potential Overlapping Cases – Coordination Required" with Match Receipt | R-07 | C | M3 |
-| F-10 | Action Gate (pre-action check: clear / related / conflict) | R-07 | C | M3 |
-| F-11 | Officer decision: Confirm / Dismiss / Link / Unlink, with reason | R-07 | C | M3 |
-| F-12 | Alias Memory (confirmed aliases feed back into matching) | R-06 | C | M3 |
-| F-13 | Audit trail, hash-chained, with Verify | R-05 | C | M3 |
-| F-14 | Role-based access and masked personal data | R-10 | C | M4 |
-| F-15 | Issue matching with embeddings (L3) with keyword fallback | R-06, R-11 | F | M4 |
-| F-16 | Coordination Handshake (shared thread, hold-for-discussion, clock) | R-07 | F | M4 |
-| F-17 | Deadlines, SLA clocks, reminders, escalation flags | R-08 | F | M4 |
-| F-18 | Reports: by unit, region, institution; ageing; disposal rate; export CSV/PDF | R-09 | F | M5 |
-| F-19 | AI-written overlap summary (LLM) with template fallback | R-11 | F | M5 |
-| F-20 | Systemic Issue Clusters and Institution Risk Score | R-11 | F | M5 |
-| F-21 | Ask the Dashboard (validated filter generation) | R-11 | F | M5 |
-| F-22 | Joint Case Brief PDF | R-07 | F | M5 |
+| F-01 | Institution registry with canonical records, AICTE IDs and aliases | KF1.1–KF1.3, KF3.1 | C | M1 |
+| F-02 | Complaint intake (manual form) with unit, category, institution, details, dates and a **system-generated unique Case ID** | KF2.1–KF2.6, OBJ-1 | C | M1 |
+| F-03 | Import Wizard (CSV/Excel with column mapping, preview, dry-run) | OBJ-1 | C | M2 |
+| F-04 | Complaint lifecycle: states (including **Escalated**), owner, transfer, remarks, attachments (metadata) | KF2.4–KF2.6, KF5 | C | M1 |
+| F-05 | Dashboard counters (including **escalated** and **beyond timeline**) with drill-down, **institution-wise status** and Bureau/Cell workload | KF4.1–KF4.8, OBJ-6 | C | M2 |
+| F-06 | Search and filters (all listed fields) with URL-shareable state | KF6.1–KF6.8 | C | M2 |
+| F-07 | College 360° (timeline across units, owner per case, open overlaps, risk, past actions) | KF1.3, KF4.7 | C | M2 |
+| F-08 | Overlap Engine L1–L4 (ID, fuzzy institution, rules) | KF3.1, INN | C | M3 |
+| F-09 | Overlap alert "Potential Overlapping Cases – Coordination Required" with Match Receipt | KF3.2, KF7.1, INN | C | M3 |
+| F-10 | Action Gate (pre-action check: clear / related / conflict) | OBJ-5, OUT-1, OUT-2 | C | M3 |
+| F-11 | Officer decision: Confirm / Dismiss / Link / Unlink, with reason | KF3.3 | C | M3 |
+| F-12 | Alias Memory (confirmed aliases feed back into matching) | KF3.1, INN | C | M3 |
+| F-13 | Audit trail, hash-chained, with Verify | KF5, OUT-5 | C | M3 |
+| F-14 | Role-based access and masked personal data | TU-1–TU-6, OUT-5 | C | M4 |
+| F-15 | Issue matching with embeddings (L3) with keyword fallback | INN, KF3.1 | F | M4 |
+| F-16 | Coordination Handshake (shared thread, hold-for-discussion, clock) | OBJ-5, OUT-3 | F | M4 |
+| F-17 | Deadlines, SLA clocks, **pending-case reminders**, SLA alerts and **escalation alerts** | OBJ-8, KF7.2–KF7.4, OUT-4 | C | M4 |
+| F-18 | Reports: **Bureau/Cell-wise**, **region-wise**, ageing, disposal rate; export CSV/PDF | KF8.1, KF8.2, KF8.4, KF8.5 | C | M5 |
+| F-19 | AI-written overlap summary (LLM) with template fallback | INN | F | M5 |
+| F-20 | Systemic Issue Clusters and Institution Risk Score | INN, OUT-6 | F | M5 |
+| F-21 | Ask the Dashboard (validated filter generation) | INN | F | M5 |
+| F-22 | Joint Case Brief PDF | KF3.2, OBJ-5 | F | M5 |
 | F-23 | Scenario Runner (demo) | — | F | M5 |
-| F-24 | Learning from feedback to tune thresholds (offline analysis of stored decisions) | R-11 | R | later |
-| F-25 | Geographic hotspot map | R-11 | R | later |
-| F-26 | SSO / 2FA with an institutional identity provider | R-10 | R | later |
-| F-27 | Live connectors to unit systems (database/API) | R-01 | R | later |
+| F-24 | Learning from feedback to tune thresholds (offline analysis of stored decisions) | INN | R | later |
+| F-25 | Geographic hotspot map | INN | R | later |
+| F-26 | SSO / 2FA with an institutional identity provider | TU-5, TU-6 | R | later |
+| F-27 | Live connectors to unit systems (database/API) | OBJ-1 | R | later |
 | F-28 | Complainant-facing status tracker | — | R | later |
+| F-29 | **Escalation workflow:** Escalated status, escalation level and target, escalation history, de-escalation, escalation alerts | KF2.4, KF4 (OBJ-6), KF5.5, KF7.3, OUT-4 | C | M2 (status, history) · M4 (alerts) |
+| F-30 | **Case tracking fields:** last action taken, next action required, date of last action, expected disposal date (last action is derived from history; next action is set by the owner) | KF2.7–KF2.9 | C | M1 |
+| F-31 | **Live dashboard:** server-pushed updates with automatic polling fallback, "last updated" indicator, stale-data warning | KF4 (real-time), OUT-6 | C | M2 |
+| F-32 | **Extended reports:** status-wise, institution-wise complaint history, overlapping/duplicate cases, monthly and quarterly performance | KF8.3, KF8.6, KF8.7, OBJ-7, OUT-7 | C | M5 |
 
 ---
 
@@ -233,6 +282,13 @@ Priority: **C** = core, **F** = full build, **R** = roadmap (described, not buil
 1. An auditor opens a case, reads its audit trail, and presses **Verify chain**.
 2. The system re-computes hashes and reports *Intact* or *Broken at entry #N*.
 
+### 6.7 Escalation (OBJ-6, KF5.5, KF7.3)
+1. **Triggers for an escalation alert:** a case is overdue by more than the grace period (default 3 days); a coordination thread expires without an outcome; or the owner decides to escalate on their own.
+2. The system **alerts** the owner and the supervisor. By default it does **not** escalate by itself (principle P2); an administrator may switch on automatic escalation, in which case the system records the escalation as a system action in the history and audit trail.
+3. The owner or supervisor presses **Escalate**, chooses the level (Level 2 = supervisor, Level 3 = Competent Authority) and gives a reason. The case status becomes **Escalated**, the history records who escalated to whom and why, and the recipient is notified.
+4. The recipient acts: gives instructions and returns the case to *Under process*, reassigns it, or disposes of it (the Action Gate runs before disposal). Each step is recorded.
+5. The dashboard counts Escalated cases separately, and the Competent Authority sees an **Escalations** queue.
+
 ---
 
 ## 7. What counts as an "overlap"? (taxonomy)
@@ -263,6 +319,7 @@ The exact severity rules are configuration, not code (backend plan §6.6), so th
   - 10 look-alike **decoys** (similar names, different colleges) that must *not* be merged;
   - 8 conflicting-action pairs;
   - 3 systemic clusters;
+  - 12 complaints approaching their SLA, 8 beyond it, and 6 escalated (levels 2 and 3), with last-action and next-action fields filled;
   - complaints in mixed English/Hindi/Hinglish.
 - Every record carries `is_synthetic = true`; all screens show **SYNTHETIC DATA**.
 
@@ -320,6 +377,7 @@ The exact severity rules are configuration, not code (backend plan §6.6), so th
 11. **Institution Registry** — canonical records and aliases.
 12. **Audit & Verify** — trail and chain verification.
 13. **Admin** — users, roles, thresholds, scenarios.
+14. **Escalations** — cases escalated to me or my unit, with the reason and history.
 
 ---
 
@@ -330,6 +388,7 @@ The exact severity rules are configuration, not code (backend plan §6.6), so th
 | **Explainability** | 100% of overlap alerts carry a Match Receipt; 100% of AI summaries show their source evidence |
 | **Matching quality** (on the planted ground truth, measured, not claimed) | Institution matching: recall ≥ 0.95, precision ≥ 0.95 on variant pairs; decoys wrongly merged: 0. Issue matching: recall ≥ 0.80, precision ≥ 0.85. Targets are recorded in the plan and replaced by measured numbers in the verification appendix |
 | **Performance (prototype scale)** | Gate check ≤ 1 s; dashboard load ≤ 2 s; overlap scan on intake ≤ 3 s at 10,000 complaints |
+| **Live updates** | A new case or status change appears on other officers' dashboards within 5 s through server push, or within 15 s through the polling fallback; the screen always shows "last updated" and a stale-data warning after 30 s without updates |
 | **Security** | Role checks on every endpoint; passwords hashed; no secrets in the repo; input validation; rate limiting on auth; masked PII by default |
 | **Privacy** | Reveal-with-reason for personal data; synthetic data only in the prototype |
 | **Integrity** | Hash-chained audit entries; verification endpoint |
@@ -347,11 +406,11 @@ There is **no time limit** on the build, so phases are ordered by **dependency a
 | Phase | Name | Scope | Exit criteria |
 |---|---|---|---|
 | **M0** | Planning | These three documents, repo skeleton, authorship rule | ✅ Documents committed |
-| **M1** | Foundations | Repo structure, backend skeleton, database schema and migrations, institution registry, complaint intake and lifecycle, synthetic data generator v1, frontend shell, API client generated from the backend contract | `make up` starts everything; data generator produces the dataset; complaint can be created and viewed; CI green |
-| **M2** | Visibility | Dashboard, search/filters, College 360°, Import Wizard | Counters match database counts (tested); filters are URL-shareable; an import with a bad row reports the row, not a crash |
+| **M1** | Foundations | Repo structure, backend skeleton, database schema and migrations, institution registry, complaint intake and lifecycle with system Case ID and the case tracking fields (F-30), synthetic data generator v1, frontend shell, API client generated from the backend contract | `make up` starts everything; data generator produces the dataset; complaint can be created and viewed; CI green |
+| **M2** | Visibility | Dashboard (live updates F-31, institution-wise status), Escalated status and escalation history (F-29), search/filters, College 360°, Import Wizard | Counters match database counts (tested); filters are URL-shareable; an import with a bad row reports the row, not a crash |
 | **M3** | Overlap core | Overlap Engine L1/L2/L4, Match Receipt, overlap alert, Action Gate, officer decisions, Alias Memory, hash-chained audit | Engine meets the quality targets on the planted ground truth; Gate returns correct result for every planted scenario; chain verifies, and a deliberately altered row is detected |
-| **M4** | Intelligence and roles | Issue matching with embeddings (L3) and fallback, Coordination Handshake, deadlines/SLA, roles and masking | Issue-matching targets met or the fallback is documented as the default; role matrix tests pass; reveal-with-reason is logged |
-| **M5** | Management and polish | Reports and exports, risk score and clusters, AI summaries with fallback, Ask the Dashboard, Joint Case Brief, Scenario Runner | Report numbers reconcile with raw data; risk components shown; every AI feature degrades gracefully (tested with AI disabled) |
+| **M4** | Intelligence and roles | Issue matching with embeddings (L3) and fallback, Coordination Handshake, deadlines/SLA, pending-case reminders and escalation alerts, roles and masking | Issue-matching targets met or the fallback is documented as the default; role matrix tests pass; reveal-with-reason is logged |
+| **M5** | Management and polish | Reports and exports (including the extended reports F-32), risk score and clusters, AI summaries with fallback, Ask the Dashboard, Joint Case Brief, Scenario Runner | Report numbers reconcile with raw data; risk components shown; every AI feature degrades gracefully (tested with AI disabled) |
 | **M6** | Hardening and presentation | Accessibility pass, security review, performance measurement, usability walkthrough, demo script, backup recording, presentation deck | Verification appendix filled with real measurements; demo runs three times end to end without intervention |
 
 **Cut-line guidance:** if quality of a later feature is poor, **move it to roadmap** and say so, rather than showing something half-working (P3, P6). Order of removal: F-23, F-22, F-21, F-20, F-19.
@@ -368,6 +427,7 @@ There is **no time limit** on the build, so phases are ordered by **dependency a
 | Audit integrity | Tamper test | Detected 100% |
 | Usability | 5-person walkthrough with 6 tasks (e.g. "find all open cases for College X", "resolve a conflict") | ≥ 80% task success, SUS ≥ 70 |
 | Robustness | Run with AI disabled and with the network off | No error screens |
+| Coverage of the official statement | Matrix in §1.3 | Every official item mapped to a planned feature; an item is marked built only with a file and a passing test |
 
 ---
 
@@ -381,7 +441,7 @@ There is **no time limit** on the build, so phases are ordered by **dependency a
 | R4 | Too many alerts | Medium | Medium | Alert budget (P8), ranking, grouping by institution |
 | R5 | Over-claiming "AI" or "learning" | Medium | High | Only claim what is built; "learning" is roadmap; alias memory is described as what it is |
 | R6 | Scope grows beyond what can be finished | High | Medium | Phases with cut-lines (§12) |
-| R7 | PS text differs from our reconstruction | Medium | Medium | V-M1 closed early; re-map requirement IDs |
+| R7 | A judge reads the statement differently from us, or the PS number is wrong | Low | Medium | Official text is saved in `docs/PROBLEM_STATEMENT.md`; §1.3 maps every item; add the PS number |
 | R8 | Sensitive-data concerns | Low | High | Synthetic data only; masking; no real data in the repo |
 | R9 | Contract drift between frontend and backend | Medium | Medium | Generated API types plus CI diff check (frontend plan §2.3) |
 | R10 | Hash-chain claims misunderstood (it is tamper-*evident*, not tamper-*proof*) | Medium | Medium | Say "tamper-evident"; document what it does not cover (backend plan §8) |
@@ -430,6 +490,12 @@ Personal data is masked by default, revealing it needs a logged reason, and the 
 
 **"Can the audit trail be edited?"**
 Entries are hash-chained, so any edit breaks the chain and the Verify button shows where. It is tamper-evident; protecting the database itself is a deployment responsibility.
+
+**"Does it cover every item in the problem statement?"**
+Every objective, key feature, expected outcome and user type is mapped in §1.3 to a planned feature and screen. An item is marked built only when code and a passing test exist.
+
+**"What happens when a case is stuck?"**
+It gets SLA alerts, then an escalation alert; the owner or supervisor escalates it to a higher level with a reason, it is counted as Escalated on the dashboard, and the whole movement stays in the case history.
 
 **"Whose data is in the demo?"**
 None. All data is synthetic and every screen says so.

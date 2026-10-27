@@ -1,8 +1,8 @@
 # SAMANVAY Backend — Plan & Build Record
 
-**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** not recorded yet (MASTER_PLAN V-M1)
+**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** not supplied yet (MASTER_PLAN V-M1) · **Official text:** [`../docs/PROBLEM_STATEMENT.md`](../docs/PROBLEM_STATEMENT.md)
 **Parent document:** [`../MASTER_PLAN.md`](../MASTER_PLAN.md) (product). Sibling: [`../frontend/FRONTEND_PLAN.md`](../frontend/FRONTEND_PLAN.md). This document is the source of truth for the API, data and engine. When they disagree, fix all three in the same commit.
-**Document date:** 2026-10-27 (v1.0)
+**Document date:** 2026-10-27 (v1.1 — reconciled with the official problem statement)
 **Backend phase:** **B0 — Planning: ✅ this document.** Nothing is built. Next: **B1 — Foundations.**
 
 > ⚠️ **Honesty rule:** a "✅" must point to a file and a test that passed. Everything here is **📋 Planned** until code exists. Numbers in §11 are **targets**, replaced by measured values in Appendix B as they are measured.
@@ -20,7 +20,8 @@
 | V-B5 | Hash chain needs a single writer | Concurrent writers can fork the chain | Serialise appends (SQLite: single writer already; PostgreSQL: advisory lock); concurrency test at B3 | ⏳ B3 |
 | V-B6 | LLM provider and key are undecided | We do not know which provider the team will use | LLM is behind an adapter; template summary is the default; provider chosen later | ⏳ Open |
 | V-B7 | Threshold values in §6 are starting points | They have not been measured | Tune on the **development split** only; report on the **held-out split** (§11) | ⏳ B3 |
-| V-B8 | Official PS text not available | Requirement IDs `R-xx` are working IDs | Re-map when MASTER_PLAN V-M1 closes | ⏳ Open |
+| V-B8 | Requirement IDs | Earlier working IDs `R-xx` were replaced by the official IDs (`OBJ`, `KF`, `INN`, `OUT`, `TU`); the comparison found gaps (MASTER_PLAN V-M7), all fixed here: Escalated status, case tracking fields, system Case ID, extra reports, Competent Authority role, live stream | Done; coverage matrix in MASTER_PLAN §1.3 | ✅ Resolved 2026-10-27 |
+| V-B9 | Meaning of "pending" vs "under process" | The statement lists both without defining them. Our definition: **pending** = received or assigned but no officer action yet; **under process** = at least one action taken and not yet disposed; **escalated** and **transferred** counted separately (§3.3) | Confirm with AICTE officers; definitions live in one place (`app/services/dashboard.py`) and are tested | ⏳ Confirm |
 
 ---
 
@@ -103,7 +104,7 @@ Types are described logically; at B1 they are written as portable SQLAlchemy typ
 | `units` | `code` (RB, PGRC, REG-W, …), `name`, `kind` | The handling units |
 | `regions` | `code`, `name`, `states[]` | Regional offices / zones |
 | `categories` | `code`, `name`, `severity_weight`, `sla_days` | Complaint categories (8 initially) |
-| `users` | `email`, `name`, `password_hash`, `role`, `unit_id`, `region_id`, `is_active` | Roles: `rb_officer`, `pgrc_officer`, `regional_officer`, `management`, `admin`, `auditor` |
+| `users` | `email`, `name`, `password_hash`, `role`, `unit_id`, `region_id`, `is_active` | Roles: `unit_officer`, `unit_supervisor`, `regional_officer`, `management`, `competent_authority`, `admin`, `auditor`. Whether an officer belongs to RB, PGRC or another Bureau/Cell comes from `unit_id`, not from the role |
 
 ### 3.2 Institutions
 
@@ -118,8 +119,8 @@ Indexes: `normalized_name`, `normalized_alias`, (`state`,`district`), `aicte_id`
 
 | Table | Key columns | Notes |
 |---|---|---|
-| `complaints` | `reference_no` (per unit, unique per unit), `unit_id`, `institution_id` (nullable until resolved), `institution_text_raw`, `aicte_id_raw`, `category_id`, `title`, `description`, `language_hint`, `received_on`, `due_on`, `state`, `owner_user_id`, `priority`, `source` (`manual`, `import`), `import_job_id`, `complainant_name_enc`, `complainant_phone_enc`, `complainant_email_enc`, `is_synthetic` | Personal fields are **encrypted at rest** and masked in responses by role |
-| `complaint_events` | `complaint_id`, `kind`, `from_state`, `to_state`, `actor_user_id`, `remark`, `payload_json`, `occurred_at` | The workflow history (R-05). `kind`: `RECEIVED`, `ASSIGNED`, `STATE_CHANGED`, `TRANSFERRED`, `REMARK`, `ACTION_TAKEN`, `OVERLAP_LINKED`, `COORDINATION_REQUESTED`, … |
+| `complaints` | `case_id` (system-generated, globally unique, e.g. `SMV-2026-000123`), `reference_no` (the unit's own number, unique per unit), `unit_id`, `institution_id` (nullable until resolved), `institution_text_raw`, `aicte_id_raw`, `category_id`, `title`, `description`, `language_hint`, `received_on`, `due_on` (SLA due date), `expected_disposal_on`, `state`, `owner_user_id`, `escalation_level` (0–3), `escalated_to_user_id`, `last_action_text`, `last_action_at`, `last_action_by`, `next_action_text`, `next_action_due_on`, `priority`, `source` (`manual`, `import`), `import_job_id`, `complainant_name_enc`, `complainant_phone_enc`, `complainant_email_enc`, `is_synthetic` | Personal fields are **encrypted at rest** and masked in responses by role |
+| `complaint_events` | `complaint_id`, `kind`, `from_state`, `to_state`, `actor_user_id`, `remark`, `payload_json`, `occurred_at` | The workflow history (KF5). `kind`: `RECEIVED`, `ASSIGNED`, `STATE_CHANGED`, `TRANSFERRED`, `ESCALATED`, `DE_ESCALATED`, `REMINDER_SENT`, `NEXT_ACTION_SET`, `REMARK`, `ACTION_TAKEN`, `OVERLAP_LINKED`, `COORDINATION_REQUESTED`, … |
 | `attachments` | `complaint_id`, `filename`, `content_type`, `size_bytes`, `sha256`, `storage_key` | Prototype stores metadata and a small file in local storage |
 | `complaint_actions` | `complaint_id`, `action_type`, `status` (`PROPOSED`,`DONE`,`WITHDRAWN`), `proposed_by`, `proposed_at`, `done_at`, `details` | Regulatory actions (notice, penalty, closure…); used by the Gate and by O4 |
 
@@ -133,10 +134,16 @@ Indexes: `normalized_name`, `normalized_alias`, (`state`,`district`), `aicte_id`
 | `UNDER_PROCESS` | `TRANSFERRED` | owner | target unit set, remark required |
 | `TRANSFERRED` | `ASSIGNED` | receiving unit | accepted into the receiving unit's queue (new `unit_id`, new `reference_no` allowed, original kept in events) |
 | `UNDER_PROCESS` | `DISPOSED` | owner | disposal reason required; Gate runs for the `CLOSE_CASE` action |
+| `UNDER_PROCESS` | `ESCALATED` | owner, supervisor or system (if auto-escalation is on) | level (2 or 3) and reason required; `escalation_level` and `escalated_to_user_id` set; event `ESCALATED` |
+| `ESCALATED` | `ESCALATED` (higher level) | escalated-to user | Level 2 → 3 only; reason required |
+| `ESCALATED` | `UNDER_PROCESS` | escalated-to user | instructions recorded; returns to the owner; event `DE_ESCALATED` |
+| `ESCALATED` | `DISPOSED` | escalated-to user (Level 2 or 3) | disposal reason required; Gate runs for the `CLOSE_CASE` action |
 | `DISPOSED` | `REOPENED` | supervisor | reason required |
 | `REOPENED` | `UNDER_PROCESS` | owner | — |
 
-Illegal transitions return `409 invalid_transition`. **"On hold for coordination"** is a flag on the complaint, not a state, so the normal lifecycle is not disturbed. **"Overdue"** is computed (`due_on < today` and state not `DISPOSED`), not stored.
+Illegal transitions return `409 invalid_transition`. **Tracking fields (KF2.7–KF2.9):** `last_action_*` is derived automatically from the latest `ACTION_TAKEN`, `STATE_CHANGED`, `TRANSFERRED` or `ESCALATED` event and stored for fast listing; `next_action_*` is set by the owner (event `NEXT_ACTION_SET`), and an `UNDER_PROCESS` case without a next action shows a hint; `expected_disposal_on` defaults to `due_on` and the owner may change it with a remark.
+**Dashboard counters (KF4, defined once, in `app/services/dashboard.py`):** *total received* = all cases in scope; *pending* = `RECEIVED` or `ASSIGNED` with no officer action yet; *under process* = `UNDER_PROCESS`; *escalated* = `ESCALATED`; *disposed* = `DISPOSED`; *transferred* = cases with a `TRANSFERRED` event in the selected period; *beyond timeline* = computed (below). The definitions are our interpretation (V-B9).
+**"On hold for coordination"** is a flag on the complaint, not a state, so the normal lifecycle is not disturbed. **"Overdue"** is computed (`due_on < today` and state not `DISPOSED`), not stored.
 
 ### 3.4 Overlaps, gate, coordination
 
@@ -172,8 +179,8 @@ Illegal transitions return `409 invalid_transition`. **"On hold for coordination
 
 ## 4. Roles and Permissions (summary; full matrix in §9.2)
 
-Roles: `rb_officer`, `pgrc_officer`, `regional_officer`, `management`, `admin`, `auditor`.
-Scope rules: officers see **all institutions' overlap summaries** (needed for coordination) but only **their own unit's case details**, unless a coordination thread or link group gives them access to the specific counterpart case. Regional officers additionally see cases in their region. Management sees aggregates and case summaries. Auditors see audit data and everything read-only.
+Roles: `unit_officer` (RB, PGRC or any other Bureau/Cell, decided by the user's unit), `unit_supervisor`, `regional_officer`, `management`, `competent_authority`, `admin`, `auditor`.
+Scope rules: officers see **all institutions' overlap summaries** (needed for coordination) but only **their own unit's case details**, unless a coordination thread or link group gives them access to the specific counterpart case. Regional officers additionally see cases in their region. Management sees aggregates and case summaries. Supervisors see their whole unit's queue. The Competent Authority sees all case details read-only and acts on Level 3 escalations. Auditors see audit data and everything read-only.
 
 > **Design note:** this resolves a real tension. The Gate must tell an RB officer that PGRC has a related case (otherwise the product is pointless), but it should not expose a PGRC complainant's details. So the Gate shows **case summary fields** (unit, category, state, owner, dates, match receipt) and hides description text and personal data until the other unit shares the case through coordination.
 
@@ -181,7 +188,7 @@ Scope rules: officers see **all institutions' overlap summaries** (needed for co
 
 ## 5. API Surface (all under `/api/v1`)
 
-Role abbreviations: **O** = any officer role, **M** = management, **A** = admin, **U** = auditor, **ALL** = any authenticated user.
+Role abbreviations: **O** = `unit_officer`, `unit_supervisor` or `regional_officer`; **SUP** = `unit_supervisor`; **M** = `management`; **CA** = `competent_authority`; **A** = `admin`; **U** = `auditor`; **ALL** = any authenticated user.
 
 ### 5.1 System and auth
 
@@ -194,6 +201,7 @@ Role abbreviations: **O** = any officer role, **M** = management, **A** = admin,
 | POST | `/auth/refresh` | public | Refresh |
 | POST | `/auth/logout` | ALL | Revoke refresh token |
 | GET | `/me` | ALL | Current user, role, unit, region |
+| GET | `/stream` | ALL (scoped) | **Live updates (F-31):** Server-Sent Events carrying `counters_changed`, `case_changed`, `overlap_created` and `notification` events for the caller's scope, with a heartbeat every 15 s. If the stream fails the client falls back to polling `/dashboard/summary` every `live_poll_seconds` |
 
 ### 5.2 Institutions
 
@@ -213,12 +221,15 @@ Role abbreviations: **O** = any officer role, **M** = management, **A** = admin,
 
 | Method | Path | Roles | Purpose |
 |---|---|---|---|
-| GET | `/complaints` | ALL | List with filters: `institution_id`, `aicte_id`, `unit`, `region`, `category`, `state`, `overdue`, `received_from/to`, `owner`, `q`, `has_overlap`; masked by role |
+| GET | `/complaints` | ALL | List with filters: `institution_id`, `aicte_id`, `unit`, `region`, `category`, `state`, `overdue`, `received_from/to`, `owner`, `q`, `case_id`, `reference_no`, `escalated`, `has_overlap`; masked by role |
 | POST | `/complaints` | O | Create (then runs the overlap scan) |
 | GET | `/complaints/{id}` | ALL (scope rules §4) | Detail |
 | PATCH | `/complaints/{id}` | O (owner/supervisor) | Edit allowed fields |
 | POST | `/complaints/{id}/transition` | O | Change state (validated) |
 | POST | `/complaints/{id}/transfer` | O | Transfer to another unit (remark required) |
+| POST | `/complaints/{id}/escalate` | O | `{level: 2|3, to_user_id?, reason}`; sets status `ESCALATED`; notifies the recipient (F-29) |
+| POST | `/complaints/{id}/next-action` | O (owner/supervisor) | `{text, due_on}` — sets the next action required (KF2.8) |
+| GET | `/escalations` | SUP, CA, M, A | Escalated cases: supervisor → their unit at Level 2; Competent Authority → Level 3; management and admin → all |
 | POST | `/complaints/{id}/remarks` | O | Add a remark |
 | POST | `/complaints/{id}/attachments` | O | Add an attachment |
 | POST | `/complaints/{id}/reveal-pii` | O,M | Body `{reason}`; returns unmasked personal fields; audited |
@@ -248,10 +259,11 @@ Role abbreviations: **O** = any officer role, **M** = management, **A** = admin,
 
 | Method | Path | Roles | Purpose |
 |---|---|---|---|
-| GET | `/dashboard/summary` | ALL (scoped) | Counters: total, pending, under process, disposed, transferred, overdue; by unit |
+| GET | `/dashboard/summary` | ALL (scoped) | Counters: total received, pending, under process, disposed, transferred, **escalated**, **beyond timeline**; by unit (definitions in §3.3) |
+| GET | `/dashboard/by-institution` | ALL (scoped) | **Institution-wise case status (KF4.7):** per institution the counts by status and unit |
 | GET | `/dashboard/ageing` | ALL (scoped) | Age buckets for open cases |
 | GET | `/dashboard/workload` | M,O | Open cases per unit and per owner |
-| GET | `/reports/{kind}` | M,A,O | `kind`: `by_unit`, `by_region`, `by_institution`, `ageing`, `disposal_rate`; `format=json|csv|pdf` |
+| GET | `/reports/{kind}` | M,A,O | `kind`: `by_unit`, `by_region`, `by_status`, `by_institution`, `institution_history` (needs `institution_id`), `ageing`, `disposal_rate`, `overlaps`, `performance` (needs `period=monthly|quarterly` and a date range); `format=json|csv|pdf` |
 | GET | `/clusters` | M,A,O | Systemic clusters |
 | GET | `/risk/ranking` | M,A,U | Institutions ranked by score with components |
 | POST | `/ask` | O,M | `{question}` → `{parsed_filters, explanation, used_ai}`; **returns filters only**, the client then calls the normal list endpoint |
@@ -356,7 +368,7 @@ A scan on intake compares the new complaint against candidates limited to: stron
 
 ### 6.6 Configuration (all in `settings`)
 
-`T_inst_strong` (0.90), `T_inst_possible` (0.75), `T_issue_high` (0.70), `T_issue_low` (0.40), `recent_days` (90), `scan_window_months` (24), `alert_budget_per_officer_per_day` (20), `coordination_sla_working_days` (3), `embeddings_enabled`, `llm_enabled`, `cluster_min_size` (3), `cluster_window_days` (180), `cluster_sim_threshold` (0.70), risk weights (§7.2).
+`T_inst_strong` (0.90), `T_inst_possible` (0.75), `T_issue_high` (0.70), `T_issue_low` (0.40), `recent_days` (90), `pending_reminder_days` (7), `escalation_grace_days` (3), `auto_escalate` (false), `live_poll_seconds` (15), `scan_window_months` (24), `alert_budget_per_officer_per_day` (20), `coordination_sla_working_days` (3), `embeddings_enabled`, `llm_enabled`, `cluster_min_size` (3), `cluster_window_days` (180), `cluster_sim_threshold` (0.70), risk weights (§7.2).
 
 Changes via `PUT /admin/settings/{key}` are audited and take effect on the next scan. The **engine version** string is stored on every overlap so results can be traced to the configuration used.
 
@@ -425,14 +437,22 @@ A prioritisation aid for management, **not** a judgement about an institution. S
 Weights are configuration (V-B7). Every score response carries the components and a note: "Score is a ranking aid based on complaint data only."
 **Fairness checks (tests):** the score does not use institution size or name; a high-volume large institution is not automatically ranked above a small one with older, conflicting cases (a scripted example in the tests).
 
-### 7.3 Deadlines and SLA (F-17)
-`due_on = received_on + category.sla_days` (working days, with a holiday table). A scheduled job:
-- marks a complaint **"due soon"** at 80% of the SLA window and **"overdue"** after;
-- creates notifications to the owner, then the supervisor;
-- flags coordination threads past `due_at`.
-The number of notifications per officer per day is capped by the alert budget (P8); CONFLICT-level items are never capped out.
+### 7.3 Deadlines, reminders, SLA and escalation alerts (F-17, F-29)
+`due_on = received_on + category.sla_days` (working days, using a holiday table). `expected_disposal_on` defaults to `due_on` and may be changed by the owner with a remark. A scheduled job creates these alerts:
 
-### 7.4 Ask the Dashboard (U10, F-21) — safe by construction
+| Alert (PS item) | Rule | Recipient |
+|---|---|---|
+| Pending-case reminder (KF7.2) | A case in `RECEIVED`/`ASSIGNED` has had no officer action, or an `UNDER_PROCESS` case has had no history event, for `pending_reminder_days` (default 7); repeats each period | owner |
+| SLA approaching (KF7.4) | 80% of the SLA window used | owner |
+| SLA breached (KF7.4) | after `due_on` | owner and supervisor |
+| Escalation alert (KF7.3) | overdue by more than `escalation_grace_days` (default 3); or a coordination thread expired; or a case was just escalated to the recipient | supervisor / next level |
+
+**Escalation is advisory by default** (principle P2): the alert tells the supervisor, and a person escalates. The setting `auto_escalate` (default **off**) lets an administrator turn on automatic escalation to Level 2 after the grace period; the system then records the escalation with actor "system" in the history and the audit trail. Notifications per officer per day are capped by the alert budget (P8); CONFLICT-level and escalation alerts are never capped out.
+
+### 7.4 Live updates (F-31)
+The `/stream` endpoint pushes `counters_changed`, `case_changed`, `overlap_created` and `notification` events for the caller's scope. Every event carries a server timestamp; the client shows "last updated" and a stale warning after 30 s without a heartbeat, then falls back to polling. Events contain identifiers and counters only (no personal data); the client re-fetches details through the normal, role-checked endpoints.
+
+### 7.5 Ask the Dashboard (U10, F-21) — safe by construction
 - Input: a short text question.
 - The LLM (when enabled) is asked to return **JSON only**, matching a fixed schema of allowed filters (unit, region, category, state, `older_than_days`, `institution_text`, date ranges, `has_overlap`, `overdue`).
 - The server **validates** the JSON against the schema and the user's role; unknown keys are dropped, values are checked against reference tables, and institution text is resolved through the matching engine.
@@ -471,21 +491,24 @@ Argon2 password hashes; login rate-limited per account and per IP; short-lived a
 
 ### 9.2 Permission matrix (starting)
 
-| Capability | rb_officer | pgrc_officer | regional_officer | management | admin | auditor |
-|---|---|---|---|---|---|---|
-| View dashboard (scoped) | ✔ | ✔ | ✔ (region) | ✔ (all) | ✔ | ✔ |
-| View own-unit case details | ✔ | ✔ | ✔ (region) | summary | ✔ | ✔ (read) |
-| View other unit's case **summary** | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| View other unit's case **detail** | via coordination/link | via coordination/link | via coordination/link | ✔ | ✔ | ✔ (read) |
-| Create / edit complaint | ✔ | ✔ | ✔ | ✘ | ✔ | ✘ |
-| Run Action Gate | ✔ | ✔ | ✔ | ✘ | ✘ | ✘ |
-| Decide an overlap | ✔ | ✔ | ✔ | ✘ | ✔ | ✘ |
-| Reveal PII (with reason) | ✔ (own unit) | ✔ (own unit) | ✔ (region) | ✔ | ✔ | ✘ |
-| Import data | ✘ | ✘ | ✘ | ✘ | ✔ | ✘ |
-| Reports | ✔ (scoped) | ✔ (scoped) | ✔ (region) | ✔ | ✔ | ✔ |
-| Risk ranking | ✘ | ✘ | ✘ | ✔ | ✔ | ✔ |
-| Settings, users, scenarios, AI switches | ✘ | ✘ | ✘ | ✘ | ✔ | ✘ |
-| Audit view and Verify | ✘ | ✘ | ✘ | ✘ | ✔ | ✔ |
+| Capability | unit_officer | unit_supervisor | regional_officer | management | competent_authority | admin | auditor |
+|---|---|---|---|---|---|---|---|
+| View dashboard (scoped) | ✔ | ✔ (unit) | ✔ (region) | ✔ (all) | ✔ (all) | ✔ | ✔ |
+| View own-unit case details | ✔ | ✔ (whole unit) | ✔ (region) | summary | ✔ | ✔ | ✔ (read) |
+| View other unit's case **summary** | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| View other unit's case **detail** | via coordination/link | via coordination/link | via coordination/link | ✔ | ✔ (read) | ✔ | ✔ (read) |
+| Create / edit complaint | ✔ | ✔ | ✔ | ✘ | ✘ | ✔ | ✘ |
+| Reassign cases within a unit | ✘ | ✔ | ✘ | ✘ | ✘ | ✔ | ✘ |
+| Escalate a case | ✔ (own) | ✔ (unit) | ✔ (region) | ✘ | ✘ | ✘ | ✘ |
+| Act on an escalated case | ✘ | ✔ (Level 2) | ✘ | ✘ | ✔ (Level 3) | ✘ | ✘ |
+| Run Action Gate | ✔ | ✔ | ✔ | ✘ | ✔ | ✘ | ✘ |
+| Decide an overlap | ✔ | ✔ | ✔ | ✘ | ✔ | ✔ | ✘ |
+| Reveal PII (with reason) | ✔ (own unit) | ✔ (unit) | ✔ (region) | ✔ | ✔ | ✔ | ✘ |
+| Import data | ✘ | ✘ | ✘ | ✘ | ✘ | ✔ | ✘ |
+| Reports | ✔ (scoped) | ✔ (unit) | ✔ (region) | ✔ | ✔ | ✔ | ✔ |
+| Risk ranking | ✘ | ✘ | ✘ | ✔ | ✔ | ✔ | ✔ |
+| Settings, users, scenarios, AI switches | ✘ | ✘ | ✘ | ✘ | ✘ | ✔ | ✘ |
+| Audit view and Verify | ✘ | ✘ | ✘ | ✘ | ✔ (read) | ✔ | ✔ |
 
 This matrix is **encoded as data** and a parametrised test walks every endpoint × role and asserts the expected status code (a new endpoint without a matrix row fails the test).
 
@@ -511,7 +534,7 @@ Input validation on every model; upload size/type limits and SHA-256 recorded; f
 ## 11. Quality: Ground Truth and Evaluation
 
 ### 11.1 Synthetic data generator
-`app/cli.py seed --seed 42` creates the dataset in MASTER_PLAN §8 deterministically and writes `data/ground_truth.json` containing, for every planted scenario, the expected institution link, expected overlap type/severity, and expected Gate result.
+`app/cli.py seed --seed 42` creates the dataset in MASTER_PLAN §8 deterministically (including cases approaching or beyond SLA and escalated cases, with last-action and next-action fields filled) and writes `data/ground_truth.json` containing, for every planted scenario, the expected institution link, expected overlap type/severity, and expected Gate result.
 
 **Variant generators for institution names:** abbreviations, dropped/added words, typos (edit distance 1–2), word-order swaps, mixed-case, punctuation noise, Devanagari spellings, Hinglish spellings, and **decoys** (different institutions that share most words and/or the same city).
 
@@ -588,7 +611,7 @@ backend/
 │   ├── engine/                  normalize.py · institution.py · issue.py · rules.py · receipt.py · scoring.py
 │   ├── adapters/                embeddings.py (real + fallback) · llm.py (real + template) · pdf.py
 │   ├── services/                complaints.py · institutions.py · overlaps.py · gate.py · coordination.py
-│   │                            imports.py · reports.py · risk.py · clusters.py · ask.py · notifications.py
+│   │                            imports.py · reports.py · risk.py · clusters.py · ask.py · notifications.py · escalations.py · dashboard.py · stream.py
 │   └── api/v1/                  routers per area (§5)
 ├── data/                        seed outputs · ground_truth.json (generated, not hand-edited)
 └── tests/                       unit/ · engine/ · api/ · security/ · audit/ · ai_off/ · perf/
@@ -625,6 +648,10 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 21 | Joint Case Brief PDF | B5 | 📋 | — |
 | 22 | Scenario loader (synthetic only) | B5 | 📋 | — |
 | 23 | Performance measurement, security review, PostgreSQL run | B6 | 📋 | — |
+| 24 | System Case ID and case tracking fields: last/next action, date of last action, expected disposal date (F-30) | B1 | 📋 | — |
+| 25 | Escalation workflow: status, history, escalate endpoint, escalations queue; alerts in B4 (F-29) | B2/B4 | 📋 | — |
+| 26 | Live updates stream with polling fallback (F-31); institution-wise dashboard endpoint | B2 | 📋 | — |
+| 27 | Extended reports: status-wise, institution history, overlaps, monthly/quarterly (F-32) | B5 | 📋 | — |
 
 ---
 
@@ -633,11 +660,11 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | Phase | Scope | Exit criteria |
 |---|---|---|
 | **B0 Planning** | This document | ✅ Committed |
-| **B1 Foundations** | Items 1–5 (auth baseline), 501 stubs for every route in §5 with `planned_phase` | `make up` works; `/readyz` healthy; OpenAPI exported and committed; seed produces dataset + ground truth; CI green |
-| **B2 Records & visibility** | Items 6–10 | Audit chain verifies and detects edit/delete/reorder; counters equal raw database counts (tested); import dry-run reports bad rows by number |
+| **B1 Foundations** | Items 1–5 and 24 (auth baseline), 501 stubs for every route in §5 with `planned_phase` | `make up` works; `/readyz` healthy; OpenAPI exported and committed; seed produces dataset + ground truth; CI green |
+| **B2 Records & visibility** | Items 6–10, 26, and the status/history part of 25 | Audit chain verifies and detects edit/delete/reorder; counters equal raw database counts (tested); import dry-run reports bad rows by number |
 | **B3 Overlap core** | Items 11–13 | Targets in §11.3 met on the held-out split **or** the shortfall recorded; Gate correct for every planted scenario; decoys never strong |
-| **B4 Intelligence & roles** | Items 14–16, role matrix complete | L3 evaluated with the chosen model (V-B2) and fallback proven; role-matrix test covers every endpoint |
-| **B5 Management & AI** | Items 17–22 | Report totals reconcile with raw data; every AI feature passes the AI-off and LLM-guard tests |
+| **B4 Intelligence & roles** | Items 14–16, escalation alerts (rest of item 25), role matrix complete | L3 evaluated with the chosen model (V-B2) and fallback proven; role-matrix test covers every endpoint |
+| **B5 Management & AI** | Items 17–22 and 27 | Report totals reconcile with raw data; every AI feature passes the AI-off and LLM-guard tests |
 | **B6 Hardening** | Item 23 | Appendix B filled with real measurements; PostgreSQL suite passes; dependency audit clean |
 
 ---
@@ -658,6 +685,9 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | ADR-B10 | Encrypt complainant fields at rest; mask on output | Plain text with role checks only | Defence in depth |
 | ADR-B11 | Gate shows summaries, hides details across units | Full cross-unit visibility | Coordination without over-sharing |
 | ADR-B12 | Held-out evaluation split | Tune and report on the same data | Prevents over-claiming accuracy |
+| ADR-B13 | Escalation is advisory by default; automatic escalation is a switch | Always-automatic escalation | Keeps officials in control (P2) while allowing a stricter deployment |
+| ADR-B14 | Server-Sent Events with a polling fallback | WebSockets | One-way updates are enough; simpler through proxies; fallback keeps the dashboard live when streaming fails |
+| ADR-B15 | Roles are `unit_officer` + unit assignment, not one role per Bureau | A role per Bureau/Cell | The statement allows "other Bureaus/Cells"; adding a unit must not need a code change |
 
 ---
 
@@ -675,6 +705,8 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | RB8 | SQLite/PostgreSQL divergence | Medium | Medium | Dual-database tests from B3 (V-B4) |
 | RB9 | Over-claiming accuracy | Medium | High | Held-out split, numbers only from Appendix B |
 | RB10 | Personal data leaking in logs or payloads | Low | High | Logging filters, payload rules in §8.1, tests |
+| RB11 | Our definitions of "pending" and "under process" differ from AICTE's | Medium | Medium | V-B9: confirm with officers; definitions in one tested place so a change is one edit |
+| RB12 | Live stream drops silently and the dashboard looks current when it is not | Medium | Medium | Heartbeat, "last updated" and stale warning in the client; polling fallback |
 
 ---
 
