@@ -625,32 +625,32 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 
 | # | Item | Phase | Status | Evidence |
 |---|---|---|---|---|
-| 1 | Project skeleton, lockfile, lint/type/test tooling, CI | B1 | 📋 | — |
-| 2 | Schema + migrations (§3), portable across SQLite/PostgreSQL | B1 | 📋 | — |
-| 3 | Config, error envelope, request id, health/ready/meta | B1 | 📋 | — |
-| 4 | Seed generator + ground truth (§11.1) | B1 | 📋 | — |
-| 5 | Auth, roles, masking, role-matrix test | B1/B4 | 📋 | — |
-| 6 | Audit log with hash chain + Verify | B2 | 📋 | — |
-| 7 | Institution registry, aliases, suggest endpoint | B2 | 📋 | — |
-| 8 | Complaint lifecycle, events, transfer, deadlines fields | B2 | 📋 | — |
-| 9 | Dashboard summary/ageing/workload, search/filters | B2 | 📋 | — |
+| 1 | Project skeleton, lockfile, lint/type/test tooling, CI | B1 | ⚠️ | backend/pyproject.toml, backend/tests/. Known limits: no lockfile, no CI, no mypy/ruff run yet, Python 3.14 used (plan says 3.12), no Docker image |
+| 2 | Schema + migrations (§3), portable across SQLite/PostgreSQL | B1 | ⚠️ | backend/app/db/models/. Built: units, regions, categories, users, refresh tokens, institutions, aliases, complaints, events, overlaps, gate checks, notifications (table only), audit log. Not built: link groups, coordination, attachments, actions, embeddings, clusters, risk, imports, settings use. SQLite only; no Alembic migrations (tables created from models) |
+| 3 | Config, error envelope, request id, health/ready/meta | B1 | ✅ | app/main.py, app/api/v1/system.py; tests test_health_and_ready, test_unauthenticated_is_401_with_envelope |
+| 4 | Seed generator + ground truth (§11.1) | B1 | ⚠️ | app/seed.py, `python -m app.cli seed`, data/ground_truth.json. Limits: 60 institutions not 40; no Devanagari variants; no 70/30 split; scenarios counts differ slightly from MASTER_PLAN §8 |
+| 5 | Auth, roles, masking, role-matrix test | B1/B4 | ⚠️ | app/core/security.py, app/api/deps.py, app/core/crypto.py; tests test_role_enforced_on_backend, test_reveal_pii_needs_reason_and_is_audited, test_other_unit_detail_is_hidden_but_summary_visible. Not built: the matrix-driven endpoint x role test, rate limiting by IP, admin user management |
+| 6 | Audit log with hash chain + Verify | B2 | ✅ | app/core/audit.py; test_audit_chain_intact_and_tamper_detected (edit detected). Delete/reorder detection is by the same check but not separately tested |
+| 7 | Institution registry, aliases, suggest endpoint | B2 | ⚠️ | app/api/v1/records.py; test_unmatched_case_can_be_linked_and_alias_is_remembered. Not built: create/update/delete institution, alias delete |
+| 8 | Complaint lifecycle, events, transfer, deadlines fields | B2 | ⚠️ | app/services/complaints.py; test_lifecycle_rules. Not built: PATCH edit, attachments, receiving-unit acceptance step |
+| 9 | Dashboard summary/ageing/workload, search/filters | B2 | ✅ | app/services/dashboard.py; test_dashboard_counters_equal_database, test_unit_officer_dashboard_is_scoped. Filters in GET /complaints (tested through the UI flow, not every filter by unit test) |
 | 10 | Import Wizard (map, dry-run, commit) | B2 | 📋 | — |
-| 11 | Engine L1/L2/L4 + Match Receipt + evaluation harness | B3 | 📋 | — |
-| 12 | Overlap scan on intake, overlap queue, decisions, Alias Memory | B3 | 📋 | — |
-| 13 | Action Gate (check + decision) | B3 | 📋 | — |
+| 11 | Engine L1/L2/L4 + Match Receipt + evaluation harness | B3 | ⚠️ | app/engine/, app/evaluate.py. L1, L2 and L4 built; no held-out split; thresholds not tuned. Measured on our own generated data: see Appendix B |
+| 12 | Overlap scan on intake, overlap queue, decisions, Alias Memory | B3 | ✅ | app/engine/overlap.py, records.py; test_create_complaint_resolves_variant_and_flags_overlap, test_overlap_always_has_receipt_and_label |
+| 13 | Action Gate (check + decision) | B3 | ✅ | records.py gate endpoints; test_gate_requires_justification_on_conflict_and_close_is_gated |
 | 14 | Issue matching (L3) with embeddings + fallback | B4 | 📋 | — |
 | 15 | Coordination Handshake | B4 | 📋 | — |
 | 16 | SLA job, notifications, alert budget | B4 | 📋 | — |
-| 17 | Reports + CSV/PDF export | B5 | 📋 | — |
+| 17 | Reports + CSV/PDF export | B5 | ⚠️ | JSON and CSV only (reports/{kind}); no PDF, no monthly/quarterly performance report |
 | 18 | Risk score, clusters | B5 | 📋 | — |
 | 19 | AI summary with validation + template fallback | B5 | 📋 | — |
 | 20 | Ask the Dashboard (validated filters) | B5 | 📋 | — |
 | 21 | Joint Case Brief PDF | B5 | 📋 | — |
 | 22 | Scenario loader (synthetic only) | B5 | 📋 | — |
 | 23 | Performance measurement, security review, PostgreSQL run | B6 | 📋 | — |
-| 24 | System Case ID and case tracking fields: last/next action, date of last action, expected disposal date (F-30) | B1 | 📋 | — |
-| 25 | Escalation workflow: status, history, escalate endpoint, escalations queue; alerts in B4 (F-29) | B2/B4 | 📋 | — |
-| 26 | Live updates stream with polling fallback (F-31); institution-wise dashboard endpoint | B2 | 📋 | — |
+| 24 | System Case ID and case tracking fields: last/next action, date of last action, expected disposal date (F-30) | B1 | ✅ | app/services/complaints.py (case ID, last/next action, expected disposal); test_lifecycle_rules |
+| 25 | Escalation workflow: status, history, escalate endpoint, escalations queue; alerts in B4 (F-29) | B2/B4 | ⚠️ | escalate endpoint and /escalations built and tested (test_lifecycle_rules). Not built: escalation alerts and notifications |
+| 26 | Live updates stream with polling fallback (F-31); institution-wise dashboard endpoint | B2 | ⚠️ | institution-wise endpoint built. Live updates are polling every 20 s in the UI; no Server-Sent Events stream (GET /stream returns 501) |
 | 27 | Extended reports: status-wise, institution history, overlaps, monthly/quarterly (F-32) | B5 | 📋 | — |
 
 ---
@@ -726,3 +726,18 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 - Update §14 here and the API routes in the same commit as the code.
 - Every "✅" cites a file and a test.
 - **Git rule:** every commit and push is authored by Ayush More only; no co-author trailers or tool attribution (see `../CLAUDE.md`).
+
+---
+
+## Appendix B — Measured so far (2026-10-28)
+
+All figures are from `python -m app.cli evaluate` on the generated dataset (seed 42, rules-1.0). The data and the answers were produced by us, no held-out split exists, and thresholds (0.92 auto-link, 0.78 suggest) were set before the data was generated and not tuned afterwards. These show the rules behave as designed, not accuracy on real data.
+
+| Check | Result |
+|---|---|
+| Misspelled / abbreviated names resolved automatically to the right college | 13 of 20 (the other 7 scored below 0.92 and are sent to an officer, by design) |
+| Overlaps found for those 20 planted pairs | 13 of 20 (the 7 are not linked, so no overlap check runs until an officer links them) |
+| Planted conflicting-action pairs flagged Conflict | 8 of 8 |
+| Different-wording pairs flagged (by institution + category rules, not wording) | 15 of 15 (they share a category by construction, so this does not test wording matching) |
+| Look-alike decoys wrongly merged | 0 of 10; all 10 resolved to their own record |
+| Automated tests | 19 passed (backend/tests) |

@@ -1,7 +1,10 @@
 import uuid
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1 import auth, records, stubs, system
@@ -40,6 +43,17 @@ def create_app() -> FastAPI:
 
     for r in (system.router, auth.router, records.router, stubs.router):
         app.include_router(r, prefix="/api/v1")
+    dist = Path(__file__).resolve().parents[2] / 'frontend' / 'app' / 'dist'
+    if dist.exists():  # one-process demo: serve the built single-page app
+        app.mount('/assets', StaticFiles(directory=dist / 'assets'), name='assets')
+
+        @app.get('/{path:path}', include_in_schema=False)
+        async def spa(path: str):
+            f = (dist / path).resolve()
+            if path and f.is_file() and dist in f.parents:
+                return FileResponse(f)
+            return FileResponse(dist / 'index.html')
+
     return app
 
 

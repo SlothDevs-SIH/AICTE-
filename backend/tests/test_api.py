@@ -213,3 +213,22 @@ def test_normalize_and_matcher_basics():
     from app.engine.normalize import normalize
 
     assert normalize("Shri Ramdeo Inst. of Tech., Nagpur") == normalize("SHRI RAMDEO INSTITUTE OF TECHNOLOGY NAGPUR")
+
+
+def test_unmatched_case_can_be_linked_and_alias_is_remembered(client, tokens):
+    ref = client.get(f"{API}/reference", headers=tokens["officer.rb"]).json()
+    rows = client.get(f"{API}/complaints?unit=PGRC&limit=200", headers=tokens["officer.rb"]).json()["items"]
+    target = next(r for r in rows if r["institution_id"])
+    odd = "Compltly Diffrent Wrtten Naem Of College"
+    made = client.post(f"{API}/complaints", headers=tokens["officer.rb"], json={
+        "reference_no": "RB/TEST/0003", "category_id": ref["categories"][0]["id"],
+        "title": "Case with an unrecognisable name", "institution_text_raw": odd}).json()
+    assert made["complaint"]["institution_id"] is None
+    r = client.post(f"{API}/complaints/{made['complaint']['id']}/institution", headers=tokens["officer.rb"],
+                    json={"institution_id": target["institution_id"]})
+    assert r.status_code == 200 and r.json()["alias_saved"] is True
+    again = client.post(f"{API}/complaints/{made['complaint']['id']}/institution", headers=tokens["officer.rb"],
+                        json={"institution_id": target["institution_id"]})
+    assert again.status_code == 409
+    sug = client.get(f"{API}/institutions/suggest?text={odd}", headers=tokens["officer.rb"]).json()["items"]
+    assert sug and sug[0]["institution_id"] == target["institution_id"]

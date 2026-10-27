@@ -362,32 +362,32 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 
 | # | Item | Phase | Status | Evidence |
 |---|---|---|---|---|
-| 1 | Vite + React + TS strict project, lockfile, lint/format/test tooling | F1 | 📋 | — |
-| 2 | Design tokens, light/dark/auto theme, pre-paint script | F1 | 📋 | — |
-| 3 | App shell, role-filtered navigation from the screen registry | F1 | 📋 | — |
-| 4 | Typed API client + generated schema + contract checks | F1 | 📋 | — |
-| 5 | Login and auth context (in-memory tokens) | F1 | 📋 | — |
-| 6 | System Status | F1 | 📋 | — |
+| 1 | Vite + React + TS strict project, lockfile, lint/format/test tooling | F1 | ⚠️ | frontend/app (Vite, React, strict TS; `npx tsc -b` and `vite build` pass). No lint, formatter or unit-test tooling yet. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 2 | Design tokens, light/dark/auto theme, pre-paint script | F1 | ⚠️ | frontend/app/src/index.css, public/theme-init.js. Light by default; dark by manual toggle only (no auto mode). Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 3 | App shell, role-filtered navigation from the screen registry | F1 | ⚠️ | frontend/app/src/App.tsx. Navigation is a list in App.tsx, not a generated screen registry. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 4 | Typed API client + generated schema + contract checks | F1 | ⚠️ | frontend/app/src/api.ts. Hand-written client; no generated types or contract diff check. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 5 | Login and auth context (in-memory tokens) | F1 | ⚠️ | frontend/app/src/auth.tsx, pages/Login.tsx. Deviation: the refresh token is kept in sessionStorage so a reload keeps the demo session. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 6 | System Status | F1 | ⚠️ | pages/Status.tsx. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
 | 7 | Planned-screen pages that probe real endpoints | F1 | 📋 | — |
 | 8 | nginx image with strict CSP, proxy, Compose service | F1 | 📋 | — |
 | 9 | CI: lint, types, unit, build, e2e, axe | F1 | 📋 | — |
-| 10 | Dashboard | F2 | 📋 | §4.2 |
-| 11 | Complaints list + filters in URL | F2 | 📋 | §4.3 |
-| 12 | New Complaint + InstitutionPicker | F2 | 📋 | §4.4 |
-| 13 | Complaint Detail with timeline, masked fields | F2 | 📋 | §4.5 |
-| 14 | College 360° | F2 | 📋 | §4.6 |
+| 10 | Dashboard | F2 | ⚠️ | pages/Dashboard.tsx; polling every 20 s with Live/Stale indicator (no stream). Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 11 | Complaints list + filters in URL | F2 | ⚠️ | pages/Complaints.tsx; filters live in the URL. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 12 | New Complaint + InstitutionPicker | F2 | ⚠️ | pages/NewComplaint.tsx; suggestions shown with match score. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 13 | Complaint Detail with timeline, masked fields | F2 | ⚠️ | pages/CaseDetail.tsx; masked complainant fields with reveal-with-reason; link-to-college panel for unmatched cases. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 14 | College 360° | F2 | ⚠️ | pages/Colleges.tsx (College360). Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
 | 15 | Import Wizard | F2 | 📋 | §4.12 |
-| 16 | Institution Registry | F2 | 📋 | §4.13 |
-| 17 | Overlaps queue/review, MatchReceipt | F3 | 📋 | §4.7 |
-| 18 | Action Gate | F3 | 📋 | §4.8 |
-| 19 | Audit & Verify | F3 | 📋 | §4.14 |
+| 16 | Institution Registry | F2 | ⚠️ | pages/Colleges.tsx list/search only; no create or edit. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 17 | Overlaps queue/review, MatchReceipt | F3 | ⚠️ | pages/Overlaps.tsx, components/ui.tsx (MatchReceipt). Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 18 | Action Gate | F3 | ⚠️ | pages/Gate.tsx. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 19 | Audit & Verify | F3 | ⚠️ | pages/Audit.tsx. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
 | 20 | Coordination Thread, notifications | F4 | 📋 | §4.9, §4.18 |
 | 21 | Role-aware UI complete, masking everywhere, Admin | F4 | 📋 | §4.15 |
-| 22 | Management View, Reports | F5 | 📋 | §4.10, §4.11 |
+| 22 | Management View, Reports | F5 | ⚠️ | pages/Reports.tsx covers the reports; the Management View (risk, clusters) is not built. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
 | 23 | AskBar, AI summary UI, Joint Case Brief link, Scenario loader UI | F5 | 📋 | §4.7, §4.17 |
 | 24 | Usability walkthrough, performance measurement, hidden source maps, security headers review | F6 | 📋 | — |
-| 25 | Escalate dialog and Escalations screen, escalation badge and history in the timeline (F-29) | F2 | 📋 | §4.19 |
-| 26 | Live indicator and live dashboard updates, institution-wise status table, Tracking block (F-30, F-31) | F2 | 📋 | §3.6, §4.2, §4.5 |
+| 25 | Escalate dialog and Escalations screen, escalation badge and history in the timeline (F-29) | F2 | ⚠️ | pages/CaseDetail.tsx (Escalate dialog), pages/Escalations.tsx. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
+| 26 | Live indicator and live dashboard updates, institution-wise status table, Tracking block (F-30, F-31) | F2 | ⚠️ | pages/Dashboard.tsx, pages/CaseDetail.tsx (Tracking block). Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
 | 27 | Extended reports UI: status-wise, institution history, overlapping cases, monthly/quarterly (F-32) | F5 | 📋 | §4.11 |
 
 ---

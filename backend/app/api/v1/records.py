@@ -688,3 +688,38 @@ def report(kind: str, format: str = "json", institution_id: str | None = None,
                         headers={"Content-Disposition": f"attachment; filename={kind}.csv"})
     return {"kind": kind, "generated_at": datetime.now(UTC).isoformat(), "synthetic": True,
             "caption": dash.scope_caption(db, user), "rows": data}
+
+
+# ---------- resolve an unmatched case (officer decision + Alias Memory) ----------
+class LinkInstitutionIn(BaseModel):
+    institution_id: str
+    save_alias: bool = True
+
+
+@router.post("/complaints/{cid}/institution")
+def link_institution(cid: str, body: LinkInstitutionIn, db: Session = Depends(get_db),
+                     user: User = Depends(require(*OFFICERS, R.ADMIN))):
+    c = get_complaint(db, cid)
+    own_or_supervisor(user, c)
+    inst = db.get(Institution, body.institution_id)
+    if inst is None:
+        raise ApiError(404, "not_found", "Institution not found.")
+    if c.institution_id:
+        raise ApiError(409, "already_linked", "This case is already linked to a college.")
+    c.institution_id = inst.id
+    saved = False
+    raw = (c.institution_text_raw or "").strip()
+    if body.save_alias and raw and normalize(raw) != inst.normalized_name:
+        n = normalize(raw)
+        if not db.scalar(select(InstitutionAlias).where(
+                InstitutionAlias.institution_id == inst.id, InstitutionAlias.normalized_alias == n)):
+            db.add(InstitutionAlias(institution_id=inst.id, alias=raw, normalized_alias=n,
+                                    source="officer_confirmed", confirmed_by=user.id, confirmed_at=svc.now()))
+            saved = True
+    svc.add_event(db, c, "REMARK", user, f"Linked to college: {inst.canonical_name}",
+                  payload={"alias_saved": saved})
+    from app.engine.overlap import scan_complaint
+    new = scan_complaint(db, c, user.id)
+    db.commit()
+    return {"complaint": complaint_row(c, _maps(db), has_overlap_ids(db)), "alias_saved": saved,
+            "new_overlaps": len(new)}
