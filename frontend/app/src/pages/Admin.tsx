@@ -54,10 +54,17 @@ export default function Admin() {
         <h2>AI features</h2>
         <p className="muted">Both are off. Summaries use a fixed template unless a language model is switched on and an API key is configured on the server; model output that mentions anything not in the case facts is thrown away. Matching of different wording does not need either switch: it uses a built-in concept list.</p>
         {st.data && (
-          <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
-            <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_llm_enabled} onChange={(e) => setSetting('ai_llm_enabled', e.target.checked)} />
-            Allow language-model summaries (needs <code>ANTHROPIC_API_KEY</code> on the server)
-          </label>
+          <>
+            <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
+              <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_llm_enabled} onChange={(e) => setSetting('ai_llm_enabled', e.target.checked)} />
+              Allow language-model summaries (needs <code>ANTHROPIC_API_KEY</code> on the server)
+            </label>
+            <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center', marginTop: '.6rem' }}>
+              <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_issue_matching} onChange={(e) => setSetting('ai_issue_matching', e.target.checked)} />
+              <span><strong>AI reading of different wording.</strong> When two cases at one college share no known problem type, the model is asked whether they are the same issue. Only the case titles and descriptions are sent, never names or contact details. The answer is shown in the Match Receipt as AI-written and never acts on its own.</span>
+            </label>
+            <p><button className="btn" onClick={() => wrap(async () => { const r = await api('/admin/jobs/ai-rescan', { method: 'POST' }); say(true, `Asked about ${r.asked} existing overlaps: ${r.now_same_issue} read as the same issue, ${r.no_answer} got no usable answer.`) }, '')}>Re-check existing overlaps with AI</button></p>
+          </>
         )}
       </section>
 

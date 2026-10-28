@@ -43,6 +43,26 @@
         }
       }
     },
+    "/api/v1/public/overview": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Public Overview",
+        "description": "Landing-page numbers read live from the running database. No personal data, no case text.",
+        "operationId": "public_overview_api_v1_public_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/meta": {
       "get": {
         "tags": [
@@ -1446,6 +1466,22 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/jobs/ai-rescan": {
+      "post": {
+        "summary": "Ai Rescan",
+        "operationId": "ai_rescan_api_v1_admin_jobs_ai_rescan_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }

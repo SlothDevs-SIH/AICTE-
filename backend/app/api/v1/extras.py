@@ -493,9 +493,18 @@ def put_setting(key: str, body: dict, db: Session = Depends(get_db), user: User 
     return {"key": key, "value": body["value"]}
 
 
+@router.post("/admin/jobs/ai-rescan")
+def ai_rescan(db: Session = Depends(get_db), user: User = Depends(require(R.ADMIN))):
+    from app.services import issue_judge
+
+    if not issue_judge.enabled(db):
+        raise ApiError(409, "ai_off", "AI issue matching is off: switch it on in Admin and set ANTHROPIC_API_KEY on the server.")
+    return issue_judge.rescan(db, user.id)
+
+
 @router.post("/admin/ai/{feature}")
 def ai_switch(feature: str, body: dict, db: Session = Depends(get_db), user: User = Depends(require(R.ADMIN))):
-    key = {"llm": "ai_llm_enabled", "embeddings": "ai_embeddings_enabled"}.get(feature)
+    key = {"llm": "ai_llm_enabled", "issue_matching": "ai_issue_matching"}.get(feature)
     if key is None:
         raise ApiError(404, "unknown_feature", "Unknown AI feature.")
     return put_setting(key, {"value": bool(body.get("enabled"))}, db, user)

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import write_audit
 from app.db.models import Category, Complaint, Overlap
+from app.services import issue_judge
 from app.services.intelligence import issue_similarity, same_issue
 
 ENGINE_VERSION = "rules-1.0"
@@ -66,6 +67,14 @@ def scan_complaint(db: Session, c: Complaint, actor_id: str | None = None) -> li
             continue
         kind, sev, score, reasons = res
         a, b = sorted((c, o), key=lambda x: x.id)
+        ai = None
+        if not same_issue(a, b)[1]["shared_concepts"] and issue_judge.enabled(db):
+            ai = issue_judge.judge(a, b) or {"asked": True, "answer": None}
+            if ai.get("same_issue"):
+                reasons.append(f"Same issue according to the AI reading: {ai['reason']}")
+                if kind == "O1":
+                    kind = "O4"
+                score = min(0.85, score + 0.15)
         if db.scalar(
             select(Overlap).where(Overlap.complaint_a_id == a.id, Overlap.complaint_b_id == b.id)
         ):
@@ -85,6 +94,7 @@ def scan_complaint(db: Session, c: Complaint, actor_id: str | None = None) -> li
                     "used": True,
                     "concept_score": same_issue(a, b)[0],
                     "concepts": same_issue(a, b)[1],
+                    **({"ai": ai} if ai else {}),
                     "lexical_score": issue_similarity(a, b)[0],
                     "formula": "each complaint text is read for known problem concepts (fee refund, faculty "
                     "qualification, approval lapse and so on) from a hand-written list in English, Hinglish and "

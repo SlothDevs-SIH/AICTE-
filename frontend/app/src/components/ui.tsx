@@ -133,7 +133,12 @@ export function MatchReceipt({ receipt }: { receipt?: any }) {
         <li><b>Institution:</b> {L.L1_institution.how}.</li>
         <li><b>Typed names:</b> {(L.L2_fuzzy_name.inputs || []).filter(Boolean).join('  |  ') || 'taken from the registry'} — {L.L2_fuzzy_name.how}.</li>
         <li><b>Rules ({L.L4_rules.type}):</b> {L.L4_rules.reasons.join('; ')}.</li>
-        <li className="muted"><b>Wording match:</b> {L.L3_issue.used ? 'used' : L.L3_issue.formula}</li>
+        <li className="muted"><b>Wording match:</b>{' '}
+          {L.L3_issue.concepts?.shared_concepts?.length
+            ? <>same problem found in the text: {L.L3_issue.concepts.shared_concepts.map((s: any) => `${s.concept} ("${s.a_words[0]}" and "${s.b_words[0]}")`).join('; ')}. </>
+            : 'no shared problem type found in the word list. '}
+          {L.L3_issue.ai?.reason && <><AiLabel kind="AI-written" /> {L.L3_issue.ai.same_issue ? 'Reads as the same issue' : 'Does not read as the same issue'} ({Math.round(L.L3_issue.ai.confidence * 100)}% sure): {L.L3_issue.ai.reason}</>}
+        </li>
       </ol>
       <p className="muted" style={{ margin: '.5rem 0 0' }}>{receipt.note}</p>
     </div>

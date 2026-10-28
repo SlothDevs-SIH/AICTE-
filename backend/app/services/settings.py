@@ -15,6 +15,7 @@ DEFAULTS: dict[str, object] = {
     "cluster_window_days": 90,
     "issue_threshold": 0.5,
     "ai_llm_enabled": False,
+    "ai_issue_matching": False,
     "ai_embeddings_enabled": False,
     "risk_weights": {"volume": 0.20, "ageing": 0.20, "multi_unit": 0.15, "repeat": 0.15,
                      "severity": 0.15, "open_conflicts": 0.10, "trend": 0.05},
