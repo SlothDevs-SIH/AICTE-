@@ -1,0 +1,8 @@
+{
+  "name": "samanvay",
+  "private": true,
+  "description": "Lets a host that runs `npm start` launch the Python server. The real app is in backend/ and frontend/app/.",
+  "scripts": {
+    "start": "cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+  }
+}
