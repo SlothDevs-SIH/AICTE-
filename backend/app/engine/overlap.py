@@ -69,7 +69,7 @@ def scan_complaint(db: Session, c: Complaint, actor_id: str | None = None) -> li
         a, b = sorted((c, o), key=lambda x: x.id)
         ai = None
         if not same_issue(a, b)[1]["shared_concepts"] and issue_judge.enabled(db):
-            ai = issue_judge.judge(a, b) or {"asked": True, "answer": None}
+            ai = issue_judge.judge(a, b) or {"asked": True, "answer": None, "error": issue_judge.llm.last_error()}
             if ai.get("same_issue"):
                 reasons.append(f"Same issue according to the AI reading: {ai['reason']}")
                 if kind == "O1":

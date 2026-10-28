@@ -63,21 +63,22 @@ def rescan(db: Session, actor_id: str, limit: int = 200) -> dict:
     """Ask the model about existing suggested overlaps whose receipt has no shared concept and no AI answer yet."""
     from app.core.audit import write_audit
 
-    stats = {"asked": 0, "now_same_issue": 0, "no_answer": 0}
+    stats = {"asked": 0, "now_same_issue": 0, "no_answer": 0, "last_error": None}
     if not enabled(db):
         return stats
     for o in db.scalars(select(Overlap).where(Overlap.status == "SUGGESTED")):
         l3 = o.receipt_json["layers"]["L3_issue"]
-        if l3.get("concepts", {}).get("shared_concepts") or "ai" in l3:
+        if l3.get("concepts", {}).get("shared_concepts") or "same_issue" in l3.get("ai", {}):  # retry earlier failures
             continue
         if stats["asked"] >= limit:
             break
         stats["asked"] += 1
         ai = judge(db.get(Complaint, o.complaint_a_id), db.get(Complaint, o.complaint_b_id))
         receipt = json.loads(json.dumps(o.receipt_json))
-        receipt["layers"]["L3_issue"]["ai"] = ai or {"asked": True, "answer": None}
+        receipt["layers"]["L3_issue"]["ai"] = ai or {"asked": True, "answer": None, "error": llm.last_error()}
         if ai is None:
             stats["no_answer"] += 1
+            stats["last_error"] = llm.last_error()
         elif ai["same_issue"]:
             stats["now_same_issue"] += 1
             receipt["layers"]["L4_rules"]["reasons"].append(f"Same issue according to the AI reading: {ai['reason']}")

@@ -107,3 +107,18 @@ def test_provider_errors_mean_no_answer(monkeypatch):
     assert llm.complete("s", "u") is None
     monkeypatch.delenv("GEMINI_API_KEY")
     assert llm.provider() is None and llm.complete("s", "u") is None
+
+
+def test_failure_reason_is_recorded_without_the_key(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "secret-key-123")
+
+    class Bad(Exception):
+        response = type("R", (), {"status_code": 404, "text": "model not found for secret-key-123"})()
+
+    def boom(*a, **k):
+        raise Bad()
+
+    monkeypatch.setattr(llm.httpx, "post", boom)
+    assert llm.complete("s", "u") is None
+    err = llm.last_error()
+    assert "404" in err and "model not found" in err and "secret-key-123" not in err

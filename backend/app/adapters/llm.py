@@ -57,11 +57,37 @@ def _anthropic(system: str, user: str, max_tokens: int) -> str:
     return "".join(b.get("text", "") for b in r.json().get("content", []))
 
 
+_last_error: str | None = None
+
+
+def last_error() -> str | None:
+    """Why the most recent call returned nothing (never includes keys or personal data), for the Admin screen."""
+    return _last_error
+
+
+def _describe(exc: Exception) -> str:
+    text = type(exc).__name__
+    resp = getattr(exc, "response", None)
+    if resp is not None:
+        text += f" {resp.status_code}: {resp.text[:300]}"
+    elif str(exc):
+        text += f": {str(exc)[:200]}"
+    for k in ("GEMINI_API_KEY", "ANTHROPIC_API_KEY"):
+        if os.environ.get(k):
+            text = text.replace(os.environ[k], "***")
+    return text
+
+
 def complete(system: str, user: str, max_tokens: int = 400) -> str | None:
+    global _last_error
     p = provider()
     if not p:
+        _last_error = "no model key is set on the server"
         return None
     try:
-        return (_gemini if p == "gemini" else _anthropic)(system, user, max_tokens)
-    except Exception:  # any failure means "use the template"
+        out = (_gemini if p == "gemini" else _anthropic)(system, user, max_tokens)
+        _last_error = None if out else f"{p} returned an empty answer"
+        return out
+    except Exception as e:  # any failure means "use the template"
+        _last_error = f"{p} ({model_name()}): {_describe(e)}"
         return None
