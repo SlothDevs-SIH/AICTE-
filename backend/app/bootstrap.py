@@ -20,6 +20,37 @@ NEW_COLUMNS = [
 ]
 
 
+def seed_remote(db) -> None:
+    """Load the demo data into a database that is across a network (PostgreSQL).
+
+    Building it row by row there costs about five thousand round trips, minutes when the database is far away. So it is built
+    in a throw-away local SQLite file (seconds) and copied over in large batches (a few dozen statements).
+    """
+    import tempfile
+    from datetime import UTC, datetime
+
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import sessionmaker
+
+    from app import seed
+
+    with tempfile.TemporaryDirectory() as tmp:
+        local = create_engine(f"sqlite:///{Path(tmp, 'staging.db').as_posix()}")
+        Base.metadata.create_all(local)
+        with sessionmaker(local, expire_on_commit=False)() as src:
+            seed.seed(src, 42, ROOT / "data" / "ground_truth.json")
+            for table in Base.metadata.sorted_tables:  # parents before children
+                rows = [dict(r) for r in src.execute(select(table)).mappings()]
+                for r in rows:
+                    for k, v in r.items():
+                        if isinstance(v, datetime) and v.tzinfo is None:
+                            r[k] = v.replace(tzinfo=UTC)  # SQLite drops the zone; everything was written in UTC
+                for i in range(0, len(rows), 400):
+                    db.execute(table.insert(), rows[i:i + 400])
+        local.dispose()
+    db.commit()
+
+
 def secure_demo_accounts() -> int:
     """The generated demo logins share a published password, so they are switched off unless DEMO_ACCOUNTS=true.
     Their rows stay (the simulated cases refer to them) but nobody can sign in as them."""
@@ -68,7 +99,10 @@ def ensure_database() -> str:
     with session_factory()() as db:
         if db.scalar(select(User.id).limit(1)) is not None:
             return "existing"
-        from app import seed
+        if engine.dialect.name == "sqlite":
+            from app import seed
 
-        seed.seed(db, 42, ROOT / "data" / "ground_truth.json")
+            seed.seed(db, 42, ROOT / "data" / "ground_truth.json")
+        else:
+            seed_remote(db)
     return "seeded"

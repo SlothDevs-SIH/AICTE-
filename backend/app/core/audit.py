@@ -41,7 +41,7 @@ def verify_chain(db: Session) -> dict:
     prev, count = GENESIS, 0
     for row in db.scalars(select(AuditLog).order_by(AuditLog.seq)):
         count += 1
-        at = row.occurred_at if row.occurred_at.tzinfo else row.occurred_at.replace(tzinfo=UTC)
+        at = (row.occurred_at if row.occurred_at.tzinfo else row.occurred_at.replace(tzinfo=UTC)).astimezone(UTC)
         expect = _digest(prev, row.seq, at.isoformat(), row.actor_user_id, row.action,
                          row.entity_type, row.entity_id, row.payload_json)
         if row.seq != count or row.prev_hash != prev or row.entry_hash != expect:

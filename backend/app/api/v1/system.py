@@ -35,7 +35,10 @@ def readyz(db: Session = Depends(get_db)):
     from app.main import STARTUP
 
     if STARTUP["state"] == "starting":  # still loading data: alive and listening, not yet useful
-        return JSONResponse({"status": "starting", "checks": {"database": database}, "adapters": adapters()}, status_code=200)
+        import time
+
+        return JSONResponse({"status": "starting", "seconds_so_far": round(time.time() - (STARTUP.get("since") or time.time())),
+                             "checks": {"database": database}, "adapters": adapters()}, status_code=200)
     if STARTUP["state"] == "failed":
         return JSONResponse({"status": "not_ready", "checks": {"database": database, "startup": STARTUP["error"]}}, status_code=503)
     body = {

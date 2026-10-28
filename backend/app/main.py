@@ -19,7 +19,7 @@ from app.core.errors import ApiError, envelope
 log = logging.getLogger("samanvay.startup")
 # "starting" while the tables are created and the first data is loaded, so the port opens at once (a host gives up on a
 # service that does not listen within minutes, and loading data into a remote database can take that long).
-STARTUP: dict = {"state": "ready", "error": None}
+STARTUP: dict = {"state": "ready", "error": None, "since": None}
 
 
 def _startup_work() -> None:
@@ -38,7 +38,9 @@ def _startup_work() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    STARTUP.update(state="starting", error=None)
+    import time
+
+    STARTUP.update(state="starting", error=None, since=time.time())
     threading.Thread(target=_startup_work, name="startup", daemon=True).start()
     yield
 
