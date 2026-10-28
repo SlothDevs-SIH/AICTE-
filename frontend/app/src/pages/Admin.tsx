@@ -16,15 +16,23 @@ export default function Admin() {
   const ref = useFetch<any>('/reference')
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [nu, setNu] = useState({ email: '', name: '', role: 'unit_officer', password: '', unit_code: 'RB' })
+  const [busy, setBusy] = useState(false)
   const say = (ok: boolean, text: string) => setMsg({ ok, text })
   const wrap = async (fn: () => Promise<any>, ok: string) => {
-    try { await fn(); if (ok) say(true, ok) } catch (e) { say(false, (e as ApiError).message) }
+    setBusy(true); setMsg(null)
+    try { await fn(); if (ok) say(true, ok) } catch (e) { say(false, (e as ApiError).message || 'Something went wrong.') }
+    finally { setBusy(false) }
   }
   const setSetting = (k: string, value: unknown) => wrap(async () => { await api(`/admin/settings/${k}`, { method: 'PUT', body: { value } }); st.reload() }, `Saved ${k}.`)
   return (
     <>
       <h1>Admin</h1>
-      {msg && <div className={`notice ${msg.ok ? 'ok' : 'err'}`} role="status">{msg.text}</div>}
+      {(msg || busy) && (
+        <div className={`notice ${busy ? 'warn' : msg!.ok ? 'ok' : 'err'}`} role="status"
+          style={{ position: 'sticky', top: '4.2rem', zIndex: 6, boxShadow: 'var(--shadow)' }}>
+          {busy ? 'Working… asking the model can take several seconds.' : msg!.text}
+        </div>
+      )}
 
       <section className="card" style={{ marginTop: '1rem' }}>
         <h2>Alerts and escalation</h2>
@@ -63,7 +71,7 @@ export default function Admin() {
               <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_issue_matching} onChange={(e) => setSetting('ai_issue_matching', e.target.checked)} />
               <span><strong>AI reading of different wording.</strong> When two cases at one college share no known problem type, the model is asked whether they are the same issue. Only the case titles and descriptions are sent, never names or contact details. The answer is shown in the Match Receipt as AI-written and never acts on its own.</span>
             </label>
-            <p><button className="btn" onClick={() => wrap(async () => { const r = await api('/admin/jobs/ai-rescan', { method: 'POST' }); say(true, `Asked about ${r.asked} existing overlaps: ${r.now_same_issue} read as the same issue, ${r.no_answer} got no usable answer.${r.last_error ? ' Reason: ' + r.last_error : ''}`) }, '')}>Re-check existing overlaps with AI</button></p>
+            <p><button className="btn" disabled={busy} onClick={() => wrap(async () => { const r = await api('/admin/jobs/ai-rescan', { method: 'POST' }); say(r.no_answer === 0, `${r.asked === 0 ? 'Nothing to ask: every open overlap already matches a known problem type or has an AI answer. ' : ''}Asked about ${r.asked} existing overlaps: ${r.now_same_issue} read as the same issue, ${r.no_answer} got no usable answer.${r.last_error ? ' Reason: ' + r.last_error : ''}`) }, '')}>Re-check existing overlaps with AI</button></p>
           </>
         )}
       </section>
