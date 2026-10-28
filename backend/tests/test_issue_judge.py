@@ -122,3 +122,16 @@ def test_failure_reason_is_recorded_without_the_key(monkeypatch):
     assert llm.complete("s", "u") is None
     err = llm.last_error()
     assert "404" in err and "model not found" in err and "secret-key-123" not in err
+
+
+def test_admin_connection_test_reports_result_or_reason(client, tokens, monkeypatch):
+    h = tokens["admin"]
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    off = client.post("/api/v1/admin/ai/test", headers=h).json()
+    assert off["ok"] is False and "key" in off["error"]
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setattr(llm, "complete", lambda s, u, max_tokens=400: '{"same_issue": true, "confidence": 0.9, "reason": "Both are about a hostel deposit."}')
+    ok = client.post("/api/v1/admin/ai/test", headers=h).json()
+    assert ok["ok"] is True and ok["answer"]["same_issue"] is True
+    assert client.post("/api/v1/admin/ai/test", headers=tokens["officer.rb"]).status_code == 403

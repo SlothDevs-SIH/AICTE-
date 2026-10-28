@@ -493,6 +493,24 @@ def put_setting(key: str, body: dict, db: Session = Depends(get_db), user: User 
     return {"key": key, "value": body["value"]}
 
 
+@router.post("/admin/ai/test")
+def ai_test(user: User = Depends(require(R.ADMIN))):
+    """Send one fixed, invented pair to the model so an admin can see that the connection works."""
+    from app.adapters import llm
+    from app.db.models import Complaint
+    from app.services import issue_judge
+
+    if not llm.available():
+        return {"ok": False, "provider": None, "error": "No model key is set on the server (GEMINI_API_KEY)."}
+    a = Complaint(title="Hostel security amount kept by the management after I left",
+                  description="I vacated the room in June and the management is still holding the amount I gave on joining.")
+    b = Complaint(title="Leaving-time settlement of room deposit denied",
+                  description="Warden refuses to settle the deposit paid for the hostel room after checkout.")
+    r = issue_judge.judge(a, b)
+    return {"ok": r is not None, "provider": llm.provider(), "model": llm.model_name(), "answer": r,
+            "error": None if r else llm.last_error() or "The model answered, but not in the expected format."}
+
+
 @router.post("/admin/jobs/ai-rescan")
 def ai_rescan(db: Session = Depends(get_db), user: User = Depends(require(R.ADMIN))):
     from app.services import issue_judge

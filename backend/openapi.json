@@ -1472,6 +1472,23 @@
         }
       }
     },
+    "/api/v1/admin/ai/test": {
+      "post": {
+        "summary": "Ai Test",
+        "description": "Send one fixed, invented pair to the model so an admin can see that the connection works.",
+        "operationId": "ai_test_api_v1_admin_ai_test_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/jobs/ai-rescan": {
       "post": {
         "summary": "Ai Rescan",
