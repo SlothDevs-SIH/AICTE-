@@ -1,3 +1,4 @@
+import { Expand } from '../components/Expand'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { AskBar, Count, Empty, ErrorBox, LiveIndicator, Loading, Severity, useFetch, useLive, useStream } from '../components/ui'
@@ -105,9 +106,9 @@ function Bars({ rows }: { rows: [string, number][] }) {
           <div className="bar" key={l}><span>{l}</span><i style={{ width: `${(n / max) * 100}%` }} /><span>{n}</span></div>
         ))}
       </div>
-      <details style={{ marginTop: '.6rem' }}><summary>View as table</summary>
+      <Expand title="View as table">
         <table><tbody>{rows.map(([l, n]) => <tr key={l}><td>{l}</td><td className="num">{n}</td></tr>)}</tbody></table>
-      </details>
+      </Expand>
     </>
   )
 }

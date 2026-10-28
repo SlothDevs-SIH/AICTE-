@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { qs } from '../api'
-import { Empty, ErrorBox, Loading, Severity, StatePill, fmtDate, useFetch } from '../components/ui'
+import { Empty, ErrorBox, Loading, Severity, StatePill, fmtDate, useDebounced, useFetch } from '../components/ui'
 
 const KEYS = ['q', 'case_id', 'aicte_id', 'unit', 'region', 'category', 'state', 'received_from', 'received_to', 'overdue', 'escalated', 'has_overlap', 'due_soon', 'institution_id', 'older_than_days']
 
@@ -9,7 +9,8 @@ export default function Complaints() {
   const ref = useFetch<any>('/reference')
   const params = Object.fromEntries(KEYS.map((k) => [k, sp.get(k) ?? '']))
   const offset = Number(sp.get('offset') ?? 0)
-  const list = useFetch<any>('/complaints' + qs({ ...params, limit: 25, offset }))
+  const path = useDebounced('/complaints' + qs({ ...params, limit: 25, offset }), 300) // wait for a pause in typing
+  const list = useFetch<any>(path)
   const set = (k: string, v: string) => {
     const n = new URLSearchParams(sp)
     if (v) n.set(k, v); else n.delete(k)
@@ -51,11 +52,11 @@ export default function Complaints() {
 
       {list.error && <ErrorBox error={list.error} retry={list.reload} />}
       {list.loading && !list.data && <Loading what="cases" />}
-      {list.data && list.data.items.length === 0 && <Empty>No cases match these filters.</Empty>}
-      {list.data && list.data.items.length > 0 && (
+      {list.data && !list.loading && list.data.items.length === 0 && <Empty>No cases match these filters.</Empty>}
+      {list.data && (list.loading || list.data.items.length > 0) && list.data.items.length > 0 && (
         <>
           <p className="muted" role="status">{total} case{total === 1 ? '' : 's'} · showing {offset + 1}–{Math.min(offset + 25, total)}</p>
-          <div className="tablewrap">
+          <div className={`tablewrap ${list.loading ? 'refreshing' : ''}`}>
             <table>
               <caption className="sr">Complaint cases</caption>
               <thead><tr><th>Case ID</th><th>Institution</th><th>Category</th><th>Unit</th><th>Status</th><th>Owner</th><th>Last action</th><th>Next action</th><th>Received</th><th>Expected disposal</th><th>Overlap</th></tr></thead>

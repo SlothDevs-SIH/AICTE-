@@ -1,6 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { OFFICER_ROLES, ROLE_LABEL, useAuth } from './auth'
+import { CommandSearch, type CommandItem } from './components/CommandSearch'
+import { TreeMenu, type MenuItem } from './components/TreeMenu'
 import { Logo, NoticeTicker, useFetch } from './components/ui'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -22,22 +24,53 @@ import Management from './pages/Management'
 import Admin from './pages/Admin'
 
 const ALL = ['unit_officer', 'unit_supervisor', 'regional_officer', 'management', 'competent_authority', 'admin', 'auditor']
-const NAV: { to: string; label: string; icon: string; roles: string[] }[] = [
-  { to: '/app', label: 'Dashboard', icon: '▦', roles: ALL },
-  { to: '/app/complaints', label: 'Complaints', icon: '☰', roles: ALL },
-  { to: '/app/new', label: 'New complaint', icon: '＋', roles: [...OFFICER_ROLES, 'admin'] },
-  { to: '/app/overlaps', label: 'Overlaps', icon: '⇄', roles: [...OFFICER_ROLES, 'management', 'competent_authority', 'admin', 'auditor'] },
-  { to: '/app/gate', label: 'Action Gate', icon: '⛨', roles: [...OFFICER_ROLES, 'competent_authority'] },
-  { to: '/app/coordination', label: 'Coordination', icon: '⇋', roles: [...OFFICER_ROLES, 'management', 'competent_authority', 'admin', 'auditor'] },
-  { to: '/app/management', label: 'Management view', icon: '◈', roles: ['management', 'competent_authority', 'admin', 'auditor'] },
-  { to: '/app/imports', label: 'Import cases', icon: '⇪', roles: [...OFFICER_ROLES, 'admin'] },
-  { to: '/app/colleges', label: 'Colleges', icon: '◧', roles: ALL },
-  { to: '/app/escalations', label: 'Escalations', icon: '↑', roles: ['unit_supervisor', 'competent_authority', 'management', 'admin'] },
-  { to: '/app/reports', label: 'Reports', icon: '▤', roles: ALL },
-  { to: '/app/audit', label: 'Audit & Verify', icon: '✓', roles: ['auditor', 'admin', 'competent_authority'] },
-  { to: '/app/admin', label: 'Admin', icon: '⚙', roles: ['admin'] },
-  { to: '/app/status', label: 'System status', icon: '◉', roles: ALL },
+const OFFICE = [...OFFICER_ROLES, 'admin']
+const OVERSIGHT = [...OFFICER_ROLES, 'management', 'competent_authority', 'admin', 'auditor']
+type Leaf = MenuItem & { roles: string[] }
+type Group = { id: string; label: string; icon: string; to?: string; roles?: string[]; children?: Leaf[] }
+// Related pages sit together so the menu stays short; a group with one visible page collapses into that page.
+const TREE: Group[] = [
+  { id: 'dash', label: 'Dashboard', icon: '▦', to: '/app', roles: ALL },
+  { id: 'complaints', label: 'Complaints', icon: '☰', children: [
+    { id: 'c-search', label: 'Search complaints', to: '/app/complaints', roles: ALL },
+    { id: 'c-new', label: 'New complaint', to: '/app/new', roles: OFFICE },
+    { id: 'c-import', label: 'Import cases', to: '/app/imports', roles: OFFICE },
+  ] },
+  { id: 'coord', label: 'Overlaps and action', icon: '⇄', children: [
+    { id: 'o-overlaps', label: 'Overlaps', to: '/app/overlaps', roles: OVERSIGHT },
+    { id: 'o-gate', label: 'Action Gate', to: '/app/gate', roles: [...OFFICER_ROLES, 'competent_authority'] },
+    { id: 'o-coord', label: 'Coordination', to: '/app/coordination', roles: OVERSIGHT },
+    { id: 'o-esc', label: 'Escalations', to: '/app/escalations', roles: ['unit_supervisor', 'competent_authority', 'management', 'admin'] },
+  ] },
+  { id: 'colleges', label: 'Colleges', icon: '◧', to: '/app/colleges', roles: ALL },
+  { id: 'insight', label: 'Insights', icon: '◈', children: [
+    { id: 'i-mgmt', label: 'Management view', to: '/app/management', roles: ['management', 'competent_authority', 'admin', 'auditor'] },
+    { id: 'i-reports', label: 'Reports', to: '/app/reports', roles: ALL },
+  ] },
+  { id: 'oversight', label: 'Oversight', icon: '✓', children: [
+    { id: 'v-audit', label: 'Audit & Verify', to: '/app/audit', roles: ['auditor', 'admin', 'competent_authority'] },
+    { id: 'v-status', label: 'System status', to: '/app/status', roles: ALL },
+  ] },
+  { id: 'admin', label: 'Admin', icon: '⚙', to: '/app/admin', roles: ['admin'] },
 ]
+
+function menuFor(role: string): MenuItem[] {
+  const out: MenuItem[] = []
+  for (const g of TREE) {
+    if (g.to) { if (g.roles?.includes(role)) out.push({ id: g.id, label: g.label, icon: g.icon, to: g.to }); continue }
+    const kids: MenuItem[] = (g.children ?? []).filter((c) => c.roles.includes(role)).map((c) => ({ id: c.id, label: c.label, to: c.to }))
+    if (kids.length === 1) out.push({ ...kids[0], icon: g.icon })
+    else if (kids.length > 1) out.push({ id: g.id, label: g.label, icon: g.icon, children: kids })
+  }
+  return out
+}
+const flat = (items: MenuItem[]): MenuItem[] => items.flatMap((i) => (i.children ? flat(i.children) : [i]))
+const activeLeaf = (items: MenuItem[], path: string): string | null => {
+  const leaves = flat(items).filter((l) => l.to && (l.to === '/app' ? path === '/app' : path === l.to || path.startsWith(l.to + '/')))
+  leaves.sort((x, y) => (y.to?.length ?? 0) - (x.to?.length ?? 0))
+  return leaves[0]?.id ?? null
+}
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || '?'
 
 function Shell() {
   const { me, ready, logout } = useAuth()
@@ -46,16 +79,20 @@ function Shell() {
   const [open, setOpen] = useState(false)
   const notes = useFetch<any>(me ? '/notifications' : null, [loc.pathname])
   useEffect(() => setOpen(false), [loc.pathname])
-  const navRef = useRef<HTMLElement>(null)
-  // The highlight glides to the active link instead of jumping.
-  useLayoutEffect(() => {
-    const nav = navRef.current
-    const a = nav?.querySelector<HTMLElement>('a.active')
-    const pill = nav?.querySelector<HTMLElement>('.nav-pill')
-    if (!nav || !pill) return
-    if (a) { pill.style.opacity = '1'; pill.style.transform = `translateY(${a.offsetTop}px)`; pill.style.height = `${a.offsetHeight}px` }
-    else pill.style.opacity = '0'
-  }, [loc.pathname, me])
+  const menu = useMemo(() => (me ? menuFor(me.role) : []), [me])
+  const commands = useMemo<CommandItem[]>(() => {
+    const pages = flat(menu).map((l) => ({ id: l.id, title: l.label, section: 'Suggestions', icon: l.icon, action: () => nav(l.to!) }))
+    return [
+      ...pages,
+      { id: 'x-notes', title: 'Notifications', section: 'Settings', icon: '◔', action: () => nav('/app/notifications') },
+      { id: 'x-out', title: 'Sign out', section: 'Settings', icon: '↩', action: async () => { await logout(); nav('/') } },
+      { id: 'x-home', title: 'Landing page', section: 'Help', icon: '⌂', action: () => nav('/') },
+    ]
+  }, [menu, nav, logout])
+  const findCases = useCallback((q: string): CommandItem[] => [
+    { id: 'q-cases', title: `Search complaints for “${q}”`, section: 'Search', icon: '☰', action: () => nav(`/app/complaints?q=${encodeURIComponent(q)}`) },
+    { id: 'q-colleges', title: `Search colleges for “${q}”`, section: 'Search', icon: '◧', action: () => nav(`/app/colleges?q=${encodeURIComponent(q)}`) },
+  ], [nav])
   if (!ready) return <p style={{ padding: '2rem' }} role="status">Loading…</p>
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
   return (
@@ -63,24 +100,24 @@ function Shell() {
       <a className="skip" href="#main">Skip to content</a>
       <aside className={`side ${open ? 'open' : ''}`} aria-label="Primary">
         <Link to="/" className="brand"><Logo /> SAMANVAY</Link>
-        <nav ref={navRef}>
-          <span className="nav-pill" aria-hidden="true" />
-          {NAV.filter((n) => n.roles.includes(me.role)).map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.to === '/app'}><span aria-hidden="true">{n.icon}</span> {n.label}</NavLink>
-          ))}
+        <div className="profile">
+          <span className="avatar" aria-hidden="true">{initials(me.name)}</span>
+          <div className="who">
+            <strong>{me.name}</strong>
+            <span>{ROLE_LABEL[me.role]}</span>
+          </div>
+          <button type="button" className="signout" onClick={async () => { await logout(); nav('/') }} aria-label="Sign out" title="Sign out">⏻</button>
+        </div>
+        <nav aria-label="Pages">
+          <TreeMenu menuData={menu} activeId={activeLeaf(menu, loc.pathname)} onSelect={(i) => i.to && nav(i.to)} />
         </nav>
       </aside>
       <div className="main">
         <header className="top">
-          <div className="row">
-            <button className="btn sm menu-btn" onClick={() => setOpen(!open)} aria-label="Toggle menu">☰</button>
-          </div>
+          <button className="btn sm menu-btn" onClick={() => setOpen(!open)} aria-label="Toggle menu">☰</button>
+          <CommandSearch items={commands} extra={findCases} />
           <NoticeTicker />
-          <div className="row">
-            <Link className="btn sm" to="/app/notifications" aria-label={`Notifications, ${notes.data?.unread ?? 0} unread`}>◔ {notes.data?.unread ? <strong>{notes.data.unread} unread</strong> : 'Notifications'}</Link>
-                        <span><strong>{me.name}</strong> <span className="badge b-neutral">{ROLE_LABEL[me.role]}</span></span>
-            <button className="btn sm" onClick={async () => { await logout(); nav('/') }}>Sign out</button>
-          </div>
+          <Link className="btn sm" to="/app/notifications" aria-label={`Notifications, ${notes.data?.unread ?? 0} unread`}>◔ {notes.data?.unread ? <strong>{notes.data.unread} unread</strong> : 'Notifications'}</Link>
         </header>
         <main id="main" className="content page-in" key={loc.pathname}><Outlet /></main>
       </div>

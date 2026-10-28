@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth'
+import { ExpandableScreen } from '../components/ExpandableScreen'
+import { LoginForm } from '../components/LoginForm'
+import { OrganicButton } from '../components/OrganicButton'
 import { Count, Logo } from '../components/ui'
 
 function SkylineArt() {
@@ -8,31 +12,32 @@ function SkylineArt() {
   return (
     <svg viewBox="0 0 1200 480" preserveAspectRatio="xMidYMax slice" width="100%" height="100%" aria-hidden="true">
       <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#dfe9d3" /><stop offset="1" stopColor="#f2f3e6" /></linearGradient>
-        <linearGradient id="b1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7fa88d" /><stop offset="1" stopColor="#bcd3c2" /></linearGradient>
-        <linearGradient id="b2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4c7d63" /><stop offset="1" stopColor="#9bbfa8" /></linearGradient>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#dbe6fb" /><stop offset="1" stopColor="#f2f5fc" /></linearGradient>
+        <linearGradient id="b1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7f9fe0" /><stop offset="1" stopColor="#bcd0f2" /></linearGradient>
+        <linearGradient id="b2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3f66c4" /><stop offset="1" stopColor="#9bb6ea" /></linearGradient>
       </defs>
       <rect width="1200" height="480" fill="url(#sky)" />
-      <circle cx="930" cy="110" r="58" fill="#d6f36b" opacity=".7" />
+      <circle cx="930" cy="110" r="58" fill="#ff9a4a" opacity=".7" />
       {blocks.map(([x, y, w, h], i) => (
         <g key={i}>
           <rect x={x} y={y} width={w} height={h} fill={i % 2 ? 'url(#b1)' : 'url(#b2)'} />
           {Array.from({ length: Math.floor(h / 34) }).map((_, r) => (
             <g key={r}>
-              <rect x={x + 10} y={y + 14 + r * 34} width="12" height="14" fill="#f7f7f0" opacity=".7" />
-              <rect x={x + w - 24} y={y + 14 + r * 34} width="12" height="14" fill="#f7f7f0" opacity=".7" />
+              <rect x={x + 10} y={y + 14 + r * 34} width="12" height="14" fill="#f2f5fc" opacity=".7" />
+              <rect x={x + w - 24} y={y + 14 + r * 34} width="12" height="14" fill="#f2f5fc" opacity=".7" />
             </g>
           ))}
         </g>
       ))}
-      <path d="M0 470 Q300 430 600 455 T1200 440 V480 H0Z" fill="#1f4d3a" opacity=".85" />
-      <circle cx="590" cy="318" r="14" fill="#d6f36b" stroke="#1f4d3a" strokeWidth="3" />
-      <path d="M590 318 L520 430" stroke="#1f4d3a" strokeWidth="2" strokeDasharray="4 5" />
+      <path d="M0 470 Q300 430 600 455 T1200 440 V480 H0Z" fill="#1a3fa8" opacity=".85" />
+      <circle cx="590" cy="318" r="14" fill="#ff9a4a" stroke="#1a3fa8" strokeWidth="3" />
+      <path d="M590 318 L520 430" stroke="#1a3fa8" strokeWidth="2" strokeDasharray="4 5" />
     </svg>
   )
 }
 
 export default function Landing() {
+  const { me } = useAuth()
   const [live, setLive] = useState<any>(null)
   useEffect(() => {
     fetch('/api/v1/public/overview').then((r) => (r.ok ? r.json() : null)).then(setLive).catch(() => setLive(null))
@@ -58,7 +63,24 @@ export default function Landing() {
             SAMANVAY puts them in one place, warns an officer when another unit is already handling the same college, and shows
             exactly why.
           </p>
-          <Link className="cta" to="/login">Open the dashboard <span aria-hidden="true">→</span></Link>
+          {me ? <OrganicButton to="/app" size="lg" label="Open the dashboard" arrow /> : (
+            <ExpandableScreen trigger={<>Get started <span aria-hidden="true">→</span></>}>
+              {() => (
+                <div className="xs-grid">
+                  <div className="xs-left">
+                    <h2>Sign in to SAMANVAY</h2>
+                    <ul className="xs-points">
+                      <li><span aria-hidden="true">✓</span>One place for complaints that reach the Bureau, the Cell and regional offices separately.</li>
+                      <li><span aria-hidden="true">⇄</span>A warning when another unit already handles the same college, with the evidence shown.</li>
+                      <li><span aria-hidden="true">☑</span>An officer always decides. The system only suggests.</li>
+                    </ul>
+                    {live && <div className="xs-stats"><div><b><Count to={live.complaints} /></b><span>simulated cases</span></div><div><b><Count to={live.colleges} /></b><span>colleges</span></div><div><b><Count to={live.open_overlaps} /></b><span>open overlaps</span></div></div>}
+                  </div>
+                  <div className="xs-right"><LoginForm /></div>
+                </div>
+              )}
+            </ExpandableScreen>
+          )}
           <p className="small">An officer always decides. The system only suggests, and every suggestion comes with its evidence.</p>
         </div>
 

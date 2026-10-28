@@ -1,3 +1,4 @@
+import { Expand } from '../components/Expand'
 import { useState } from 'react'
 import { api, ApiError, upload } from '../api'
 import { useAuth } from '../auth'
@@ -54,9 +55,9 @@ export default function Imports() {
                   </select></label>
               ))}
             </div>
-            {job.sample && <details style={{ marginTop: '.8rem' }}><summary>First rows of the file</summary>
+            {job.sample && <Expand title="First rows of the file">
               <div className="tablewrap"><table><thead><tr>{job.columns.map((c: string) => <th key={c}>{c}</th>)}</tr></thead>
-                <tbody>{job.sample.map((r: any, i: number) => <tr key={i}>{job.columns.map((c: string) => <td key={c}>{r[c]}</td>)}</tr>)}</tbody></table></div></details>}
+                <tbody>{job.sample.map((r: any, i: number) => <tr key={i}>{job.columns.map((c: string) => <td key={c}>{r[c]}</td>)}</tr>)}</tbody></table></div></Expand>}
             {job.status !== 'COMMITTED' && <p><button className="btn primary" disabled={busy} onClick={doDry}>Check with a dry run</button></p>}
           </section>
           {rep && (

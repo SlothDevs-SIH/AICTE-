@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api, ApiError, qs } from '../api'
 import { useAuth } from '../auth'
-import { Empty, ErrorBox, Loading, Severity, StatePill, fmtDate, useFetch } from '../components/ui'
+import { Empty, ErrorBox, Loading, Severity, StatePill, fmtDate, useDebounced, useFetch } from '../components/ui'
 
 export default function Colleges() {
   const { me } = useAuth()
@@ -10,9 +10,10 @@ export default function Colleges() {
   const blank = { canonical_name: '', aicte_id: '', state: '', district: '', region_code: '' }
   const [nf, setNf] = useState<Record<string, string>>(blank)
   const [addErr, setAddErr] = useState('')
-  const [q, setQ] = useState('')
+  const [sp] = useSearchParams()
+  const [q, setQ] = useState(sp.get('q') ?? '')
   const [state, setState] = useState('')
-  const list = useFetch<any>(`/institutions${qs({ q, state, limit: 60 })}`, [q, state])
+  const list = useFetch<any>(useDebounced(`/institutions${qs({ q, state, limit: 60 })}`, 300))
   return (
     <>
       <h1>Colleges</h1>
@@ -44,7 +45,7 @@ export default function Colleges() {
       )}
       {list.error && <ErrorBox error={list.error} retry={list.reload} />}
       {list.loading && !list.data && <Loading what="colleges" />}
-      {list.data && list.data.items.length === 0 && <Empty>No college matches.</Empty>}
+      {list.data && !list.loading && list.data.items.length === 0 && <Empty>No college matches.</Empty>}
       {list.data && list.data.items.length > 0 && (
         <div className="tablewrap">
           <table>

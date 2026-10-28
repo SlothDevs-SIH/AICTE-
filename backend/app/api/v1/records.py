@@ -1,6 +1,7 @@
 """Institutions, complaints, dashboard, overlaps, Action Gate, audit, escalations, reports."""
 import csv
 import io
+import re
 from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, Query
@@ -118,9 +119,23 @@ def list_institutions(q: str | None = None, state: str | None = None, region: st
     if region:
         rows = [i for i in rows if i.region_id in regions and regions[i.region_id].code == region]
     if q:
+        # every word typed must appear somewhere in the name, short name, district, state or AICTE ID (any order,
+        # so "institute technology pune" finds the college); a fuzzy match on the name catches spelling variants
+        words = [w for w in re.findall(r"\w+", q.casefold()) if w]
         hits = {c.institution_id: c.score for c in match_institution(db, q, q, limit=50)}
         nq = normalize(q)
-        rows = [i for i in rows if i.id in hits or nq in i.normalized_name or q.casefold() in (i.aicte_id or "").casefold()]
+
+        def hay(i: Institution) -> str:
+            return " ".join(filter(None, [i.canonical_name, i.short_name, i.normalized_name, i.district, i.state, i.aicte_id])).casefold()
+
+        scored = []
+        for i in rows:
+            h = hay(i)
+            if words and all(w in h for w in words):
+                scored.append((0 if (i.canonical_name or "").casefold().startswith(q.casefold()) else 1, i))
+            elif i.id in hits or (nq and nq in i.normalized_name):
+                scored.append((2, i))
+        rows = [i for _, i in sorted(scored, key=lambda t: (t[0], len(t[1].canonical_name or "")))]
     return {"items": [_inst(i, regions) for i in rows[:limit]], "total": len(rows)}
 
 

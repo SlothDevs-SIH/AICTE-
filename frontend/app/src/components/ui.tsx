@@ -5,7 +5,7 @@ import { api, ApiError, openStream } from '../api'
 export function Logo({ size = 32 }: { size?: number }) {
   return (
     <span className="logo" style={{ width: size, height: size }} aria-hidden="true">
-      <svg viewBox="0 0 32 32" width={size * 0.8} height={size * 0.8}><path d="M9 21c0-6 5-9 9-9h5M23 12l-3-3m3 3-3 3M9 21h8" stroke="#d6f36b" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <svg viewBox="0 0 32 32" width={size * 0.8} height={size * 0.8}><path d="M9 21c0-6 5-9 9-9h5M23 12l-3-3m3 3-3 3M9 21h8" stroke="#ffa25c" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
     </span>
   )
 }
@@ -16,15 +16,17 @@ export function useFetch<T>(path: string | null, deps: unknown[] = []) {
   const [loading, setLoading] = useState(true)
   const [stamp, setStamp] = useState<number | null>(null)
   const alive = useRef(true)
+  const seq = useRef(0)
   const load = useCallback(async () => {
     if (!path) return
+    const mine = ++seq.current // only the newest request may update the screen, so a slow older answer cannot overwrite it
     try {
       const d = await api<T>(path)
-      if (alive.current) { setData(d); setError(null); setStamp(Date.now()) }
+      if (alive.current && mine === seq.current) { setData(d); setError(null); setStamp(Date.now()) }
     } catch (e) {
-      if (alive.current) setError(e as ApiError)
+      if (alive.current && mine === seq.current) setError(e as ApiError)
     } finally {
-      if (alive.current) setLoading(false)
+      if (alive.current && mine === seq.current) setLoading(false)
     }
   }, [path])
   useEffect(() => {
@@ -35,6 +37,15 @@ export function useFetch<T>(path: string | null, deps: unknown[] = []) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, ...deps])
   return { data, error, loading, reload: load, stamp }
+}
+
+export function useDebounced<T>(value: T, ms = 300): T {
+  const [v, setV] = useState(value)
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), ms)
+    return () => clearTimeout(t)
+  }, [value, ms])
+  return v
 }
 
 export function Loading({ what = 'data' }: { what?: string }) {
