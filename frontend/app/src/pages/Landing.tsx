@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Logo } from '../components/ui'
+import { Count, Logo } from '../components/ui'
 
 function SkylineArt() {
   // Abstract campus-and-city illustration drawn in SVG (no photos, so nothing is borrowed).
@@ -33,8 +33,10 @@ function SkylineArt() {
 }
 
 export default function Landing() {
-  const [dark] = useState(false)
-  void dark
+  const [live, setLive] = useState<any>(null)
+  useEffect(() => {
+    fetch('/api/v1/public/overview').then((r) => (r.ok ? r.json() : null)).then(setLive).catch(() => setLive(null))
+  }, [])
   return (
     <div className="land">
       <header className="lnav">
@@ -60,19 +62,31 @@ export default function Landing() {
           <p className="small">An officer always decides. The system only suggests, and every suggestion comes with its evidence.</p>
         </div>
 
-        <div className="floatcard" role="img" aria-label="Illustrative example of an overlap alert between the Regulation Bureau and PGRC">
-          <div className="row" style={{ justifyContent: 'space-between' }}>
-            <strong>Potential Overlapping Cases – Coordination Required</strong>
-            <span className="badge b-danger">⛨ Conflict</span>
-          </div>
-          <p className="muted" style={{ margin: '.4rem 0' }}>Same institution · different units · both open</p>
-          <div className="sides">
-            <div className="side-case"><span className="badge b-info">RB</span><br /><strong>Show-cause notice issued</strong><br /><span className="muted">Unapproved intake</span></div>
-            <div className="side-case"><span className="badge b-info">PGRC</span><br /><strong>Under examination</strong><br /><span className="muted">Misleading advertisement</span></div>
-          </div>
-          <p className="muted" style={{ margin: '.6rem 0 0', fontSize: '.85rem' }}>Why: same registry record · different units · a regulatory action is already recorded.</p>
+        <div className="floatcard" aria-live="polite">
+          {live ? (
+            <>
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <strong>Potential Overlapping Cases – Coordination Required</strong>
+                <span className="badge b-danger">Conflict</span>
+              </div>
+              {live.sample_conflict ? (
+                <>
+                  <p style={{ margin: '.5rem 0 .2rem' }}><strong>{live.sample_conflict.institution}</strong></p>
+                  <p className="muted" style={{ margin: 0 }}>Open with {live.sample_conflict.units.join(' and ')}</p>
+                  <p className="muted" style={{ margin: '.6rem 0 0', fontSize: '.85rem' }}>Why: {live.sample_conflict.reasons.join(' · ').toLowerCase()}.</p>
+                </>
+              ) : <p className="muted">No conflict is open right now.</p>}
+              <div className="livestats">
+                <div><span className="n"><Count to={live.complaints} /></span><span className="l">cases tracked</span></div>
+                <div><span className="n"><Count to={live.colleges} /></span><span className="l">colleges in the registry</span></div>
+                <div><span className="n"><Count to={live.open_overlaps} /></span><span className="l">open overlaps</span></div>
+              </div>
+            </>
+          ) : <p className="muted">Reading the running system…</p>}
         </div>
-        <div className="pill">Illustration. Not live data.</div>
+        <div className="pill">
+          {live ? `Live from this running system. ${live.complaints_simulated === live.complaints ? 'Cases are simulated' : 'Some cases are simulated'}; ${live.colleges_real > 0 ? `${live.colleges_real.toLocaleString('en-IN')} colleges are real AICTE records` : 'the college list is not yet real AICTE data'}.` : 'Reading the running system…'}
+        </div>
       </section>
 
       <section className="section" id="how">
@@ -103,20 +117,21 @@ export default function Landing() {
       <section className="section" id="evidence" style={{ paddingTop: 0 }}>
         <h2>What we have measured, and what we have not</h2>
         <p className="muted" style={{ maxWidth: '46rem' }}>
-          All data in this prototype is generated; there are no real complaints in it. The numbers below come from planted test scenarios that we
-          created ourselves, so they show the rules work as designed. They are not a promise about real AICTE data.
+          AICTE does not publish complaint records, so the complaints in this prototype are simulated; the college registry can be loaded with real AICTE
+          approved institutions. The numbers below come from planted test scenarios that we created ourselves, so they show the rules work as designed.
+          They are not a promise about real AICTE data.
         </p>
         <div className="feat">
           <div className="card"><div className="stat">8 of 8</div><p className="muted" style={{ margin: 0 }}>planted conflicting-action pairs flagged as Conflict.</p></div>
           <div className="card"><div className="stat">0 of 10</div><p className="muted" style={{ margin: 0 }}>look-alike colleges wrongly merged with a similar name in the same city.</p></div>
           <div className="card"><div className="stat">13 of 20</div><p className="muted" style={{ margin: 0 }}>misspelled names linked automatically. The other 7 are sent to an officer to confirm, by design.</p></div>
         </div>
-        <p className="muted" style={{ maxWidth: '46rem' }}><strong>Not built yet:</strong> matching of different wording for the same issue (needs a language model), Hindi-script name matching, coordination threads, bulk import, and PDF briefs.</p>
+        <p className="muted" style={{ maxWidth: '46rem' }}><strong>Built:</strong> matching of different wording for the same issue through a hand-written concept list (English, Hinglish, Devanagari), coordination threads, bulk import and PDF briefs. <strong>Not built:</strong> a neural language model for matching, and Hindi-script college-name matching.</p>
       </section>
 
       <footer className="lfoot">
         <span>SAMANVAY · Team SlothDevs · Smart India Hackathon · AICTE (Regulation Bureau) problem statement</span>
-        <span><Link to="/login">Sign in</Link> · Synthetic data only</span>
+        <span><Link to="/login">Sign in</Link> · Complaints are simulated</span>
       </footer>
     </div>
   )

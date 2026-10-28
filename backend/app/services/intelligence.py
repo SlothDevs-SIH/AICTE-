@@ -1,7 +1,8 @@
-"""Issue matching (lexical fallback), clusters and the institution risk score (BACKEND_PLAN 6.3, 7.1, 7.2).
+"""Issue matching, clusters and the institution risk score (BACKEND_PLAN 6.3, 7.1, 7.2).
 
-Issue matching here is LEXICAL (word overlap), not embeddings. It cannot see that
-"money not returned" and "refund pending" mean the same thing. Embeddings are not built.
+`issue_similarity` is LEXICAL (word overlap) and shown for information only. `same_issue` uses the hand-written
+concept lexicon in engine/concepts.py, which does see that "money not returned" and "refund pending" are one
+concept. Neither is a neural embedding: a local embedding model could not be downloaded on this machine.
 """
 import re
 from datetime import date, timedelta
@@ -12,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Category, Complaint, Institution, Overlap
+from app.engine.concepts import concept_similarity
 from app.engine.normalize import normalize
 from app.services.settings import get_setting
 
@@ -32,6 +34,11 @@ def issue_similarity(a: Complaint, b: Complaint) -> tuple[float, dict]:
     score = round(0.5 * jacc + 0.5 * fz * (1 if wa & wb else 0.5), 3)
     return score, {"method": "lexical (word overlap + fuzzy title)", "shared_words": sorted(wa & wb),
                    "word_overlap": round(jacc, 3), "title_similarity": round(fz, 3)}
+
+
+def same_issue(a: Complaint, b: Complaint) -> tuple[float, dict]:
+    """Concept-level similarity of two complaints: same problem, whatever the words (engine.concepts)."""
+    return concept_similarity(f"{a.title}. {a.description}", f"{b.title}. {b.description}")
 
 
 def clusters(db: Session, institution_id: str | None = None) -> list[dict]:

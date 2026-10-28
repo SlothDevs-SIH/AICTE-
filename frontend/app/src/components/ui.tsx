@@ -70,7 +70,36 @@ export function Severity({ s }: { s: string | null | undefined }) {
   const [c, i, t] = m[s] ?? ['b-neutral', '', s]
   return <span className={`badge ${c}`}><span aria-hidden="true">{i}</span> {t}</span>
 }
-export const SyntheticBadge = () => <span className="badge synthetic" title="All data in this prototype is generated">⚗ SYNTHETIC DATA</span>
+/** A number that counts up to its value (skipped when the user prefers reduced motion). */
+export function Count({ to }: { to: number }) {
+  const [v, setV] = useState(0)
+  const from = useRef(0)
+  useEffect(() => {
+    const start = from.current
+    from.current = to
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || Math.abs(to - start) < 2) { setV(to); return }
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / 900)
+      setV(Math.round(start + (to - start) * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [to])
+  return <>{v.toLocaleString('en-IN')}</>
+}
+
+export function SyntheticBadge() {
+  const o = useFetch<any>('/public/overview')
+  const real = o.data?.colleges_real ?? 0
+  return (
+    <span className="badge synthetic" title="Complaints are simulated: AICTE does not publish complaint records. The college list is real AICTE data only where it has been imported.">
+      Simulated complaints{real > 0 ? ` · ${real.toLocaleString('en-IN')} real AICTE colleges` : ''}
+    </span>
+  )
+}
 
 export const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')
 export const fmtDateTime = (d?: string | null) => (d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—')

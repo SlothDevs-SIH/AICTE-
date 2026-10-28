@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from rapidfuzz import fuzz
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -240,7 +241,12 @@ def list_complaints(
         if q:
             hay = " ".join([c.title, c.case_id, c.reference_no, c.institution_text_raw or "",
                             inst.canonical_name if inst else ""]).casefold()
-            if q.casefold() not in hay and normalize(q) not in normalize(hay): return False
+            nh = normalize(hay)
+            tokens = normalize(q).split()
+            # every typed word must appear somewhere (any order), or the name must be a close spelling match
+            if q.casefold() not in hay and not (tokens and all(t in nh for t in tokens)):
+                names = [normalize(x) for x in (c.institution_text_raw, inst.canonical_name if inst else None) if x]
+                if not any(fuzz.partial_ratio(normalize(q), n) >= 85 for n in names): return False
         return True
 
     matched = [c for c in rows if keep(c)]

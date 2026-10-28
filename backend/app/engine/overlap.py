@@ -4,7 +4,7 @@ Types built here:
   O1  same institution, different units, both open            -> RELATED
   O2  O1 and the same complaint category                       -> RELATED
   O3  a regulatory action is recorded/planned on either case   -> CONFLICT
-Not built: wording-similarity matching (L3, needs embeddings) and systemic clusters (phase B5).
+  O4  O1 and the complaint texts describe the same issue (concept lexicon, any wording)
 """
 from datetime import UTC, datetime
 
@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import write_audit
 from app.db.models import Category, Complaint, Overlap
-from app.services.intelligence import issue_similarity
+from app.services.intelligence import issue_similarity, same_issue
 
 ENGINE_VERSION = "rules-1.0"
 OPEN_STATES = ("RECEIVED", "ASSIGNED", "UNDER_PROCESS", "ESCALATED", "REOPENED", "TRANSFERRED")
@@ -34,6 +34,13 @@ def classify(a: Complaint, b: Complaint) -> tuple[str, str, float, list[str]] | 
     if a.category_id == b.category_id:
         reasons.append("Same complaint category")
         kind, score = "O2", 0.7
+    sim, why = same_issue(a, b)
+    if why["shared_concepts"]:
+        names = ", ".join(s["concept"] for s in why["shared_concepts"])
+        reasons.append(f"Same issue in the complaint text ({names}), even if worded differently")
+        if kind == "O1":
+            kind = "O4"
+        score = min(0.85, score + 0.15)
     if has_action(a) or has_action(b):
         reasons.append("A regulatory action is recorded or planned on one of the cases")
         kind, sev, score = "O3", "CONFLICT", 0.9
@@ -75,11 +82,15 @@ def scan_complaint(db: Session, c: Complaint, actor_id: str | None = None) -> li
                     "how": "the institution name typed on each case was matched to the registry",
                 },
                 "L3_issue": {
-                    "used": False,
+                    "used": True,
+                    "concept_score": same_issue(a, b)[0],
+                    "concepts": same_issue(a, b)[1],
                     "lexical_score": issue_similarity(a, b)[0],
-                    "formula": "wording is compared by word overlap only, and that score is shown for "
-                    "information but NOT used to decide: it cannot see that different words mean the same "
-                    "thing (embeddings are not built). This overlap uses institution and category rules only",
+                    "formula": "each complaint text is read for known problem concepts (fee refund, faculty "
+                    "qualification, approval lapse and so on) from a hand-written list in English, Hinglish and "
+                    "Devanagari. Shared concepts raise the score and are listed here. This is not a language "
+                    "model: a problem described in a way the list does not know is not seen. The plain "
+                    "word-overlap score is shown for information only",
                 },
                 "L4_rules": {"type": kind, "severity": sev, "reasons": reasons},
             },

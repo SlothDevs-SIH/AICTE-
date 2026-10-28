@@ -1,5 +1,5 @@
 import { useAuth } from '../auth'
-import { ErrorBox, useFetch } from '../components/ui'
+import { ErrorBox, SyntheticBadge, useFetch } from '../components/ui'
 
 export default function Status() {
   const { me } = useAuth()
@@ -21,14 +21,14 @@ export default function Status() {
         </section>
         <section className="card">
           <h2>AI features</h2>
-          <p><span className="badge b-neutral">Embeddings: not built</span> <span className="badge b-neutral">Language model: not built</span></p>
-          <p className="muted">Overlaps use institution and category rules only. Matching different wording of the same issue is planned, not built.</p>
+          <p><span className="badge b-ok">Concept matching: built</span> <span className="badge b-neutral">Neural embeddings: not built</span> <span className="badge b-neutral">Language model: off</span></p>
+          <p className="muted">Different wording of the same issue is matched through a hand-written list of problem concepts in English, Hinglish and Devanagari. It is not a language model, so a problem described in a way the list does not know is missed. A neural embedding model could not be downloaded on the machine this was built on.</p>
         </section>
         <section className="card"><h2>You</h2><p>{me?.name}<br /><span className="muted">{me?.email}</span></p></section>
         <section className="card">
           <h2>Data</h2>
-          <p><span className="badge synthetic">⚗ SYNTHETIC DATA</span></p>
-          <p className="muted">No real complaint or personal data is stored.</p>
+          <p><SyntheticBadge /></p>
+          <p className="muted">No real complaint or personal data is stored. AICTE does not publish complaint records, so cases are simulated. Real AICTE colleges can be loaded with <code>python -m app.cli import-aicte</code>.</p>
         </section>
       </div>
     </>

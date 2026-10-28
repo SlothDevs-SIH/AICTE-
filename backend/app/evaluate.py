@@ -32,8 +32,11 @@ def run() -> dict:
 
         w = [s for s in truth["scenarios"] if s["kind"] == "wording_overlap"]
         w_pair = sum(1 for s in w if frozenset(cases[c].id for c in s["cases"]) in pair)
-        out["wording_overlap_detected"] = {"hit": w_pair, "total": len(w),
-                                           "note": "found through institution + category rules, not wording"}
+        w_concept = sum(1 for s in w if (o := pair.get(frozenset(cases[c].id for c in s["cases"])))
+                        and o.receipt_json["layers"]["L3_issue"]["concepts"]["shared_concepts"])
+        out["wording_overlap_detected"] = {"hit": w_pair, "total": len(w), "found_by_concept_match": w_concept,
+                                           "note": "pairs were planted by the same generator that wrote the concept "
+                                                   "list's test titles; not a held-out measurement"}
 
         c = [s for s in truth["scenarios"] if s["kind"] == "conflict_pair"]
         c_ok = sum(1 for s in c if (o := pair.get(frozenset(cases[x].id for x in s["cases"]))) and o.severity == "CONFLICT")

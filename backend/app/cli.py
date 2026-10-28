@@ -1,4 +1,4 @@
-"""Commands: seed | verify-audit | openapi | evaluate (python -m app.cli <command>)."""
+"""Commands: seed | verify-audit | openapi | evaluate | import-aicte [file.json] (python -m app.cli <command>)."""
 import json
 import sys
 from pathlib import Path
@@ -42,7 +42,16 @@ def cmd_evaluate() -> None:
     run()
 
 
+def cmd_import_aicte() -> None:
+    """import-aicte [file.json]  - real AICTE-approved institutions, from the public site or a saved file."""
+    from app import aicte_import
+
+    file = sys.argv[2] if len(sys.argv) > 2 else None
+    with session_factory()() as db:
+        print(json.dumps(aicte_import.run(db, file), indent=2))
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
-    {"seed": cmd_seed, "openapi": cmd_openapi, "verify-audit": cmd_verify, "evaluate": cmd_evaluate}.get(
-        cmd, lambda: print(__doc__))()
+    {"seed": cmd_seed, "openapi": cmd_openapi, "verify-audit": cmd_verify, "evaluate": cmd_evaluate,
+     "import-aicte": cmd_import_aicte}.get(cmd, lambda: print(__doc__))()

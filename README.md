@@ -1,4 +1,4 @@
-# SAMANVAY (working name) — Unified Complaint Coordination for AICTE
+﻿# SAMANVAY (working name) — Unified Complaint Coordination for AICTE
 
 Team **SlothDevs** · Smart India Hackathon · AICTE (Regulation Bureau) problem statement: an integrated institution complaint monitoring and status dashboard.
 
@@ -6,7 +6,7 @@ Team **SlothDevs** · Smart India Hackathon · AICTE (Regulation Bureau) problem
 
 ## Status
 
-🔨 **Working prototype (synthetic data).** Every route in the backend plan is built, and 25 backend tests pass. Built: sign-in for seven roles, dashboard with live updates and Ask the Dashboard, case tracking and lifecycle, escalation, overlap detection with a Match Receipt, the Action Gate, coordination threads, notifications and time-limit alerts, College 360 with an attention score, Management view, CSV import wizard, reports (CSV, monthly and quarterly), PDF joint brief, admin screen, and a tamper-evident audit chain. Not built: matching of different wording (needs embeddings; only a weak word-overlap score is shown for information), Hindi-script names, PostgreSQL, a background scheduler (an admin runs the time-limit check), PDF reports, and automated frontend tests. The language-model features (summary, Ask) are off and were never run against the real service. The exact list is in the "Designed vs. Built" tables of the two plans.
+🔨 **Working prototype (simulated complaints; real AICTE colleges can be imported).** Every route in the backend plan is built, and 31 backend tests pass. Built: sign-in for seven roles, dashboard with live updates and Ask the Dashboard, case tracking and lifecycle, escalation, overlap detection with a Match Receipt, the Action Gate, coordination threads, notifications and time-limit alerts, College 360 with an attention score, Management view, CSV import wizard, reports (CSV, monthly and quarterly), PDF joint brief, admin screen, and a tamper-evident audit chain. Different wording of the same issue is matched through a hand-written concept list (English, Hinglish, Devanagari), not a language model: a neural embedding model could not be downloaded on the build machine. Real AICTE colleges load with `python -m app.cli import-aicte` (the live fetch has not been run: the AICTE site was unreachable from the build machine; parsing is tested on a fixture). AICTE publishes no complaint records, so complaints stay simulated. Not built: neural embeddings, Hindi-script college-name matching, PostgreSQL, a background scheduler (an admin runs the time-limit check), PDF reports, and automated frontend tests. The language-model features (summary, Ask) are off and were never run against the real service. The exact list is in the "Designed vs. Built" tables of the two plans.
 
 ## Run it
 
@@ -36,3 +36,4 @@ Tests: `cd backend; .\.venv\Scripts\python -m pytest -q`. Evaluation on the plan
 ## Data
 
 All data is synthetic. No real complaint or personal data is used or stored in this repository.
+

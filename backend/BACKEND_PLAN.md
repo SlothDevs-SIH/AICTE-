@@ -1,4 +1,4 @@
-# SAMANVAY Backend — Plan & Build Record
+﻿# SAMANVAY Backend — Plan & Build Record
 
 **Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** not supplied yet (MASTER_PLAN V-M1) · **Official text:** [`../docs/PROBLEM_STATEMENT.md`](../docs/PROBLEM_STATEMENT.md)
 **Parent document:** [`../MASTER_PLAN.md`](../MASTER_PLAN.md) (product). Sibling: [`../frontend/FRONTEND_PLAN.md`](../frontend/FRONTEND_PLAN.md). This document is the source of truth for the API, data and engine. When they disagree, fix all three in the same commit.
@@ -638,7 +638,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 11 | Engine L1/L2/L4 + Match Receipt + evaluation harness | B3 | ⚠️ | app/engine/, app/evaluate.py. L1, L2 and L4 built; no held-out split; thresholds not tuned. Measured on our own generated data: see Appendix B |
 | 12 | Overlap scan on intake, overlap queue, decisions, Alias Memory | B3 | ✅ | app/engine/overlap.py, records.py; test_create_complaint_resolves_variant_and_flags_overlap, test_overlap_always_has_receipt_and_label |
 | 13 | Action Gate (check + decision) | B3 | ✅ | records.py gate endpoints; test_gate_requires_justification_on_conflict_and_close_is_gated |
-| 14 | Issue matching (L3) with embeddings + fallback | B4 | ⚠️ | services/intelligence.py issue_similarity is LEXICAL (word overlap), not embeddings. It is shown in the receipt for information and is NOT used to decide, because test_issue_similarity_is_lexical_and_says_so shows it cannot tell synonyms from unrelated text. Embeddings: not built |
+| 14 | Issue matching (L3) with embeddings + fallback | B4 | ⚠️ | Built without embeddings: engine/concepts.py is a hand-written concept lexicon (English, Hinglish, Devanagari); engine/overlap.py uses shared concepts to add an O4 type and a receipt reason; tests/test_concepts.py. It is not a language model and misses concepts not in the list. issue_similarity (word overlap) stays information-only. Neural embeddings: not built, because fastembed installed but the model file download was blocked on the build machine |
 | 15 | Coordination Handshake | B4 | ✅ | extras.py coordination routes; test_coordination_handshake_two_users, test_coordination_expiry_alerts_supervisor |
 | 16 | SLA job, notifications, alert budget | B4 | ⚠️ | services/notifications.py; test_sla_job_creates_alerts_and_respects_advisory_escalation, test_alert_budget_caps_non_conflict_alerts, test_budget_never_blocks_a_request_from_a_colleague. In-app only. The job runs when an admin triggers it (POST /admin/jobs/sla); there is no background scheduler |
 | 17 | Reports + CSV/PDF export | B5 | ⚠️ | JSON and CSV for all kinds, plus /reports/performance (monthly, quarterly); test_performance_report_and_overlaps_for_case, test_csv_report_declares_synthetic. No PDF reports |
@@ -738,6 +738,7 @@ All figures are from `python -m app.cli evaluate` on the generated dataset (seed
 | Misspelled / abbreviated names resolved automatically to the right college | 13 of 20 (the other 7 scored below 0.92 and are sent to an officer, by design) |
 | Overlaps found for those 20 planted pairs | 13 of 20 (the 7 are not linked, so no overlap check runs until an officer links them) |
 | Planted conflicting-action pairs flagged Conflict | 8 of 8 |
-| Different-wording pairs flagged (by institution + category rules, not wording) | 15 of 15 (they share a category by construction, so this does not test wording matching) |
+| Different-wording pairs flagged | 15 of 15; 15 of 15 also carry a shared concept in the receipt. The pairs and the lexicon were written by the same author, so this is not a held-out measurement |
 | Look-alike decoys wrongly merged | 0 of 10; all 10 resolved to their own record |
 | Automated tests | 25 passed (backend/tests) |
+

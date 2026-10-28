@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { AskBar, Empty, ErrorBox, LiveIndicator, Loading, Severity, useFetch, useLive, useStream } from '../components/ui'
+import { AskBar, Count, Empty, ErrorBox, LiveIndicator, Loading, Severity, useFetch, useLive, useStream } from '../components/ui'
 
 const TILES: [string, string, string, string?][] = [
   ['total_received', 'Total received', ''], ['pending', 'Pending', '?state=RECEIVED'], ['under_process', 'Under process', '?state=UNDER_PROCESS'],
@@ -35,7 +35,7 @@ export default function Dashboard() {
         <div className={`tiles ${live.stale ? 'dim' : ''}`}>
           {TILES.map(([k, label, q, cls]) => (
             <Link key={k} to={`/app/complaints${q}`} className={`tile ${cls ?? ''}`}>
-              <div className="n">{sum.data.counters[k]}</div><div className="l">{label}</div>
+              <div className="n"><Count to={sum.data.counters[k]} /></div><div className="l">{label}</div>
             </Link>
           ))}
         </div>

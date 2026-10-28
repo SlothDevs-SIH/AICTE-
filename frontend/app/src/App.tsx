@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { OFFICER_ROLES, ROLE_LABEL, useAuth } from './auth'
 import { Logo, SyntheticBadge, useFetch } from './components/ui'
@@ -31,10 +31,10 @@ const NAV: { to: string; label: string; icon: string; roles: string[] }[] = [
   { to: '/app/coordination', label: 'Coordination', icon: '⇋', roles: [...OFFICER_ROLES, 'management', 'competent_authority', 'admin', 'auditor'] },
   { to: '/app/management', label: 'Management view', icon: '◈', roles: ['management', 'competent_authority', 'admin', 'auditor'] },
   { to: '/app/imports', label: 'Import cases', icon: '⇪', roles: [...OFFICER_ROLES, 'admin'] },
-  { to: '/app/colleges', label: 'Colleges', icon: '🏛', roles: ALL },
+  { to: '/app/colleges', label: 'Colleges', icon: '◧', roles: ALL },
   { to: '/app/escalations', label: 'Escalations', icon: '↑', roles: ['unit_supervisor', 'competent_authority', 'management', 'admin'] },
   { to: '/app/reports', label: 'Reports', icon: '▤', roles: ALL },
-  { to: '/app/audit', label: 'Audit & Verify', icon: '🔒', roles: ['auditor', 'admin', 'competent_authority'] },
+  { to: '/app/audit', label: 'Audit & Verify', icon: '✓', roles: ['auditor', 'admin', 'competent_authority'] },
   { to: '/app/admin', label: 'Admin', icon: '⚙', roles: ['admin'] },
   { to: '/app/status', label: 'System status', icon: '◉', roles: ALL },
 ]
@@ -47,6 +47,16 @@ function Shell() {
   const notes = useFetch<any>(me ? '/notifications' : null, [loc.pathname])
   const [dark, setDark] = useState(document.documentElement.getAttribute('data-theme') === 'dark')
   useEffect(() => setOpen(false), [loc.pathname])
+  const navRef = useRef<HTMLElement>(null)
+  // The highlight glides to the active link instead of jumping.
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    const a = nav?.querySelector<HTMLElement>('a.active')
+    const pill = nav?.querySelector<HTMLElement>('.nav-pill')
+    if (!nav || !pill) return
+    if (a) { pill.style.opacity = '1'; pill.style.transform = `translateY(${a.offsetTop}px)`; pill.style.height = `${a.offsetHeight}px` }
+    else pill.style.opacity = '0'
+  }, [loc.pathname, me])
   if (!ready) return <p style={{ padding: '2rem' }} role="status">Loading…</p>
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
   const toggle = () => {
@@ -60,7 +70,8 @@ function Shell() {
       <a className="skip" href="#main">Skip to content</a>
       <aside className={`side ${open ? 'open' : ''}`} aria-label="Primary">
         <Link to="/" className="brand"><Logo /> SAMANVAY</Link>
-        <nav>
+        <nav ref={navRef}>
+          <span className="nav-pill" aria-hidden="true" />
           {NAV.filter((n) => n.roles.includes(me.role)).map((n) => (
             <NavLink key={n.to} to={n.to} end={n.to === '/app'}><span aria-hidden="true">{n.icon}</span> {n.label}</NavLink>
           ))}
@@ -79,7 +90,7 @@ function Shell() {
             <button className="btn sm" onClick={async () => { await logout(); nav('/') }}>Sign out</button>
           </div>
         </header>
-        <main id="main" className="content"><Outlet /></main>
+        <main id="main" className="content page-in" key={loc.pathname}><Outlet /></main>
       </div>
     </div>
   )

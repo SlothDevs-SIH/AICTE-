@@ -52,7 +52,7 @@ export default function Admin() {
 
       <section className="card" style={{ marginTop: '1rem' }}>
         <h2>AI features</h2>
-        <p className="muted">Both are off. Summaries use a fixed template unless a language model is switched on and an API key is configured on the server; model output that mentions anything not in the case facts is thrown away. Embedding-based matching is not built.</p>
+        <p className="muted">Both are off. Summaries use a fixed template unless a language model is switched on and an API key is configured on the server; model output that mentions anything not in the case facts is thrown away. Matching of different wording does not need either switch: it uses a built-in concept list.</p>
         {st.data && (
           <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
             <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_llm_enabled} onChange={(e) => setSetting('ai_llm_enabled', e.target.checked)} />

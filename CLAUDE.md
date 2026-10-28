@@ -1,4 +1,4 @@
-# Rules for Claude working in this repository
+﻿# Rules for Claude working in this repository
 
 This file is read automatically by Claude Code. It applies to every Claude session on this repo (claude.ai, Claude Code in VS Code, or anywhere else).
 
@@ -37,6 +37,7 @@ If they disagree, fix **all three in the same commit**.
 
 - Follow the phase order in `MASTER_PLAN.md` §12; finish a phase's exit criteria before starting the next.
 - Product principles P1–P9 in `MASTER_PLAN.md` §3 are non-negotiable (explain every flag, assist never decide, fail safe, audit everything, mask personal data, honest numbers, human correction, alert budget, declare synthetic data).
-- Synthetic data only. Never add real complaint data, personal data, secrets or keys to the repository.
+- Complaint and personal data stay synthetic: never add real complaints, personal data, secrets or keys to the repository. Public institution reference data (AICTE-approved college names, IDs, districts) may be imported into a local database with `import-aicte`, but is never committed.
 - A bug fix starts with a failing test.
 - The official problem statement is in `docs/PROBLEM_STATEMENT.md`; requirement IDs (`OBJ`, `KF`, `INN`, `OUT`, `TU`) come from it and are mapped to features in `MASTER_PLAN.md` §1.3. Keep that matrix in step with any change. The PS number is still missing (`MASTER_PLAN.md` V-M1).
+
