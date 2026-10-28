@@ -4,7 +4,7 @@ import { OFFICER_ROLES, ROLE_LABEL, useAuth } from './auth'
 import { CommandSearch, type CommandItem } from './components/CommandSearch'
 import { TreeMenu, type MenuItem } from './components/TreeMenu'
 import { DotBackdrop } from './components/DotBackdrop'
-import { Logo, useFetch } from './components/ui'
+import { useFetch } from './components/ui'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -82,6 +82,7 @@ function Shell() {
   const toggleMini = (v: boolean) => { setMini(v); try { localStorage.setItem('side-mini', v ? '1' : '0') } catch { /* private window */ } }
   const notes = useFetch<any>(me ? '/notifications' : null, [loc.pathname])
   useEffect(() => setOpen(false), [loc.pathname])
+  useEffect(() => { document.body.style.overflow = '' }, [])
   const menu = useMemo(() => (me ? menuFor(me.role) : []), [me])
   const commands = useMemo<CommandItem[]>(() => {
     const pages = flat(menu).map((l) => ({ id: l.id, title: l.label, section: 'Suggestions', icon: l.icon, action: () => nav(l.to!) }))
@@ -104,8 +105,7 @@ function Shell() {
       <a className="skip" href="#main">Skip to content</a>
       <aside className={`side ${open ? 'open' : ''}`} aria-label="Primary">
         <div className="side-head">
-          <Link to="/" className="brand"><Logo /><span className="lbl">SAMANVAY</span></Link>
-          <button type="button" className="side-toggle" onClick={() => toggleMini(!mini)} aria-label={mini ? 'Expand the menu' : 'Collapse the menu'} aria-pressed={mini} title={mini ? 'Expand' : 'Collapse'}>‹</button>
+          <button type="button" className="side-toggle" onClick={() => toggleMini(!mini)} aria-label={mini ? 'Expand the menu' : 'Collapse the menu'} aria-pressed={mini} title={mini ? 'Expand' : 'Collapse'}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /><path className="chev" d="m15 9-3 3 3 3" /></svg></button>
         </div>
         <div className="profile">
           <span className="avatar" aria-hidden="true">{initials(me.name)}</span>

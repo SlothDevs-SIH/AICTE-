@@ -414,3 +414,20 @@ mark.hl { background-size: 0 100%; background-repeat: no-repeat; background-posi
   .shell.mini .tree-btn:hover { transform: none; }
 }
 @media (max-width: 860px) { .shell, .shell.mini { grid-template-columns: 1fr; } .side-toggle { display: none; } }
+
+/* glass profile card and collapse button */
+.side-head { justify-content: flex-end; margin: .2rem .2rem .9rem; }
+.side-toggle { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-size: 0; border: 1px solid rgba(255, 255, 255, .28); background: linear-gradient(180deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, .08)); -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -1px 0 rgba(255, 255, 255, .08), 0 6px 14px rgba(5, 15, 50, .3); transition: transform .3s var(--spring), background .25s, box-shadow .25s; }
+.side-toggle:hover { transform: translateY(-1px) scale(1.05); background: linear-gradient(180deg, rgba(255, 255, 255, .4), rgba(255, 255, 255, .14)); }
+.side-toggle:active { transform: scale(.95); }
+.side-toggle .chev { transition: transform .4s var(--spring); transform-origin: 12px 12px; }
+.shell.mini .side-toggle { transform: none; }
+.shell.mini .side-toggle .chev { transform: rotate(180deg); }
+.shell.mini .side-head { justify-content: center; margin-inline: 0; }
+.side .profile { position: relative; overflow: hidden; color: #fff; border: 1px solid rgba(255, 255, 255, .22); background: linear-gradient(180deg, rgba(28, 28, 32, .92), rgba(0, 0, 0, .96)); -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(255, 255, 255, .06), 0 10px 22px rgba(0, 0, 0, .35); border-radius: 18px; }
+.side .profile::before { content: ''; position: absolute; inset: 0 0 55% 0; background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0)); pointer-events: none; }
+.side .signout { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .3); background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, .08)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 3px 8px rgba(0, 0, 0, .4); color: #fff; }
+.side .signout:hover { background: linear-gradient(180deg, rgba(255, 138, 42, .95), rgba(255, 138, 42, .6)); color: #fff; transform: rotate(90deg); }
+
+.shell > .side { position: sticky; top: 0; height: 100vh; }
+@media (max-width: 860px) { .shell > .side { position: fixed; height: auto; } }

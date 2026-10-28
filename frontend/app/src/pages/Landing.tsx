@@ -119,6 +119,7 @@ export default function Landing() {
   const { me } = useAuth()
   const nav = useNavigate()
   const [live, setLive] = useState<any>(null)
+  useEffect(() => () => { document.body.style.overflow = '' }, []) // the sign-in panel locks scrolling; leaving the page must release it
   useEffect(() => {
     fetch('/api/v1/public/overview').then((r) => (r.ok ? r.json() : null)).then(setLive).catch(() => setLive(null))
   }, [])
