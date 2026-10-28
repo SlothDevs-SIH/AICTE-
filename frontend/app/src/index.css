@@ -431,3 +431,27 @@ mark.hl { background-size: 0 100%; background-repeat: no-repeat; background-posi
 
 .shell > .side { position: sticky; top: 0; height: 100vh; }
 @media (max-width: 860px) { .shell > .side { position: fixed; height: auto; } }
+
+/* how it works: cards that open as a pop-up */
+.how-grid { align-items: stretch; }
+.how-card { width: 320px; max-width: 100%; height: 100%; display: flex; flex-direction: column; gap: .5rem; padding: 1.2rem; border-radius: 24px; background: #fff; color: var(--text); cursor: pointer; box-shadow: 0 0 0 1px rgba(255, 255, 255, .35), 0 18px 30px rgba(5, 15, 50, .3); transition: transform .35s var(--spring), box-shadow .3s; }
+.how-card:hover { transform: translateY(-4px); box-shadow: 0 0 0 2px var(--hl), 0 24px 36px rgba(5, 15, 50, .38); }
+.how-card:focus-visible { outline: 3px solid var(--hl); outline-offset: 3px; }
+.how-card-top { display: flex; align-items: center; justify-content: space-between; }
+.how-card .how-t { margin: .3rem 0 0; }
+.how-open { margin-top: auto; padding-top: .5rem; font-size: .85rem; font-weight: 700; color: var(--brand); }
+.how-card:hover .how-plus { background: var(--hl); color: #0f1f3d; transform: rotate(90deg); }
+.how-plus { transition: transform .35s var(--spring), background .2s; }
+.how-pop { width: min(780px, 100%) !important; height: auto !important; max-height: 88vh; box-shadow: 0 0 0 100vmax rgba(10, 22, 52, .62), 0 40px 80px rgba(5, 15, 50, .5); }
+.how-pop-in { padding: clamp(1.4rem, 4vw, 2.6rem); }
+.how-n-lg { width: 48px; height: 48px; font-size: 1.3rem; }
+.how-pop-in h3 { margin: 1rem 0 .6rem; font-size: clamp(1.6rem, 3.4vw, 2.2rem); letter-spacing: -.02em; color: var(--text); }
+.how-pop-lead { margin: 0 0 1.4rem; font-size: 1.12rem; line-height: 1.55; color: var(--mute); }
+.how-pop-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .9rem; }
+.how-pop-list li { display: flex; gap: .9rem; align-items: flex-start; padding: 1rem 1.1rem; border-radius: 16px; background: var(--surface-2); }
+.how-pop-list li span { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; font-size: .9rem; }
+.how-pop-list li p { margin: 0; line-height: 1.55; color: var(--text); }
+
+.how-grid > .relative { display: flex; }
+.how-grid > .relative > .relative { display: flex; }
+.how-grid .how-card { height: auto; }

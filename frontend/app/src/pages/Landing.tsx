@@ -5,8 +5,7 @@ import { useAuth } from '../auth'
 import { DotBackdrop } from '../components/DotBackdrop'
 import { LoginForm } from '../components/LoginForm'
 import { Count, Logo } from '../components/ui'
-import { Expandable, ExpandableCard, ExpandableCardContent, ExpandableCardHeader, ExpandableContent, ExpandableTrigger } from '@/components/ui/expandable'
-import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '@/components/ui/expandable-screen'
+import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger, useExpandableScreen } from '@/components/ui/expandable-screen'
 import { OrganicButton } from '@/components/ui/organic-button'
 import { ShiftCard } from '@/components/ui/shift-card'
 import { TextAnimate } from '@/components/ui/text-animate'
@@ -41,7 +40,7 @@ function SkylineArt() {
   )
 }
 
-const STEPS: { t: string; sum: string; more: string[]; h: number; c: number }[] = [
+const STEPS: { t: string; sum: string; more: string[] }[] = [
   {
     t: 'Unified institution register',
     sum: 'Each complaint is resolved to one verified AICTE institution record, so the Bureau, the PGRC and regional offices work from the same college and the same history.',
@@ -50,7 +49,6 @@ const STEPS: { t: string; sum: string; more: string[]; h: number; c: number }[] 
       'Look-alike names in the same city are held for an officer to confirm and are never merged automatically.',
       'Every merge, link and correction is attributed to a named officer and written to the audit log.',
     ],
-    h: 703, c: 319,
   },
   {
     t: 'Cross-unit overlap detection',
@@ -60,7 +58,6 @@ const STEPS: { t: string; sum: string; more: string[]; h: number; c: number }[] 
       'Issue similarity reads English, Hinglish and Devanagari text through a concept list. An optional model reading is added only when enabled and is labelled as AI-written.',
       'Alerts are capped per officer per day, so priority cases are not buried.',
     ],
-    h: 660, c: 296,
   },
   {
     t: 'Action Gate before every step',
@@ -70,7 +67,6 @@ const STEPS: { t: string; sum: string; more: string[]; h: number; c: number }[] 
       'Pairs of actions that contradict each other are classified as Conflict and need a recorded reason to proceed.',
       'Each decision is chained into a tamper-evident audit trail that an auditor can verify.',
     ],
-    h: 595, c: 273,
   },
 ]
 
@@ -88,6 +84,17 @@ const EVIDENCE: { n: number; of: number; title: string; note: string }[] = [
   { n: 10, of: 10, title: 'Look-alike colleges kept apart', note: 'Colleges with a similar name in the same city; none was wrongly merged.' },
   { n: 13, of: 20, title: 'Misspelled names linked', note: 'Linked automatically. The other 7 go to an officer to confirm, by design.' },
 ]
+
+/** Closes the open pop-up when the page behind it is clicked. */
+function ClickAway() {
+  const { collapse } = useExpandableScreen()
+  useEffect(() => {
+    const down = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('.how-pop')) collapse() }
+    document.addEventListener('mousedown', down)
+    return () => document.removeEventListener('mousedown', down)
+  }, [collapse])
+  return null
+}
 
 function Art({ k }: { k: string }) {
   const b = '#1a3fa8', o = '#ff8a2a', l = '#c9d6f5'
@@ -184,25 +191,25 @@ export default function Landing() {
             <p className="how-lead">Three safeguards sit between an incoming complaint and an officer's decision. Select a step to see how it works.</p>
             <div className="how-grid">
               {STEPS.map((s, i) => (
-                <Expandable key={s.t} expandDirection="vertical" expandBehavior="push" onExpandStart={() => undefined} onCollapseStart={() => undefined}>
-                  <ExpandableCard className="w-full relative" collapsedSize={{ width: 320, height: s.c }} expandedSize={{ width: 320, height: s.h }}>
-                    <ExpandableTrigger>
-                      <ExpandableCardHeader className="p-2">
-                        <div>
-                          <span className="how-n">{i + 1}</span>
-                          <h3 className="how-t">{s.t}</h3>
-                        </div>
-                        <span className="how-plus" aria-hidden="true">+</span>
-                      </ExpandableCardHeader>
-                      <ExpandableCardContent className="px-2 pb-2">
-                        <p className="how-sum">{s.sum}</p>
-                      </ExpandableCardContent>
-                    </ExpandableTrigger>
-                    <ExpandableContent preset="blur-md" stagger>
-                      <ul className="how-more">{s.more.map((m) => <li key={m}>{m}</li>)}</ul>
-                    </ExpandableContent>
-                  </ExpandableCard>
-                </Expandable>
+                <ExpandableScreen key={s.t} layoutId={`how-${i}`} triggerRadius="24px" contentRadius="24px">
+                  <ExpandableScreenTrigger>
+                    <div className="how-card" role="button" tabIndex={0} aria-haspopup="dialog">
+                      <div className="how-card-top"><span className="how-n">{i + 1}</span><span className="how-plus" aria-hidden="true">+</span></div>
+                      <h3 className="how-t">{s.t}</h3>
+                      <p className="how-sum">{s.sum}</p>
+                      <span className="how-open">Open the details →</span>
+                    </div>
+                  </ExpandableScreenTrigger>
+                  <ExpandableScreenContent className="how-pop bg-white" closeButtonClassName="text-primary hover:bg-primary/10">
+                    <ClickAway />
+                    <div className="how-pop-in">
+                      <span className="how-n how-n-lg">{i + 1}</span>
+                      <h3>{s.t}</h3>
+                      <p className="how-pop-lead">{s.sum}</p>
+                      <ol className="how-pop-list">{s.more.map((m, j) => <li key={m}><span>{j + 1}</span><p>{m}</p></li>)}</ol>
+                    </div>
+                  </ExpandableScreenContent>
+                </ExpandableScreen>
               ))}
             </div>
           </div>
