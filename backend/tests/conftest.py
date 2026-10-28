@@ -46,3 +46,10 @@ def login(client, who: str) -> dict:
 def tokens(client):
     return {w: login(client, w) for w in (
         "officer.rb", "officer.pgrc", "supervisor.rb", "management", "authority", "admin", "auditor", "regional.west")}
+
+
+@pytest.fixture(autouse=True)
+def _no_real_model(monkeypatch):
+    """Tests never call a real model, whatever keys the machine has; a test that needs a key sets its own."""
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)

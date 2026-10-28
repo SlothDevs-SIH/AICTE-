@@ -303,7 +303,7 @@ Each screen: **Purpose · Roles · Layout · Data · Key components · States an
 
 ### 4.15 Admin
 - **Roles:** admin.
-- **Tabs:** **Settings** (thresholds with descriptions, units, defaults, last changed by; edits require a reason and are audited), **Users** (create, role, unit, active), **AI switches** (embeddings, LLM — with the current status and what falls back), **Scenarios** (list, load, with a clear "synthetic data only" label).
+- **Tabs:** **Settings** (thresholds with descriptions, units, defaults, last changed by; edits require a reason and are audited), **Users** (create, role, unit, active), **AI switches (superseded: the AI reading is on whenever a model key is set; only “Check existing overlaps” remains)** (embeddings, LLM — with the current status and what falls back), **Scenarios** (list, load, with a clear "synthetic data only" label).
 - **Data:** `/admin/*` endpoints.
 - **Rules:** changing a threshold shows its effect text ("will apply to the next scan"); dangerous actions need a confirm dialog naming the effect.
 - **Tests:** reason required; AI switch updates the header status; scenario load confirmation.
@@ -382,7 +382,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 18 | Action Gate | F3 | ⚠️ | pages/Gate.tsx. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
 | 19 | Audit & Verify | F3 | ⚠️ | pages/Audit.tsx. Built and checked by hand with Edge screenshots on 2026-10-28. No automated frontend tests, no axe run, no CI yet |
 | 20 | Coordination Thread, notifications | F4 | ⚠️ | pages/Coordination.tsx, pages/Notifications.tsx, bell in App.tsx. Checked by hand in Edge on 2026-10-28; no automated frontend tests, no axe run |
-| 21 | Role-aware UI complete, masking everywhere, Admin | F4 | ⚠️ | pages/Admin.tsx (users, settings, scenarios, AI switch). Role-aware navigation done; masking verified only on the case page. Checked by hand in Edge on 2026-10-28; no automated frontend tests, no axe run |
+| 21 | Role-aware UI complete, masking everywhere, Admin | F4 | ⚠️ | pages/Admin.tsx (users, settings, scenarios, "Check existing overlaps" for the AI reading, which has no switch: it is on whenever the server has a model key; light theme only). Role-aware navigation done; masking verified only on the case page. Checked by hand in Edge on 2026-10-28; no automated frontend tests, no axe run |
 | 22 | Management View, Reports | F5 | ⚠️ | pages/Management.tsx, pages/Reports.tsx (incl. monthly and quarterly). Checked by hand in Edge on 2026-10-28; no automated frontend tests, no axe run |
 | 23 | AskBar, AI summary UI, Joint Case Brief link, Scenario loader UI | F5 | ⚠️ | AskBar and AiLabel in components/ui.tsx, summary and PDF brief in pages/Overlaps.tsx, scenario loader in Admin. Language-model path not run against the real service. Checked by hand in Edge on 2026-10-28; no automated frontend tests, no axe run |
 | 24 | Usability walkthrough, performance measurement, hidden source maps, security headers review | F6 | 📋 | — |

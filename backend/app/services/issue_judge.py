@@ -1,6 +1,6 @@
 """Language-model judgement: do two complaints at one college describe the same problem, in any wording?
 
-Off unless the admin switch `ai_issue_matching` is on AND a model key (GEMINI_API_KEY, or ANTHROPIC_API_KEY) is set. Only the two complaint titles and
+On whenever a model key (GEMINI_API_KEY, or ANTHROPIC_API_KEY) is set on the server; no admin switch. Only the two complaint titles and
 descriptions are sent, never names, phone numbers or e-mail addresses. The answer is a suggestion that is added to the
 Match Receipt and labelled AI-written; it never links, closes or dismisses anything. Any failure returns None and the
 concept-list result stands. Not exercised against the real service in this repository; the tests use a fake.
@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 
 from app.adapters import llm
 from app.db.models import Complaint, Overlap
-from app.services.settings import get_setting
 
 MIN_CONFIDENCE = 0.7
 SYSTEM = (
@@ -27,7 +26,7 @@ BANNED = re.compile(r"\b(violat|fraud|guilty|illegal|criminal)|SMV-\d", re.I)
 
 
 def enabled(db: Session) -> bool:
-    return bool(get_setting(db, "ai_issue_matching")) and llm.available()
+    return llm.available()
 
 
 def _clean(text: str | None) -> str:

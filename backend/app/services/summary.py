@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from app.adapters import llm
 from app.db.models import Category, Complaint, Institution, Overlap, Unit
-from app.services.settings import get_setting
 
 
 def facts(db: Session, o: Overlap) -> dict:
@@ -48,7 +47,7 @@ def _grounded(text: str, f: dict) -> bool:
 def summarise(db: Session, o: Overlap) -> dict:
     f = facts(db, o)
     base = template(f)
-    if get_setting(db, "ai_llm_enabled") and llm.available():
+    if llm.available():
         text = llm.complete("Rewrite these facts as two or three plain sentences for a government officer. "
                             "Use only the facts given. Do not accuse anyone. Do not add numbers or IDs.", base)
         if text and _grounded(text, f):

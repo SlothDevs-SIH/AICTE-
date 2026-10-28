@@ -173,7 +173,6 @@ def test_summary_template_and_llm_guard(client, tokens, monkeypatch):
     o = _two_unit_pair(client, tokens)
     off = client.post(f"{API}/overlaps/{o['id']}/summary", headers=tokens["officer.rb"]).json()
     assert off["kind"] == "Template summary" and o["a"]["case_id"] in off["text"]
-    assert client.put(f"{API}/admin/settings/ai_llm_enabled", json={"value": True}, headers=tokens["admin"]).status_code == 200
     from app.adapters import llm
     monkeypatch.setattr(llm, "available", lambda: True)
     monkeypatch.setattr(llm, "complete", lambda s, u, max_tokens=400: "This is fraud by SMV-2026-999999 over 777 days.")
@@ -185,7 +184,6 @@ def test_summary_template_and_llm_guard(client, tokens, monkeypatch):
     assert ok["kind"] == "AI-written" and ok["text"] == good_text
     monkeypatch.setattr(llm, "complete", lambda s, u, max_tokens=400: None)
     assert client.post(f"{API}/overlaps/{o['id']}/summary", headers=tokens["officer.rb"]).json()["kind"] == "Template summary"
-    client.put(f"{API}/admin/settings/ai_llm_enabled", json={"value": False}, headers=tokens["admin"])
 
 
 def test_brief_pdf(client, tokens):

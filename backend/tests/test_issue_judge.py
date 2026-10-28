@@ -7,7 +7,6 @@ from app.adapters import llm
 from app.db.base import session_factory
 from app.db.models import Complaint, Overlap, User
 from app.services import issue_judge
-from app.services.settings import DEFAULTS
 
 
 def _c(title, desc=""):
@@ -50,11 +49,10 @@ def test_only_titles_and_descriptions_are_sent(monkeypatch):
     assert "SECRET-NAME" not in seen["u"] and seen["u"].count("<complaint>") == 2
 
 
-def test_off_by_default_and_rescan_adds_labelled_ai_reading(client, tokens, monkeypatch):
+def test_needs_a_key_and_rescan_adds_labelled_ai_reading(client, tokens, monkeypatch):
     h = tokens["admin"]
-    assert DEFAULTS["ai_issue_matching"] is False
+    monkeypatch.setattr(llm, "available", lambda: False)
     assert client.post("/api/v1/admin/jobs/ai-rescan", headers=h).status_code == 409
-    client.put("/api/v1/admin/settings/ai_issue_matching", json={"value": True}, headers=h)
     monkeypatch.setattr(llm, "available", lambda: True)
     monkeypatch.setattr(llm, "complete", lambda s, u, max_tokens=400: '{"same_issue": true, "confidence": 0.95, "reason": "Same underlying complaint."}')
     with session_factory()() as db:
@@ -72,7 +70,6 @@ def test_off_by_default_and_rescan_adds_labelled_ai_reading(client, tokens, monk
         ai = o.receipt_json["layers"]["L3_issue"]["ai"]
         assert ai["kind"] == "AI-written" and ai["same_issue"] is True
         assert len(o.receipt_json["layers"]["L4_rules"]["reasons"]) == before + 1
-    client.put("/api/v1/admin/settings/ai_issue_matching", json={"value": False}, headers=h)
 
 
 def test_gemini_request_shape_and_parsing(monkeypatch):

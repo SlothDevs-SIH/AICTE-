@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { OFFICER_ROLES, ROLE_LABEL, useAuth } from './auth'
-import { Logo, SyntheticBadge, useFetch } from './components/ui'
+import { Logo, NoticeTicker, useFetch } from './components/ui'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -45,7 +45,6 @@ function Shell() {
   const loc = useLocation()
   const [open, setOpen] = useState(false)
   const notes = useFetch<any>(me ? '/notifications' : null, [loc.pathname])
-  const [dark, setDark] = useState(document.documentElement.getAttribute('data-theme') === 'dark')
   useEffect(() => setOpen(false), [loc.pathname])
   const navRef = useRef<HTMLElement>(null)
   // The highlight glides to the active link instead of jumping.
@@ -59,12 +58,6 @@ function Shell() {
   }, [loc.pathname, me])
   if (!ready) return <p style={{ padding: '2rem' }} role="status">Loading…</p>
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
-  const toggle = () => {
-    const d = !dark
-    setDark(d)
-    document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light')
-    try { localStorage.setItem('theme', d ? 'dark' : 'light') } catch {}
-  }
   return (
     <div className="shell">
       <a className="skip" href="#main">Skip to content</a>
@@ -81,12 +74,11 @@ function Shell() {
         <header className="top">
           <div className="row">
             <button className="btn sm menu-btn" onClick={() => setOpen(!open)} aria-label="Toggle menu">☰</button>
-            <SyntheticBadge />
           </div>
+          <NoticeTicker />
           <div className="row">
-            <Link className="btn sm" to="/app/notifications" aria-label={`Notifications, ${notes.data?.unread ?? 0} unread`}>🔔 {notes.data?.unread ? <strong>{notes.data.unread} unread</strong> : 'Notifications'}</Link>
-            <button className="btn sm" onClick={toggle} aria-pressed={dark}>{dark ? '☀ Light' : '☾ Dark'}</button>
-            <span><strong>{me.name}</strong> <span className="badge b-neutral">{ROLE_LABEL[me.role]}</span></span>
+            <Link className="btn sm" to="/app/notifications" aria-label={`Notifications, ${notes.data?.unread ?? 0} unread`}>◔ {notes.data?.unread ? <strong>{notes.data.unread} unread</strong> : 'Notifications'}</Link>
+                        <span><strong>{me.name}</strong> <span className="badge b-neutral">{ROLE_LABEL[me.role]}</span></span>
             <button className="btn sm" onClick={async () => { await logout(); nav('/') }}>Sign out</button>
           </div>
         </header>

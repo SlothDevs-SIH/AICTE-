@@ -536,16 +536,9 @@ def ai_rescan(db: Session = Depends(get_db), user: User = Depends(require(R.ADMI
     from app.services import issue_judge
 
     if not issue_judge.enabled(db):
-        raise ApiError(409, "ai_off", "AI issue matching is off: switch it on in Admin and set GEMINI_API_KEY on the server.")
+        raise ApiError(409, "ai_off", "AI reading is not available: set GEMINI_API_KEY on the server.")
     return issue_judge.rescan(db, user.id)
 
-
-@router.post("/admin/ai/{feature}")
-def ai_switch(feature: str, body: dict, db: Session = Depends(get_db), user: User = Depends(require(R.ADMIN))):
-    key = {"llm": "ai_llm_enabled", "issue_matching": "ai_issue_matching"}.get(feature)
-    if key is None:
-        raise ApiError(404, "unknown_feature", "Unknown AI feature.")
-    return put_setting(key, {"value": bool(body.get("enabled"))}, db, user)
 
 
 SCENARIOS = {

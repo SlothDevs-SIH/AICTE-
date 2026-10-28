@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from app.adapters import llm
 from app.db.models import Category, Region, Unit
 from app.engine.institution import match_institution
-from app.services.settings import get_setting
 
 ALLOWED = {"unit", "region", "category", "state", "overdue", "escalated", "has_overlap", "q", "institution_id", "older_than_days"}
 STATE_WORDS = {"pending": "RECEIVED", "received": "RECEIVED", "assigned": "ASSIGNED", "under process": "UNDER_PROCESS",
@@ -79,7 +78,7 @@ def validate(db: Session, raw: dict) -> dict:
 def ask(db: Session, question: str) -> dict:
     used_ai = False
     filters: dict = {}
-    if get_setting(db, "ai_llm_enabled") and llm.available():
+    if llm.available():
         text = llm.complete(
             "Convert the user's question into JSON only, using only these keys: unit, region, category, state, "
             "overdue, escalated, has_overlap, older_than_days, q. No prose, no SQL.", question)

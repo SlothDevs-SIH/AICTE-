@@ -41,6 +41,12 @@ export default function Admin() {
       )}
 
       <section className="card" style={{ marginTop: '1rem' }}>
+        <h2>Check existing overlaps</h2>
+        <p className="muted">The AI reading of different wording is always on when the server has a <code>GEMINI_API_KEY</code>. This asks the model about overlaps that were found before, where no known problem type matched. Only case titles and descriptions are sent, never names or contact details. Answers appear in the Match Receipt as AI-written and never act on their own.</p>
+        <p><button className="btn primary" disabled={busy} onClick={() => wrap(async () => { const r = await api('/admin/jobs/ai-rescan', { method: 'POST' }); say(r.no_answer === 0, `${r.asked === 0 ? 'Nothing to ask: every open overlap already matches a known problem type or has an AI answer. ' : ''}Asked about ${r.asked} existing overlaps: ${r.now_same_issue} read as the same issue, ${r.no_answer} got no usable answer.${r.last_error ? ' Reason: ' + r.last_error : ''}`) }, '')}>Check existing overlaps</button></p>
+      </section>
+
+      <section className="card" style={{ marginTop: '1rem' }}>
         <h2>Alerts and escalation</h2>
         {st.loading && !st.data && <Loading what="settings" />}
         {st.error && <ErrorBox error={st.error} retry={st.reload} />}
@@ -60,30 +66,6 @@ export default function Admin() {
               ))}
             </div>
             <p><button className="btn" onClick={() => wrap(async () => { const r = await api('/admin/jobs/sla', { method: 'POST' }); say(true, `Checked time limits: ${r.reminders} reminders, ${r.sla_approaching} approaching, ${r.sla_breached} past limit, ${r.escalation_alerts} escalation suggestions, ${r.auto_escalated} auto-escalated, ${r.threads_expired} coordination requests expired.`) }, '')}>Run the time-limit check now</button></p>
-          </>
-        )}
-      </section>
-
-      <section className="card" style={{ marginTop: '1rem' }}>
-        <h2>AI features</h2>
-        <p className="muted">Both are off. Summaries use a fixed template unless a language model is switched on and an API key is configured on the server; model output that mentions anything not in the case facts is thrown away. Matching of different wording does not need either switch: it uses a built-in concept list.</p>
-        {st.data && (
-          <>
-            <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
-              <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_llm_enabled} onChange={(e) => setSetting('ai_llm_enabled', e.target.checked)} />
-              Allow language-model summaries (needs <code>GEMINI_API_KEY</code> on the server)
-            </label>
-            <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center', marginTop: '.6rem' }}>
-              <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_issue_matching} onChange={(e) => setSetting('ai_issue_matching', e.target.checked)} />
-              <span><strong>AI reading of different wording.</strong> When two cases at one college share no known problem type, the model is asked whether they are the same issue. Only the case titles and descriptions are sent, never names or contact details. The answer is shown in the Match Receipt as AI-written and never acts on its own.</span>
-            </label>
-            <p><button className="btn" disabled={busy} onClick={() => wrap(async () => {
-              const r = await api('/admin/ai/test', { method: 'POST' })
-              say(r.ok, r.ok
-                ? `Connected to ${r.provider} (${r.model}). Test pair read as ${r.answer.same_issue ? 'the same issue' : 'different issues'}, ${Math.round(r.answer.confidence * 100)}% sure: ${r.answer.reason}`
-                : `No answer from the model. ${r.error}`)
-            }, '')}>Test the AI connection</button>{' '}
-            <button className="btn" disabled={busy} onClick={() => wrap(async () => { const r = await api('/admin/jobs/ai-rescan', { method: 'POST' }); say(r.no_answer === 0, `${r.asked === 0 ? 'Nothing to ask: every open overlap already matches a known problem type or has an AI answer. ' : ''}Asked about ${r.asked} existing overlaps: ${r.now_same_issue} read as the same issue, ${r.no_answer} got no usable answer.${r.last_error ? ' Reason: ' + r.last_error : ''}`) }, '')}>Re-check existing overlaps with AI</button></p>
           </>
         )}
       </section>
