@@ -493,6 +493,26 @@ def put_setting(key: str, body: dict, db: Session = Depends(get_db), user: User 
     return {"key": key, "value": body["value"]}
 
 
+@router.post("/admin/jobs/import-aicte")
+def import_aicte(db: Session = Depends(get_db), user: User = Depends(require(R.ADMIN))):
+    """Start loading the real AICTE-approved institutions in the background (the server must reach AICTE's site)."""
+    from app import aicte_import
+
+    fresh = aicte_import.JOB["state"] != "running"
+    job = aicte_import.start_job()
+    if fresh:
+        write_audit(db, user.id, "AICTE_IMPORT_STARTED", "institution", "all", {})
+        db.commit()
+    return job
+
+
+@router.get("/admin/jobs/import-aicte")
+def import_aicte_status(user: User = Depends(require(R.ADMIN))):
+    from app import aicte_import
+
+    return aicte_import.JOB
+
+
 @router.post("/admin/ai/test")
 def ai_test(user: User = Depends(require(R.ADMIN))):
     """Send one fixed, invented pair to the model so an admin can see that the connection works."""

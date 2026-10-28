@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api, ApiError } from '../api'
 import { ROLE_LABEL } from '../auth'
 import { ErrorBox, Loading, useFetch } from '../components/ui'
@@ -14,6 +14,12 @@ export default function Admin() {
   const users = useFetch<any>('/admin/users')
   const sc = useFetch<any>('/admin/scenarios')
   const ref = useFetch<any>('/reference')
+  const imp = useFetch<any>('/admin/jobs/import-aicte')
+  useEffect(() => {
+    if (imp.data?.state !== 'running') return
+    const t = setInterval(imp.reload, 3000)
+    return () => clearInterval(t)
+  }, [imp.data?.state, imp.reload])
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [nu, setNu] = useState({ email: '', name: '', role: 'unit_officer', password: '', unit_code: 'RB' })
   const [busy, setBusy] = useState(false)
@@ -80,6 +86,18 @@ export default function Admin() {
             <button className="btn" disabled={busy} onClick={() => wrap(async () => { const r = await api('/admin/jobs/ai-rescan', { method: 'POST' }); say(r.no_answer === 0, `${r.asked === 0 ? 'Nothing to ask: every open overlap already matches a known problem type or has an AI answer. ' : ''}Asked about ${r.asked} existing overlaps: ${r.now_same_issue} read as the same issue, ${r.no_answer} got no usable answer.${r.last_error ? ' Reason: ' + r.last_error : ''}`) }, '')}>Re-check existing overlaps with AI</button></p>
           </>
         )}
+      </section>
+
+      <section className="card" style={{ marginTop: '1rem' }}>
+        <h2>Real AICTE colleges</h2>
+        <p className="muted">Loads the public list of AICTE-approved institutions (name, AICTE ID, district, state) into the college registry from AICTE's own site. Complaints stay simulated. The server must be able to reach the AICTE site; on a free host the list is lost at each deploy unless <code>AICTE_AUTO_IMPORT=true</code> is set.</p>
+        {imp.data && imp.data.state !== 'idle' && (
+          <p role="status">
+            <strong>{imp.data.state === 'running' ? 'Loading…' : 'Finished.'}</strong> {imp.data.done_states} of {imp.data.total_states} states · {imp.data.added} colleges added, {imp.data.updated} updated.
+            {imp.data.errors.length > 0 && <><br /><span className="muted">Problems: {imp.data.errors.slice(0, 4).join(' | ')}{imp.data.errors.length > 4 ? ` … and ${imp.data.errors.length - 4} more` : ''}</span></>}
+          </p>
+        )}
+        <button className="btn" disabled={busy || imp.data?.state === 'running'} onClick={() => wrap(async () => { await api('/admin/jobs/import-aicte', { method: 'POST' }); imp.reload() }, 'Started. Progress shows here.')}>Load real AICTE colleges</button>
       </section>
 
       <section className="card" style={{ marginTop: '1rem' }}>

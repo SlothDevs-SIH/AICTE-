@@ -1472,6 +1472,37 @@
         }
       }
     },
+    "/api/v1/admin/jobs/import-aicte": {
+      "get": {
+        "summary": "Import Aicte Status",
+        "operationId": "import_aicte_status_api_v1_admin_jobs_import_aicte_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Import Aicte",
+        "description": "Start loading the real AICTE-approved institutions in the background (the server must reach AICTE's site).",
+        "operationId": "import_aicte_api_v1_admin_jobs_import_aicte_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/ai/test": {
       "post": {
         "summary": "Ai Test",

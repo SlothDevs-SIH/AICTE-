@@ -107,6 +107,9 @@ def risk_score(db: Session, inst: Institution, today: date | None = None) -> dic
 
 
 def ranking(db: Session, limit: int = 20) -> list[dict]:
-    rows = [risk_score(db, i) for i in db.scalars(select(Institution))]
+    # only colleges that have an open case can rank, so a registry of thousands of real colleges stays fast
+    with_open = select(Complaint.institution_id).where(Complaint.institution_id.is_not(None),
+                                                       Complaint.state.in_(OPEN)).distinct()
+    rows = [risk_score(db, i) for i in db.scalars(select(Institution).where(Institution.id.in_(with_open)))]
     rows = [r for r in rows if r["open_cases"] > 0]
     return sorted(rows, key=lambda r: -r["score"])[:limit]

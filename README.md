@@ -42,3 +42,5 @@ All data is synthetic. No real complaint or personal data is used or stored in t
 ## Deploy on Render
 
 The repository root has a `requirements.txt` and a `render.yaml`. In the Render service use: build command `pip install -r requirements.txt`, start command `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and set `SECRET_KEY` and `PII_ENCRYPTION_KEY` (any long random strings). The built front end is committed, so no Node step is needed. On first start the app creates its tables and loads the demo data; restarts keep what is there. Render's free tier wipes the disk on each deploy, so the data resets then. Optional: `GEMINI_API_KEY`.
+
+Optional: set `AICTE_AUTO_IMPORT=true` on the host to load the real AICTE-approved colleges at every start (needs the host to reach facilities.aicte-india.org). Or sign in as admin and press "Load real AICTE colleges". The live AICTE endpoint has not been verified from the build machine; the import reports per-state problems on the Admin page.

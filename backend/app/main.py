@@ -1,3 +1,4 @@
+import os
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -16,6 +17,10 @@ from app.core.errors import ApiError, envelope
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     ensure_database()
+    if os.environ.get("AICTE_AUTO_IMPORT", "").lower() in ("1", "true", "yes"):
+        from app import aicte_import  # the disk of a free host is wiped on deploy, so load them again each start
+
+        aicte_import.start_job()
     yield
 
 
