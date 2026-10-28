@@ -3,7 +3,8 @@ import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 
 import { OFFICER_ROLES, ROLE_LABEL, useAuth } from './auth'
 import { CommandSearch, type CommandItem } from './components/CommandSearch'
 import { TreeMenu, type MenuItem } from './components/TreeMenu'
-import { Logo, NoticeTicker, useFetch } from './components/ui'
+import { DotBackdrop } from './components/DotPattern'
+import { Logo, useFetch } from './components/ui'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -97,6 +98,7 @@ function Shell() {
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
   return (
     <div className="shell">
+      <DotBackdrop />
       <a className="skip" href="#main">Skip to content</a>
       <aside className={`side ${open ? 'open' : ''}`} aria-label="Primary">
         <Link to="/" className="brand"><Logo /> SAMANVAY</Link>
@@ -116,7 +118,6 @@ function Shell() {
         <header className="top">
           <button className="btn sm menu-btn" onClick={() => setOpen(!open)} aria-label="Toggle menu">☰</button>
           <CommandSearch items={commands} extra={findCases} />
-          <NoticeTicker />
           <Link className="btn sm" to="/app/notifications" aria-label={`Notifications, ${notes.data?.unread ?? 0} unread`}>◔ {notes.data?.unread ? <strong>{notes.data.unread} unread</strong> : 'Notifications'}</Link>
         </header>
         <main id="main" className="content page-in" key={loc.pathname}><Outlet /></main>

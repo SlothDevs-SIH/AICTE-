@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api'
 import { ROLE_LABEL, useAuth } from '../auth'
-import { OrganicButton } from './OrganicButton'
+import { InteractiveHoverButton } from './InteractiveHoverButton'
 
 const DEMO = [
   ['officer.rb', 'unit_officer', 'RB'], ['supervisor.rb', 'unit_supervisor', 'RB'], ['officer.pgrc', 'unit_officer', 'PGRC'],
@@ -39,7 +39,7 @@ export function LoginForm({ from = '/app' }: { from?: string }) {
           </span>
         </label>
         {err && <div className="notice err" role="alert">{err}</div>}
-        <div><OrganicButton type="submit" size="md" disabled={busy} label={busy ? 'Signing in…' : 'Sign in'} /></div>
+        <div><InteractiveHoverButton type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</InteractiveHoverButton></div>
       </form>
       <p className="muted" style={{ margin: '1.1rem 0 .5rem' }}>Demo accounts (generated). Pick one to fill the email; the demo password is in the project README.</p>
       <div className="chips">

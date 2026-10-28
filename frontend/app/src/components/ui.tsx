@@ -113,28 +113,6 @@ export function SyntheticBadge() {
 }
 
 
-export function NoticeTicker() {
-  const o = useFetch<any>('/public/overview')
-  const d = o.data
-  const items: ReactNode[] = [
-    <>Cases on this site are <b>simulated</b>: AICTE does not publish complaint records.</>,
-    d ? <><b>{d.colleges_real > 0 ? d.colleges_real.toLocaleString('en-IN') : 'No'}</b> real AICTE colleges in the registry{d.colleges_real > 0 ? '' : ' yet (load them from Admin)'}.</> : <>Loading registry figures…</>,
-    d ? <><b>{d.complaints.toLocaleString('en-IN')}</b> simulated cases, <b>{d.open_overlaps.toLocaleString('en-IN')}</b> open overlaps across units.</> : <>Loading case figures…</>,
-    <>Every flag is explained, and a person decides. The system only suggests.</>,
-  ]
-  const track = [...items, ...items]
-  return (
-    <div className="ticker" role="region" aria-label="Notices about the data on this site">
-      <span className="ticker-tag"><span className="ticker-dot" aria-hidden="true" />Notice</span>
-      <div className="ticker-view">
-        <div className="ticker-track">
-          {track.map((t, i) => <span className="ticker-item" key={i} aria-hidden={i >= items.length}>{t}</span>)}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')
 export const fmtDateTime = (d?: string | null) => (d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—')
 

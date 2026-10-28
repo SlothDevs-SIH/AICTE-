@@ -4,8 +4,11 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '../components/ExpandableScreen'
 import { ShiftCard } from '../components/ShiftCard'
+import { DotBackdrop } from '../components/DotPattern'
+import { InteractiveHoverButton } from '../components/InteractiveHoverButton'
+import { TextAnimate } from '../components/TextAnimate'
+import { Expandable, ExpandableCard, ExpandableCardContent, ExpandableCardHeader, ExpandableContent, ExpandableTrigger } from '../components/Expandable'
 import { LoginForm } from '../components/LoginForm'
-import { OrganicButton } from '../components/OrganicButton'
 import { Count, Logo } from '../components/ui'
 
 function SkylineArt() {
@@ -46,6 +49,7 @@ export default function Landing() {
   }, [])
   return (
     <div className="land">
+      <DotBackdrop />
       <header className="lnav">
         <Link to="/" className="brand"><Logo /> SAMANVAY</Link>
         <nav aria-label="Sections">
@@ -59,16 +63,12 @@ export default function Landing() {
       <section className="hero" aria-labelledby="h">
         <div className="hero-art"><SkylineArt /></div>
         <div className="hero-copy">
-          <h1 id="h">Coordinate <mark className="hl">before</mark> you act.</h1>
-          <p className="lead">
-            AICTE complaints reach the Regulation Bureau, the Public Grievance Redressal Cell and regional offices separately.
-            SAMANVAY puts them in one place, warns an officer when another unit is already handling the same college, and shows
-            exactly why.
-          </p>
-          {me ? <OrganicButton to="/app" size="lg" label="Open the dashboard" /> : (
+          <h1 id="h"><TextAnimate as="span" animation="blurInUp" by="word">Coordinate</TextAnimate> <mark className="hl"><TextAnimate as="span" animation="blurInUp" by="word" delay={0.2}>before</TextAnimate></mark> <TextAnimate as="span" animation="blurInUp" by="word" delay={0.35}>you act.</TextAnimate></h1>
+          <TextAnimate as="p" animation="blurInUp" by="word" delay={0.5} duration={1.2} className="lead">AICTE complaints reach the Regulation Bureau, the Public Grievance Redressal Cell and regional offices separately. SAMANVAY puts them in one place, warns an officer when another unit is already handling the same college, and shows exactly why.</TextAnimate>
+          {me ? <InteractiveHoverButton to="/app" className="ihb-lg">Open the dashboard</InteractiveHoverButton> : (
             <ExpandableScreen layoutId="cta-card" triggerRadius="100px" contentRadius="24px">
               <ExpandableScreenTrigger>
-                <span>Get started <span aria-hidden="true">→</span></span>
+                <InteractiveHoverButton as="span" className="ihb-lg">Get started</InteractiveHoverButton>
               </ExpandableScreenTrigger>
               <ExpandableScreenContent className="xs-content">
                 <div className="xs-grid">
@@ -117,16 +117,45 @@ export default function Landing() {
       </section>
 
       <section className="section" id="how">
-        <h2>How it works</h2>
-        <div className="steps">
-          <div className="step"><h3>One record per college</h3><p className="muted">Every case, from every Bureau or Cell, is linked to a single institution record. Spelling variants of a college name resolve to the same record; look-alike names in the same city do not.</p></div>
-          <div className="step"><h3>A warning with its reasons</h3><p className="muted">When two units hold open cases on one college, the officer sees a Match Receipt: which rules fired and what each case says. No alert without an explanation.</p></div>
-          <div className="step"><h3>A gate before action</h3><p className="muted">Before issuing a notice or closing a case, the Action Gate shows what the other unit is doing. The officer can request coordination, link the cases, or proceed with a written reason. All recorded.</p></div>
+        <TextAnimate as="h2" animation="blurInUp" by="word" once>How it works</TextAnimate>
+        <div className="how-box">
+          <p className="how-lead">Three safeguards sit between an incoming complaint and an officer's decision. Select a step to see what it does.</p>
+          <div className="how-grid">
+            {[
+              ['One verified record per institution', 'Every complaint, from every Bureau and Cell, resolves to a single AICTE institution record.', [
+                'Spelling variants, abbreviations and renamed colleges are matched on name, district and AICTE ID.',
+                'Look-alike colleges in one city are never merged automatically; uncertain matches go to an officer to confirm.',
+                'Each link records who confirmed it, when, and why.']],
+              ['Early warning, with the evidence', 'When two units hold open cases on the same college, the officer sees why before acting.', [
+                'A Match Receipt lists every rule that fired: same college, same issue, conflicting actions.',
+                'The same problem described in different words (English, Hinglish, Devanagari) is matched by concept, with an optional, clearly labelled AI reading.',
+                'No alert without an explanation, and each officer has a daily alert limit.']],
+              ['A gate before every action', 'Notices, closures and transfers pass an Action Gate that shows what the other unit is doing.', [
+                'The officer can request coordination, link the cases, or proceed with a written reason.',
+                'Conflicting actions on one college are flagged for a second look; the system only suggests, a person decides.',
+                'Every decision is written to a tamper-evident audit chain.']],
+            ].map(([t, sum, more], i) => (
+              <Expandable key={t as string} expandDirection="vertical" expandBehavior="push">
+                <ExpandableCard collapsedSize={{ width: 310, height: 215 }} expandedSize={{ width: 310, height: undefined }}>
+                  <ExpandableTrigger>
+                    <ExpandableCardHeader>
+                      <div><span className="how-n">{i + 1}</span><h3>{t as string}</h3></div>
+                      <span className="how-plus" aria-hidden="true">+</span>
+                    </ExpandableCardHeader>
+                    <ExpandableCardContent><p>{sum as string}</p></ExpandableCardContent>
+                  </ExpandableTrigger>
+                  <ExpandableContent preset="blur-md" stagger>
+                    <ul className="how-more">{(more as string[]).map((m) => <li key={m}>{m}</li>)}</ul>
+                  </ExpandableContent>
+                </ExpandableCard>
+              </Expandable>
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="section" id="covers" style={{ paddingTop: 0 }}>
-        <h2>What it covers</h2>
+        <TextAnimate as="h2" animation="blurInUp" by="word" once>What it covers</TextAnimate>
         <div className="sc-grid">
           {[
             ['Single-window dashboard', '▦', 'Received, pending, under process, disposed, transferred, escalated and beyond-timeline cases, with institution-wise and unit-wise views.'],
@@ -145,7 +174,7 @@ export default function Landing() {
       </section>
 
       <section className="section" id="evidence" style={{ paddingTop: 0 }}>
-        <h2>What we have measured, and what we have not</h2>
+        <TextAnimate as="h2" animation="blurInUp" by="word" once>What we have measured, and what we have not</TextAnimate>
         <p className="muted" style={{ maxWidth: '46rem' }}>
           AICTE does not publish complaint records, so the complaints in this prototype are simulated; the college registry can be loaded with real AICTE
           approved institutions. The numbers below come from planted test scenarios that we created ourselves, so they show the rules work as designed.
@@ -156,7 +185,6 @@ export default function Landing() {
           <div className="card"><div className="stat">0 of 10</div><p className="muted" style={{ margin: 0 }}>look-alike colleges wrongly merged with a similar name in the same city.</p></div>
           <div className="card"><div className="stat">13 of 20</div><p className="muted" style={{ margin: 0 }}>misspelled names linked automatically. The other 7 are sent to an officer to confirm, by design.</p></div>
         </div>
-        <p className="muted" style={{ maxWidth: '46rem' }}><strong>Built:</strong> matching of different wording for the same issue through a hand-written concept list (English, Hinglish, Devanagari), coordination threads, bulk import and PDF briefs. <strong>Not built:</strong> a neural language model for matching, and Hindi-script college-name matching.</p>
       </section>
 
       <footer className="lfoot">
