@@ -57,3 +57,22 @@ def test_unmatched_case_can_be_linked_and_alias_is_remembered(client, tokens):
     assert again.status_code == 409
     sug = client.get(f"{API}/institutions/suggest?text={odd}", headers=tokens["officer.rb"]).json()["items"]
     assert sug and sug[0]["institution_id"] == target["institution_id"]
+
+
+def test_port_opens_before_data_is_loaded(client):
+    """While the first data loads, the server answers health checks and tells everything else to retry."""
+    from app.main import STARTUP
+
+    STARTUP.update(state="starting", error=None)
+    try:
+        assert client.get("/api/v1/healthz").status_code == 200
+        ready = client.get("/api/v1/readyz")
+        assert ready.status_code == 200 and ready.json()["status"] == "starting"
+        busy = client.get("/api/v1/public/overview")
+        assert busy.status_code == 503 and busy.json()["error"]["code"] == "starting"
+        STARTUP.update(state="failed", error="OperationalError: could not connect")
+        failed = client.get("/api/v1/readyz")
+        assert failed.status_code == 503 and "could not connect" in str(failed.json())
+    finally:
+        STARTUP.update(state="ready", error=None)
+    assert client.get("/api/v1/public/overview").status_code == 200

@@ -32,6 +32,12 @@ def readyz(db: Session = Depends(get_db)):
         database = "ok"
     except Exception:  # readiness must never raise
         database = "down"
+    from app.main import STARTUP
+
+    if STARTUP["state"] == "starting":  # still loading data: alive and listening, not yet useful
+        return JSONResponse({"status": "starting", "checks": {"database": database}, "adapters": adapters()}, status_code=200)
+    if STARTUP["state"] == "failed":
+        return JSONResponse({"status": "not_ready", "checks": {"database": database, "startup": STARTUP["error"]}}, status_code=503)
     body = {
         "status": "ready" if database == "ok" else "not_ready",
         "checks": {"database": database},

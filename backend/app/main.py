@@ -1,4 +1,6 @@
+import logging
 import os
+import threading
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -14,14 +16,30 @@ from app.bootstrap import ensure_database, secure_demo_accounts
 from app.core.errors import ApiError, envelope
 
 
+log = logging.getLogger("samanvay.startup")
+# "starting" while the tables are created and the first data is loaded, so the port opens at once (a host gives up on a
+# service that does not listen within minutes, and loading data into a remote database can take that long).
+STARTUP: dict = {"state": "ready", "error": None}
+
+
+def _startup_work() -> None:
+    try:
+        ensure_database()
+        secure_demo_accounts()
+        if os.environ.get("AICTE_AUTO_IMPORT", "").lower() in ("1", "true", "yes"):
+            from app import aicte_import  # the disk of a free host is wiped on deploy, so load them again each start
+
+            aicte_import.start_job()
+        STARTUP.update(state="ready", error=None)
+    except Exception as e:  # noqa: BLE001 - keep serving health checks so the reason can be read
+        log.exception("startup failed")
+        STARTUP.update(state="failed", error=f"{type(e).__name__}: {str(e)[:200]}")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    ensure_database()
-    secure_demo_accounts()
-    if os.environ.get("AICTE_AUTO_IMPORT", "").lower() in ("1", "true", "yes"):
-        from app import aicte_import  # the disk of a free host is wiped on deploy, so load them again each start
-
-        aicte_import.start_job()
+    STARTUP.update(state="starting", error=None)
+    threading.Thread(target=_startup_work, name="startup", daemon=True).start()
     yield
 
 
@@ -34,6 +52,8 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def request_context(request: Request, call_next):
         request.state.request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+        if STARTUP["state"] == "starting" and request.url.path.startswith("/api/v1") and request.url.path not in ("/api/v1/healthz", "/api/v1/readyz"):
+            return envelope(request, 503, "starting", "The server is still loading its data. Try again in a minute.")
         response = await call_next(request)
         response.headers["X-Request-ID"] = request.state.request_id
         response.headers["X-Content-Type-Options"] = "nosniff"

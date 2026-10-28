@@ -50,6 +50,7 @@ PostgreSQL instead (Neon, neon.tech, does not expire; Render's own free database
 
 1. Create a Neon project and copy its connection string (it starts with `postgresql://` and ends with `?sslmode=require`).
 2. In Render, add it as `DATABASE_URL` and save. The app creates its tables on first start and adds any later columns by itself.
+3. **Create the Neon project in the same region as the Render service** (for example both in Singapore or both in Frankfurt). The first start loads about 5,000 small statements; in the same region that takes seconds, across the world it can take many minutes. The server opens its port straight away and answers `503 starting` to API calls until the data is loaded (`/api/v1/readyz` shows `starting`, then `ready`; if it fails it shows the reason).
 
 `postgres://` and `postgresql://` addresses are both accepted. The first start loads the simulated cases (a few seconds).
 **Verified:** the full app (seeding, every read endpoint as four roles, audit chain, sign-up, verification, portal, password
