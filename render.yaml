@@ -1,0 +1,19 @@
+# Render blueprint: one web service that serves the API and the built front end.
+# The built front end (frontend/app/dist) is committed, so no Node build step is needed on Render.
+services:
+  - type: web
+    name: samanvay
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/readyz
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PII_ENCRYPTION_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: demo
+      - key: GEMINI_API_KEY
+        sync: false
