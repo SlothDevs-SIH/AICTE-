@@ -39,7 +39,7 @@ export function LoginForm({ from = '/app' }: { from?: string }) {
           </span>
         </label>
         {err && <div className="notice err" role="alert">{err}</div>}
-        <div><OrganicButton type="submit" size="md" disabled={busy} label={busy ? 'Signing in…' : 'Sign in'} arrow={!busy} /></div>
+        <div><OrganicButton type="submit" size="md" disabled={busy} label={busy ? 'Signing in…' : 'Sign in'} /></div>
       </form>
       <p className="muted" style={{ margin: '1.1rem 0 .5rem' }}>Demo accounts (generated). Pick one to fill the email; the demo password is in the project README.</p>
       <div className="chips">

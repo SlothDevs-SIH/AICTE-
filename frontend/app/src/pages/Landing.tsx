@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { ExpandableScreen } from '../components/ExpandableScreen'
+import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '../components/ExpandableScreen'
+import { ShiftCard } from '../components/ShiftCard'
 import { LoginForm } from '../components/LoginForm'
 import { OrganicButton } from '../components/OrganicButton'
 import { Count, Logo } from '../components/ui'
@@ -63,9 +65,12 @@ export default function Landing() {
             SAMANVAY puts them in one place, warns an officer when another unit is already handling the same college, and shows
             exactly why.
           </p>
-          {me ? <OrganicButton to="/app" size="lg" label="Open the dashboard" arrow /> : (
-            <ExpandableScreen trigger={<>Get started <span aria-hidden="true">→</span></>}>
-              {() => (
+          {me ? <OrganicButton to="/app" size="lg" label="Open the dashboard" /> : (
+            <ExpandableScreen layoutId="cta-card" triggerRadius="100px" contentRadius="24px">
+              <ExpandableScreenTrigger>
+                <span>Get started <span aria-hidden="true">→</span></span>
+              </ExpandableScreenTrigger>
+              <ExpandableScreenContent className="xs-content">
                 <div className="xs-grid">
                   <div className="xs-left">
                     <h2>Sign in to SAMANVAY</h2>
@@ -78,7 +83,7 @@ export default function Landing() {
                   </div>
                   <div className="xs-right"><LoginForm /></div>
                 </div>
-              )}
+              </ExpandableScreenContent>
             </ExpandableScreen>
           )}
           <p className="small">An officer always decides. The system only suggests, and every suggestion comes with its evidence.</p>
@@ -122,16 +127,19 @@ export default function Landing() {
 
       <section className="section" id="covers" style={{ paddingTop: 0 }}>
         <h2>What it covers</h2>
-        <div className="feat">
+        <div className="sc-grid">
           {[
-            ['Single-window dashboard', 'Received, pending, under process, disposed, transferred, escalated and beyond-timeline cases, with institution-wise and unit-wise views.'],
-            ['Case tracking', 'Unique case ID, category, status, current unit and officer, last action, next action, and expected disposal date.'],
-            ['Overlap detection', 'Rule-based matching on institution identity and name variants, with a plain-language receipt.'],
-            ['Workflow history', 'Every transfer, escalation and remark with who, when and why. Tamper-evident audit chain.'],
-            ['Search and filters', 'By college, AICTE ID, case ID, unit, region, category, status and date. Filters live in the page address, so a view can be shared.'],
-            ['Reports', 'Unit-wise, region-wise, status-wise and institution-wise reports, ageing, disposal rate, and overlap list, with CSV export.'],
-          ].map(([t, d]) => (
-            <div className="card" key={t}><h3>{t}</h3><p className="muted" style={{ margin: 0 }}>{d}</p></div>
+            ['Single-window dashboard', '▦', 'Received, pending, under process, disposed, transferred, escalated and beyond-timeline cases, with institution-wise and unit-wise views.'],
+            ['Case tracking', '☰', 'Unique case ID, category, status, current unit and officer, last action, next action, and expected disposal date.'],
+            ['Overlap detection', '⇄', 'Rule-based matching on institution identity and name variants, with a plain-language receipt.'],
+            ['Workflow history', '◷', 'Every transfer, escalation and remark with who, when and why. Tamper-evident audit chain.'],
+            ['Search and filters', '⌕', 'By college, AICTE ID, case ID, unit, region, category, status and date. Filters live in the page address, so a view can be shared.'],
+            ['Reports', '▤', 'Unit-wise, region-wise, status-wise and institution-wise reports, ageing, disposal rate, and overlap list, with CSV export.'],
+          ].map(([t, ic, d]) => (
+            <ShiftCard key={t}
+              topContent={<div className="sc-slab"><h3><i aria-hidden="true">{ic}</i>{t}</h3></div>}
+              middleContent={<motion.div key="m" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}><span className="sc-big" aria-hidden="true">{ic}</span><span className="sc-hint">Hover or tap for detail</span></motion.div>}
+              bottomContent={<><b>{t}</b><p>{d}</p></>} />
           ))}
         </div>
       </section>

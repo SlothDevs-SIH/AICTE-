@@ -1,38 +1,79 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
 
-const T = { type: 'tween', ease: 'easeOut', duration: 0.35 } as const
+// Ported from the cult-ui "expandable-screen" (shadcn registry): same context, shared layoutId morph and timings.
+// Differences: plain CSS classes instead of Tailwind, an X drawn inline instead of lucide, content rendered in a
+// portal so no parent can clip the full-screen panel, and Esc closes it.
+interface Ctx {
+  isExpanded: boolean
+  expand: () => void
+  collapse: () => void
+  layoutId: string
+  triggerRadius: string
+  contentRadius: string
+  animationDuration: number
+}
+const C = createContext<Ctx | null>(null)
 
-/** A button that grows into a full-screen panel (shared layout animation); Esc or the close button folds it back. */
-export function ExpandableScreen({ trigger, children }: { trigger: ReactNode; children: (close: () => void) => ReactNode }) {
-  const [open, setOpen] = useState(false)
+export function useExpandableScreen() {
+  const c = useContext(C)
+  if (!c) throw new Error('useExpandableScreen must be used within an ExpandableScreen')
+  return c
+}
+
+export function ExpandableScreen({ children, defaultExpanded = false, onExpandChange, layoutId = 'expandable-card', triggerRadius = '100px', contentRadius = '24px', animationDuration = 0.3, lockScroll = true }: {
+  children: ReactNode; defaultExpanded?: boolean; onExpandChange?: (expanded: boolean) => void; layoutId?: string
+  triggerRadius?: string; contentRadius?: string; animationDuration?: number; lockScroll?: boolean
+}) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+  const expand = () => { setIsExpanded(true); onExpandChange?.(true) }
+  const collapse = () => { setIsExpanded(false); onExpandChange?.(false) }
   useEffect(() => {
-    if (!open) return
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    document.addEventListener('keydown', k)
+    if (!isExpanded) return
     const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    if (lockScroll) document.body.style.overflow = 'hidden'
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { setIsExpanded(false); onExpandChange?.(false) } }
+    document.addEventListener('keydown', k)
     return () => { document.removeEventListener('keydown', k); document.body.style.overflow = prev }
-  }, [open])
+  }, [isExpanded, lockScroll, onExpandChange])
+  return <C.Provider value={{ isExpanded, expand, collapse, layoutId, triggerRadius, contentRadius, animationDuration }}>{children}</C.Provider>
+}
+
+export function ExpandableScreenTrigger({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const { isExpanded, expand, layoutId, triggerRadius } = useExpandableScreen()
   return (
-    <>
-      <AnimatePresence initial={false}>
-        {!open && (
-          <motion.button key="t" type="button" layoutId="cta-card" className="xs-trigger" style={{ borderRadius: 100 }} transition={T} onClick={() => setOpen(true)}>
-            <motion.span layout="position">{trigger}</motion.span>
-          </motion.button>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {open && (
-          <motion.div key="c" layoutId="cta-card" className="xs-content" style={{ borderRadius: 24 }} transition={T} role="dialog" aria-modal="true" aria-label="Sign in">
-            <motion.div className="xs-inner" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.25, duration: 0.3 } }} exit={{ opacity: 0, transition: { duration: 0.1 } }}>
-              <button type="button" className="xs-close" onClick={() => setOpen(false)} aria-label="Close">✕ <span>Esc</span></button>
-              {children(() => setOpen(false))}
-            </motion.div>
+    <AnimatePresence initial={false}>
+      {!isExpanded && (
+        <motion.div className={`xs-trig ${className}`}>
+          <motion.div style={{ borderRadius: triggerRadius }} layout layoutId={layoutId} className="xs-bg" />
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} exit={{ opacity: 0, scale: 0.8 }} layout={false} onClick={expand} className="xs-face" role="button" tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), expand())}>
+            {children}
           </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+export function ExpandableScreenContent({ children, className = '', showCloseButton = true, closeButtonClassName = '' }: { children: ReactNode; className?: string; showCloseButton?: boolean; closeButtonClassName?: string }) {
+  const { isExpanded, collapse, layoutId, contentRadius, animationDuration } = useExpandableScreen()
+  return createPortal(
+    <AnimatePresence initial={false}>
+      {isExpanded && (
+        <div className="xs-fixed" role="dialog" aria-modal="true">
+          <motion.div layoutId={layoutId} transition={{ duration: animationDuration }} style={{ borderRadius: contentRadius }} layout className={`xs-panel ${className}`}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.4 }} className="xs-body">{children}</motion.div>
+            {showCloseButton && (
+              <motion.button onClick={collapse} className={`xs-x ${closeButtonClassName}`} aria-label="Close">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </motion.button>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
+    document.body,
   )
 }
