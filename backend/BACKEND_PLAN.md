@@ -757,7 +757,10 @@ All figures are from `python -m app.cli evaluate` on the generated dataset (seed
 | Institution representative view: counts and status only, no titles, descriptions or complainant details | ✅ | `/portal/institution/complaints`; `tests/test_accounts.py` |
 | First administrator from `ADMIN_EMAILS` when that address verifies | ✅ | `tests/test_accounts.py` |
 | Every read endpoint, as every staff role, never answers 5xx; anonymous callers get 401 | ✅ | `tests/test_smoke_all.py` (this found and fixed a crash in `GET /meta`) |
-| Password reset by e-mail, per-address and per-network sign-up limits, CAPTCHA | 📋 Planned | none |
+| Password reset by e-mail (one hour, single use, signs out every device, clears a lockout) | ✅ | `/auth/forgot-password`, `/auth/reset-password`; `tests/test_accounts.py` |
+| Generated demo logins switched off unless `DEMO_ACCOUNTS=true` | ✅ | `secure_demo_accounts` in `app/bootstrap.py`; `tests/test_accounts.py` |
+| PostgreSQL support (URL forms, pool settings, column migration with dialect-correct defaults) | ✅ run end to end on PostgreSQL 18 (PGlite), **not on Neon or a production host**; test suite itself is SQLite only | `app/db/base.py`, `app/bootstrap.py` |
+| Per-address and per-network sign-up limits, CAPTCHA | 📋 Planned | none |
 
 Known weak spot: if someone signs up with another person's address and the owner then opens that unsolicited link, the
 account is verified with the first person's password. Re-registering the same unverified address replaces the password,

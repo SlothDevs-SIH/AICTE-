@@ -156,6 +156,70 @@ def resend(body: ResendIn, request: Request, db: Session = Depends(get_db)):
     return {**generic, **_send_verification(db, user, request)}
 
 
+# ---------------------------------------------------------------- password reset
+
+RESET_HOURS = 1
+
+
+class ForgotIn(BaseModel):
+    email: str = Field(max_length=200)
+
+
+@router.post("/auth/forgot-password", status_code=202)
+def forgot_password(body: ForgotIn, request: Request, db: Session = Depends(get_db)):
+    generic = {"message": "If that address has an account, a link to choose a new password is on its way."}
+    user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
+    if user is None or not user.is_active:
+        return generic
+    last = db.scalar(select(EmailToken).where(EmailToken.user_id == user.id, EmailToken.purpose == "reset")
+                     .order_by(EmailToken.created_at.desc()).limit(1))
+    if last and (_now() - _aware(last.created_at)).total_seconds() < RESEND_SECONDS:
+        raise ApiError(429, "too_soon", f"Wait {RESEND_SECONDS} seconds before asking for another link.")
+    raw = secrets.token_urlsafe(32)
+    db.add(EmailToken(user_id=user.id, token_hash=_hash(raw), purpose="reset", expires_at=_now() + timedelta(hours=RESET_HOURS)))
+    write_audit(db, user.id, "PASSWORD_RESET_REQUESTED", "user", user.id, {})
+    db.commit()
+    link = f"{base_url(request)}/reset?token={raw}"
+    text = (f"Hello {user.name},\n\nSomeone asked to reset the password of your SAMANVAY account. To choose a new one, open:\n\n{link}\n\n"
+            f"The link works once and expires in {RESET_HOURS} hour. If it was not you, ignore this message: your password has not changed.\n")
+    html = (f"<p>Hello {user.name},</p><p>Someone asked to reset the password of your SAMANVAY account.</p>"
+            f"<p><a href=\"{link}\" style=\"background:#1a3fa8;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none\">Choose a new password</a></p>"
+            f"<p>Or open: {link}</p><p>The link works once and expires in {RESET_HOURS} hour. If it was not you, ignore this message.</p>")
+    res = mailer.send(user.email, "Reset your SAMANVAY password", text, html)
+    out = dict(generic)
+    if not res["sent"] and os.environ.get("DEV_SHOW_VERIFY_LINK", "").lower() in ("1", "true", "yes"):
+        out["dev_link"] = link
+    return out
+
+
+class ResetIn(BaseModel):
+    token: str = Field(min_length=10, max_length=200)
+    password: str = Field(max_length=200)
+
+
+@router.post("/auth/reset-password")
+def reset_password(body: ResetIn, db: Session = Depends(get_db)):
+    from app.db.models import RefreshToken
+
+    row = db.scalar(select(EmailToken).where(EmailToken.token_hash == _hash(body.token), EmailToken.purpose == "reset"))
+    bad = ApiError(400, "invalid_token", "This link is not valid, or it has expired. Ask for a new one.")
+    if row is None or row.used or _aware(row.expires_at) < _now():
+        raise bad
+    user = db.get(User, row.user_id)
+    if user is None or not user.is_active:
+        raise bad
+    _check_password(body.password, user.email)
+    row.used = True
+    user.password_hash = hash_password(body.password)
+    user.email_verified = True  # they just proved they read this mailbox
+    user.failed_logins, user.locked_until = 0, None
+    for t in db.scalars(select(RefreshToken).where(RefreshToken.user_id == user.id, RefreshToken.revoked.is_(False))):
+        t.revoked = True  # every device is signed out
+    write_audit(db, user.id, "PASSWORD_RESET", "user", user.id, {})
+    db.commit()
+    return {"reset": True}
+
+
 # ---------------------------------------------------------------- who am I
 
 def _inst_name(db: Session, iid: str | None) -> str | None:

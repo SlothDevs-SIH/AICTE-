@@ -243,3 +243,68 @@ def _keep_shared_data_synthetic():
         for c in db.scalars(select(Complaint).where(Complaint.source == "portal")):
             c.is_synthetic = True
         db.commit()
+
+
+def _reset_token() -> str:
+    m = re.search(r"reset\?token=([\w\-]+)", mailer.OUTBOX[-1]["text"])
+    assert m, mailer.OUTBOX[-1]
+    return m.group(1)
+
+
+def test_password_reset_flow(client):
+    email = _verified(client)
+    old = _login(client, email)
+    mailer.OUTBOX.clear()
+    assert client.post(f"{API}/auth/forgot-password", json={"email": "nobody@example.org"}).status_code == 202 and not mailer.OUTBOX
+    r = client.post(f"{API}/auth/forgot-password", json={"email": email})
+    assert r.status_code == 202 and "dev_link" not in r.json() and mailer.OUTBOX[-1]["to"] == email
+    assert client.post(f"{API}/auth/forgot-password", json={"email": email}).status_code == 429  # one a minute
+    token = _token_from_outbox_reset = _reset_token()
+    assert client.post(f"{API}/auth/reset-password", json={"token": token, "password": "short1"}).status_code == 422
+    assert client.post(f"{API}/auth/reset-password", json={"token": token, "password": "Brand-new-pass-9"}).json() == {"reset": True}
+    assert client.post(f"{API}/auth/reset-password", json={"token": token, "password": "Another-pass-99"}).status_code == 400  # once only
+    assert client.post(f"{API}/auth/login", json={"email": email, "password": PW}).status_code == 401  # the old password is gone
+    _login(client, email, "Brand-new-pass-9")
+    assert client.post(f"{API}/auth/reset-password", json={"token": "x" * 40, "password": "Brand-new-pass-9"}).status_code == 400
+
+
+def test_reset_clears_a_lockout_and_signs_other_devices_out(client):
+    email = _verified(client)
+    first = client.post(f"{API}/auth/login", json={"email": email, "password": PW}).json()
+    for _ in range(5):
+        client.post(f"{API}/auth/login", json={"email": email, "password": "wrong-password-1"})
+    assert client.post(f"{API}/auth/login", json={"email": email, "password": PW}).status_code == 423
+    mailer.OUTBOX.clear()
+    client.post(f"{API}/auth/forgot-password", json={"email": email})
+    assert client.post(f"{API}/auth/reset-password", json={"token": _reset_token(), "password": "Fresh-start-pass-5"}).status_code == 200
+    _login(client, email, "Fresh-start-pass-5")
+    assert client.post(f"{API}/auth/refresh", json={"refresh_token": first["refresh_token"]}).status_code == 401
+
+
+def test_reset_works_for_an_unverified_address_and_verifies_it(client):
+    email, _ = _signup(client)
+    mailer.OUTBOX.clear()
+    client.post(f"{API}/auth/forgot-password", json={"email": email})
+    assert client.post(f"{API}/auth/reset-password", json={"token": _reset_token(), "password": "Chosen-pass-2026"}).status_code == 200
+    assert client.get(f"{API}/me", headers=_login(client, email, "Chosen-pass-2026")).json()["email_verified"] is True
+
+
+def test_demo_accounts_are_switched_off_unless_asked_for(client, monkeypatch):
+    from app.bootstrap import secure_demo_accounts
+
+    monkeypatch.setenv("DEMO_ACCOUNTS", "true")
+    assert secure_demo_accounts() == 0
+    with session_factory()() as db:
+        db.add(User(email="probe@demo.samanvay.in", name="Probe", password_hash="x", role="auditor", is_active=True))
+        db.commit()
+    monkeypatch.setenv("DEMO_ACCOUNTS", "false")
+    assert secure_demo_accounts() >= 12  # every generated demo login, plus the probe
+    assert client.post(f"{API}/auth/login", json={"email": "admin@demo.samanvay.in", "password": "Demo@12345"}).status_code == 401
+    assert secure_demo_accounts() == 0  # nothing left to switch off
+    with session_factory()() as db:  # put them back for the rest of the test run
+        for u in db.scalars(select(User).where(User.email.like("%@demo.samanvay.in"))):
+            u.is_active = True
+            from app.core.security import hash_password
+            u.password_hash = hash_password("Demo@12345")
+        db.delete(db.scalar(select(User).where(User.email == "probe@demo.samanvay.in")))
+        db.commit()

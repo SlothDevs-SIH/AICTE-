@@ -24,6 +24,7 @@ import Imports from './pages/Imports'
 import Management from './pages/Management'
 import Admin from './pages/Admin'
 import Verify from './pages/Verify'
+import ResetPassword from './pages/ResetPassword'
 import { ChooseRole, Waiting } from './pages/Onboarding'
 import { FileComplaint, InstitutionHome, MyComplaintDetail, MyComplaints } from './pages/Portal'
 
@@ -156,6 +157,7 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
+      <Route path="/reset" element={<ResetPassword />} />
       <Route path="/app" element={<Shell />}>
         <Route index element={<Home />} />
         <Route path="file" element={<FileComplaint />} />

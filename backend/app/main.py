@@ -10,13 +10,14 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1 import accounts, auth, extras, records, stubs, system
-from app.bootstrap import ensure_database
+from app.bootstrap import ensure_database, secure_demo_accounts
 from app.core.errors import ApiError, envelope
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     ensure_database()
+    secure_demo_accounts()
     if os.environ.get("AICTE_AUTO_IMPORT", "").lower() in ("1", "true", "yes"):
         from app import aicte_import  # the disk of a free host is wiped on deploy, so load them again each start
 

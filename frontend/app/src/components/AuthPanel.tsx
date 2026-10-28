@@ -4,7 +4,7 @@ import { api, ApiError } from '../api'
 import { useAuth } from '../auth'
 import { OrganicButton } from '@/components/ui/organic-button'
 
-type Mode = 'in' | 'up' | 'sent'
+type Mode = 'in' | 'up' | 'sent' | 'forgot' | 'forgot-sent'
 
 const Pw = ({ value, onChange, autoComplete }: { value: string; onChange: (v: string) => void; autoComplete: string }) => {
   const [show, setShow] = useState(false)
@@ -41,6 +41,10 @@ export function AuthPanel({ from = '/app', start = 'in' }: { from?: string; star
     const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw } })
     setSent(r); setMode('sent')
   })
+  const forgot = run(async () => {
+    const r = await api('/auth/forgot-password', { method: 'POST', body: { email } })
+    setSent(r); setMode('forgot-sent')
+  })
   const resend = async () => {
     setResent('')
     try {
@@ -50,6 +54,31 @@ export function AuthPanel({ from = '/app', start = 'in' }: { from?: string; star
     } catch (x) { setResent((x as ApiError).message) }
   }
   const switchTo = (m: Mode) => { setMode(m); setErr(null); setResent('') }
+
+  if (mode === 'forgot' || mode === 'forgot-sent') {
+    return mode === 'forgot' ? (
+      <form onSubmit={forgot} className="loginform">
+        <h2 style={{ margin: 0 }}>Forgot your password?</h2>
+        <p className="muted" style={{ margin: 0 }}>Enter the e-mail you signed up with. We will send a link to choose a new password.</p>
+        <label className="f">E-mail
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required autoFocus />
+        </label>
+        {err && <div className="notice err" role="alert">{err.message}</div>}
+        <div style={{ display: 'flex', gap: '.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button className="btn primary" disabled={busy}>{busy ? 'Sending…' : 'Send the link'}</button>
+          <button type="button" className="btn" onClick={() => switchTo('in')}>Back to sign in</button>
+        </div>
+      </form>
+    ) : (
+      <div className="auth-sent">
+        <div className="auth-mail" aria-hidden="true">✉</div>
+        <h2>Check your e-mail</h2>
+        <p>If <strong>{email}</strong> has an account, a link to choose a new password is on its way. It works once and expires in an hour. Check the spam folder too.</p>
+        {sent?.dev_link && <div className="notice warn">For testing only: <a href={sent.dev_link}>open the reset link</a>.</div>}
+        <p><button type="button" className="btn sm" onClick={() => switchTo('in')}>Back to sign in</button></p>
+      </div>
+    )
+  }
 
   if (mode === 'sent') {
     return (
@@ -92,6 +121,7 @@ export function AuthPanel({ from = '/app', start = 'in' }: { from?: string; star
         <label className="f">Password
           <Pw value={pw} onChange={setPw} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} />
           {mode === 'up' && <small>At least 10 characters, with letters and a digit.</small>}
+          {mode === 'in' && <button type="button" className="linkbtn" style={{ justifySelf: 'start', fontWeight: 600, fontSize: '.85rem' }} onClick={() => switchTo('forgot')}>Forgot your password?</button>}
         </label>
         {err && (
           <div className="notice err" role="alert">

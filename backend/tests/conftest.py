@@ -2,7 +2,8 @@ import os
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key-test-secret-key-0123")
 os.environ.setdefault("PII_ENCRYPTION_KEY", "test-pii-key")
-os.environ["DATABASE_URL"] = "sqlite:///./data/test.db"
+os.environ["DEMO_ACCOUNTS"] = "true"  # the generated demo logins are what most tests sign in with
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL", "sqlite:///./data/test.db")
 
 import pytest
 from fastapi.testclient import TestClient

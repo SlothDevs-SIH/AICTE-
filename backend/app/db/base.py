@@ -31,11 +31,29 @@ _engine = None
 _Session = None
 
 
+def normalize_url(url: str) -> str:
+    """Hosts hand out postgres:// or postgresql:// URLs; SQLAlchemy needs the driver named (psycopg 3)."""
+    for old in ("postgres://", "postgresql://"):
+        if url.startswith(old):
+            return "postgresql+psycopg://" + url[len(old):]
+    return url
+
+
+def _pool_kw() -> dict:
+    import os
+
+    n = os.environ.get("DB_POOL_SIZE")
+    return {"pool_size": int(n), "max_overflow": 0} if n else {}
+
+
 def get_engine():
     global _engine, _Session
     if _engine is None:
-        url = get_settings().database_url
-        kw = {"connect_args": {"check_same_thread": False}} if url.startswith("sqlite") else {}
+        url = normalize_url(get_settings().database_url)
+        if url.startswith("sqlite"):
+            kw = {"connect_args": {"check_same_thread": False}}
+        else:  # a hosted PostgreSQL closes idle connections, so check one before using it
+            kw = {"pool_pre_ping": True, "pool_recycle": 1800, **_pool_kw()}
         _engine = create_engine(url, **kw)
         _Session = sessionmaker(_engine, expire_on_commit=False)
         from app.bootstrap import add_missing_columns  # an older database file gets the newer columns on first use
