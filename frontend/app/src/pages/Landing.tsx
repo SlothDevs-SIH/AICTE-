@@ -5,7 +5,8 @@ import { useAuth } from '../auth'
 import { DotBackdrop } from '../components/DotBackdrop'
 import { LoginForm } from '../components/LoginForm'
 import { Count, Logo } from '../components/ui'
-import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger, useExpandableScreen } from '@/components/ui/expandable-screen'
+import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '@/components/ui/expandable-screen'
+import ExpandableProfileCard from '@/components/ui/expandable-profile-card'
 import { OrganicButton } from '@/components/ui/organic-button'
 import { ShiftCard } from '@/components/ui/shift-card'
 import { TextAnimate } from '@/components/ui/text-animate'
@@ -85,15 +86,14 @@ const EVIDENCE: { n: number; of: number; title: string; note: string }[] = [
   { n: 13, of: 20, title: 'Misspelled names linked', note: 'Linked automatically. The other 7 go to an officer to confirm, by design.' },
 ]
 
-/** Closes the open pop-up when the page behind it is clicked. */
-function ClickAway() {
-  const { collapse } = useExpandableScreen()
-  useEffect(() => {
-    const down = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('.how-pop')) collapse() }
-    document.addEventListener('mousedown', down)
-    return () => document.removeEventListener('mousedown', down)
-  }, [collapse])
-  return null
+/** Picture side of a "How it works" card: a numeral over the drawing, on the brand gradient. */
+function HowMedia({ n, art }: { n: number; art: string }) {
+  return (
+    <div className="relative grid h-full w-full place-items-center bg-linear-to-br from-[#12306f] via-primary to-[#2459d6]">
+      <span className="absolute -right-2 -top-6 select-none text-[9rem] font-black leading-none text-white/10">{n}</span>
+      <div className="relative rounded-2xl bg-white/95 p-3 shadow-xl"><Art k={art} /></div>
+    </div>
+  )
 }
 
 function Art({ k }: { k: string }) {
@@ -191,25 +191,19 @@ export default function Landing() {
             <p className="how-lead">Three safeguards sit between an incoming complaint and an officer's decision. Select a step to see how it works.</p>
             <div className="how-grid">
               {STEPS.map((s, i) => (
-                <ExpandableScreen key={s.t} layoutId={`how-${i}`} triggerRadius="24px" contentRadius="24px">
-                  <ExpandableScreenTrigger>
-                    <div className="how-card" role="button" tabIndex={0} aria-haspopup="dialog">
-                      <div className="how-card-top"><span className="how-n">{i + 1}</span><span className="how-plus" aria-hidden="true">+</span></div>
-                      <h3 className="how-t">{s.t}</h3>
-                      <p className="how-sum">{s.sum}</p>
-                      <span className="how-open">Open the details →</span>
+                <ExpandableProfileCard key={s.t} title={s.t} subtitle={`Step ${i + 1}`}
+                  media={<HowMedia n={i + 1} art={['search', 'overlap', 'flow'][i]} />}
+                  content={
+                    <div className="flex flex-col gap-5">
+                      <p className="text-base leading-relaxed text-foreground">{s.sum}</p>
+                      {s.more.map((m, j) => (
+                        <div key={m} className="flex items-start gap-3">
+                          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{j + 1}</span>
+                          <p className="text-muted-foreground">{m}</p>
+                        </div>
+                      ))}
                     </div>
-                  </ExpandableScreenTrigger>
-                  <ExpandableScreenContent className="how-pop bg-white" closeButtonClassName="text-primary hover:bg-primary/10">
-                    <ClickAway />
-                    <div className="how-pop-in">
-                      <span className="how-n how-n-lg">{i + 1}</span>
-                      <h3>{s.t}</h3>
-                      <p className="how-pop-lead">{s.sum}</p>
-                      <ol className="how-pop-list">{s.more.map((m, j) => <li key={m}><span>{j + 1}</span><p>{m}</p></li>)}</ol>
-                    </div>
-                  </ExpandableScreenContent>
-                </ExpandableScreen>
+                  } />
               ))}
             </div>
           </div>
