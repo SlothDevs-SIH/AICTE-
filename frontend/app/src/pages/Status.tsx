@@ -1,4 +1,4 @@
-﻿import { useAuth } from '../auth'
+import { useAuth } from '../auth'
 import { ErrorBox, SyntheticBadge, useFetch } from '../components/ui'
 
 export default function Status() {
@@ -22,7 +22,7 @@ export default function Status() {
         <section className="card">
           <h2>AI features</h2>
           <p><span className="badge b-ok">Concept matching: built</span> <span className="badge b-neutral">Neural embeddings: not built</span> <span className="badge b-neutral">AI reading of wording: off until a key is set and the Admin switch is on</span></p>
-          <p className="muted">Different wording of the same issue is matched through a hand-written list of problem concepts in English, Hinglish and Devanagari. Without the AI switch a problem described in a way the list does not know is missed; with it, Claude is asked about those pairs and its answer is shown as AI-written. A neural embedding model could not be downloaded on the machine this was built on.</p>
+          <p className="muted">Different wording of the same issue is matched through a hand-written list of problem concepts in English, Hinglish and Devanagari. Without the AI switch a problem described in a way the list does not know is missed; with it, a language model (Gemini) is asked about those pairs and its answer is shown as AI-written. A neural embedding model could not be downloaded on the machine this was built on.</p>
         </section>
         <section className="card"><h2>You</h2><p>{me?.name}<br /><span className="muted">{me?.email}</span></p></section>
         <section className="card">

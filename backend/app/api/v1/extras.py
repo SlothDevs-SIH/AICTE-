@@ -498,7 +498,7 @@ def ai_rescan(db: Session = Depends(get_db), user: User = Depends(require(R.ADMI
     from app.services import issue_judge
 
     if not issue_judge.enabled(db):
-        raise ApiError(409, "ai_off", "AI issue matching is off: switch it on in Admin and set ANTHROPIC_API_KEY on the server.")
+        raise ApiError(409, "ai_off", "AI issue matching is off: switch it on in Admin and set GEMINI_API_KEY on the server.")
     return issue_judge.rescan(db, user.id)
 
 

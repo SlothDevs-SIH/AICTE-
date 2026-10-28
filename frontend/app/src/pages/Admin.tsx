@@ -57,7 +57,7 @@ export default function Admin() {
           <>
             <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
               <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_llm_enabled} onChange={(e) => setSetting('ai_llm_enabled', e.target.checked)} />
-              Allow language-model summaries (needs <code>ANTHROPIC_API_KEY</code> on the server)
+              Allow language-model summaries (needs <code>GEMINI_API_KEY</code> on the server)
             </label>
             <label style={{ display: 'flex', gap: '.6rem', alignItems: 'center', marginTop: '.6rem' }}>
               <input type="checkbox" style={{ width: 'auto', minHeight: 0 }} checked={st.data.items.ai_issue_matching} onChange={(e) => setSetting('ai_issue_matching', e.target.checked)} />

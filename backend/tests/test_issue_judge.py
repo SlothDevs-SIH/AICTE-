@@ -73,3 +73,37 @@ def test_off_by_default_and_rescan_adds_labelled_ai_reading(client, tokens, monk
         assert ai["kind"] == "AI-written" and ai["same_issue"] is True
         assert len(o.receipt_json["layers"]["L4_rules"]["reasons"]) == before + 1
     client.put("/api/v1/admin/settings/ai_issue_matching", json={"value": False}, headers=h)
+
+
+def test_gemini_request_shape_and_parsing(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    sent = {}
+
+    class Resp:
+        def raise_for_status(self): pass
+        def json(self): return {"candidates": [{"content": {"parts": [{"text": '{"same_issue": true, '}, {"text": '"confidence": 0.8, "reason": "ok"}'}]}}]}
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        sent.update(url=url, headers=headers, body=json)
+        return Resp()
+
+    monkeypatch.setattr(llm.httpx, "post", fake_post)
+    assert llm.provider() == "gemini" and llm.available()
+    r = issue_judge.judge(_c("a"), _c("b"))
+    assert r["same_issue"] is True and r["model"] == "gemini-2.5-flash"
+    assert sent["url"].startswith("https://generativelanguage.googleapis.com/") and ":generateContent" in sent["url"]
+    assert sent["headers"]["x-goog-api-key"] == "test-key" and "test-key" not in sent["url"]
+
+
+def test_provider_errors_mean_no_answer(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+
+    def boom(*a, **k):
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(llm.httpx, "post", boom)
+    assert llm.complete("s", "u") is None
+    monkeypatch.delenv("GEMINI_API_KEY")
+    assert llm.provider() is None and llm.complete("s", "u") is None

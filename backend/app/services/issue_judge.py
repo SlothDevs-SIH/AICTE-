@@ -1,6 +1,6 @@
 """Language-model judgement: do two complaints at one college describe the same problem, in any wording?
 
-Off unless the admin switch `ai_issue_matching` is on AND ANTHROPIC_API_KEY is set. Only the two complaint titles and
+Off unless the admin switch `ai_issue_matching` is on AND a model key (GEMINI_API_KEY, or ANTHROPIC_API_KEY) is set. Only the two complaint titles and
 descriptions are sent, never names, phone numbers or e-mail addresses. The answer is a suggestion that is added to the
 Match Receipt and labelled AI-written; it never links, closes or dismisses anything. Any failure returns None and the
 concept-list result stands. Not exercised against the real service in this repository; the tests use a fake.
@@ -56,7 +56,7 @@ def judge(a: Complaint, b: Complaint) -> dict | None:
     if BANNED.search(reason):
         reason = "the model's wording was not shown because it did not pass the checks"
     return {"same_issue": same and conf >= MIN_CONFIDENCE, "confidence": round(conf, 2), "reason": reason,
-            "kind": "AI-written", "model": llm.MODEL}
+            "kind": "AI-written", "model": llm.model_name()}
 
 
 def rescan(db: Session, actor_id: str, limit: int = 200) -> dict:
