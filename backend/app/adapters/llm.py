@@ -20,7 +20,7 @@ def provider() -> str | None:
 
 
 def model_name() -> str:
-    default = "gemini-2.5-flash" if provider() == "gemini" else "claude-haiku-5-5"
+    default = "gemini-3.8-flash" if provider() == "gemini" else "claude-haiku-5-5"
     return os.environ.get("LLM_MODEL", default)
 
 
@@ -29,16 +29,21 @@ def available() -> bool:
 
 
 def _gemini(system: str, user: str, max_tokens: int) -> str:
-    r = httpx.post(
-        GEMINI_URL.format(model=model_name()),
-        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"], "content-type": "application/json"},
-        json={"systemInstruction": {"parts": [{"text": system}]},
-              "contents": [{"role": "user", "parts": [{"text": user}]}],
-              # no hidden "thinking" tokens, so the short answer is not cut off
-              "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0,
-                                   "thinkingConfig": {"thinkingBudget": 0}}},
-        timeout=25,
-    )
+    def call(with_thinking_off: bool) -> httpx.Response:
+        config: dict = {"maxOutputTokens": max(max_tokens, 512), "temperature": 0}
+        if with_thinking_off:  # no hidden "thinking" tokens, so the short answer is not cut off
+            config["thinkingConfig"] = {"thinkingBudget": 0}
+        return httpx.post(
+            GEMINI_URL.format(model=model_name()),
+            headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"], "content-type": "application/json"},
+            json={"systemInstruction": {"parts": [{"text": system}]},
+                  "contents": [{"role": "user", "parts": [{"text": user}]}], "generationConfig": config},
+            timeout=40,
+        )
+
+    r = call(True)
+    if r.status_code == 400:  # some models do not accept that setting; ask again without it
+        r = call(False)
     r.raise_for_status()
     parts = r.json()["candidates"][0]["content"]["parts"]
     return "".join(p.get("text", "") for p in parts)

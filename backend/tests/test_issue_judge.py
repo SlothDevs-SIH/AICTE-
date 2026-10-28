@@ -82,6 +82,7 @@ def test_gemini_request_shape_and_parsing(monkeypatch):
     sent = {}
 
     class Resp:
+        status_code = 200
         def raise_for_status(self): pass
         def json(self): return {"candidates": [{"content": {"parts": [{"text": '{"same_issue": true, '}, {"text": '"confidence": 0.8, "reason": "ok"}'}]}}]}
 
@@ -92,7 +93,7 @@ def test_gemini_request_shape_and_parsing(monkeypatch):
     monkeypatch.setattr(llm.httpx, "post", fake_post)
     assert llm.provider() == "gemini" and llm.available()
     r = issue_judge.judge(_c("a"), _c("b"))
-    assert r["same_issue"] is True and r["model"] == "gemini-2.5-flash"
+    assert r["same_issue"] is True and r["model"] == "gemini-3.8-flash"
     assert sent["url"].startswith("https://generativelanguage.googleapis.com/") and ":generateContent" in sent["url"]
     assert sent["headers"]["x-goog-api-key"] == "test-key" and "test-key" not in sent["url"]
 
@@ -135,3 +136,21 @@ def test_admin_connection_test_reports_result_or_reason(client, tokens, monkeypa
     ok = client.post("/api/v1/admin/ai/test", headers=h).json()
     assert ok["ok"] is True and ok["answer"]["same_issue"] is True
     assert client.post("/api/v1/admin/ai/test", headers=tokens["officer.rb"]).status_code == 403
+
+
+def test_gemini_retries_without_thinking_setting_on_400(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    calls = []
+
+    class Resp:
+        def __init__(self, code): self.status_code = code
+        def raise_for_status(self):
+            if self.status_code >= 400: raise RuntimeError("bad")
+        def json(self): return {"candidates": [{"content": {"parts": [{"text": "OK"}]}}]}
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        calls.append("thinkingConfig" in json["generationConfig"])
+        return Resp(400 if len(calls) == 1 else 200)
+
+    monkeypatch.setattr(llm.httpx, "post", fake_post)
+    assert llm.complete("s", "u") == "OK" and calls == [True, False]
