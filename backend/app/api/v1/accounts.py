@@ -12,9 +12,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.adapters import mailer
+from app.adapters import captcha, mailer
 from app.api.deps import current_user, require
 from app.core import roles as R
+from app.core import ratelimit
 from app.core.audit import write_audit
 from app.core.config import get_settings
 from app.core.crypto import encrypt
@@ -93,13 +94,18 @@ class RegisterIn(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     email: str = Field(max_length=200)
     password: str = Field(max_length=200)
+    captcha_token: str | None = Field(default=None, max_length=4000)
 
 
 @router.post("/auth/register", status_code=202)
 def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
     email = body.email.strip().lower()
+    ip = ratelimit.client_ip(request)
+    ratelimit.check(f"register:ip:{ip}", 10, 3600, "sign-up attempts from your network")
+    ratelimit.check(f"register:email:{email}", 4, 3600, "sign-up attempts for this address")
     if not EMAIL_RE.match(email):
         raise ApiError(422, "invalid_email", "Enter a valid e-mail address.")
+    captcha.require(body.captcha_token, ip)
     _check_password(body.password, email)
     generic = {"message": "If the address can be used, a verification link is on its way. Open it, then sign in."}
     user = db.scalar(select(User).where(User.email == email))
@@ -142,11 +148,13 @@ def verify_email(body: TokenIn, db: Session = Depends(get_db)):
 
 class ResendIn(BaseModel):
     email: str = Field(max_length=200)
+    captcha_token: str | None = Field(default=None, max_length=4000)
 
 
 @router.post("/auth/resend-verification", status_code=202)
 def resend(body: ResendIn, request: Request, db: Session = Depends(get_db)):
     generic = {"message": "If that address is waiting for verification, a new link is on its way."}
+    ratelimit.check(f"resend:ip:{ratelimit.client_ip(request)}", 12, 3600, "requests from your network")
     user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
     if user is None or user.email_verified:
         return generic
@@ -163,11 +171,16 @@ RESET_HOURS = 1
 
 class ForgotIn(BaseModel):
     email: str = Field(max_length=200)
+    captcha_token: str | None = Field(default=None, max_length=4000)
 
 
 @router.post("/auth/forgot-password", status_code=202)
 def forgot_password(body: ForgotIn, request: Request, db: Session = Depends(get_db)):
     generic = {"message": "If that address has an account, a link to choose a new password is on its way."}
+    ip = ratelimit.client_ip(request)
+    ratelimit.check(f"forgot:ip:{ip}", 10, 3600, "password-reset requests from your network")
+    ratelimit.check(f"forgot:email:{body.email.strip().lower()}", 5, 3600, "password-reset requests for this address")
+    captcha.require(body.captcha_token, ip)
     user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
     if user is None or not user.is_active:
         return generic

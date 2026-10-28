@@ -43,6 +43,26 @@
         }
       }
     },
+    "/api/v1/public/config": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Public Config",
+        "description": "What the sign-up page needs to know before anyone is signed in. No secrets.",
+        "operationId": "public_config_api_v1_public_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/public/overview": {
       "get": {
         "tags": [
@@ -1992,6 +2012,43 @@
         }
       }
     },
+    "/api/v1/admin/jobs/import-aicte-file": {
+      "post": {
+        "summary": "Import Aicte File",
+        "description": "Load a list of AICTE-approved institutions that an administrator saved from the AICTE dashboard (xlsx, csv or json).",
+        "operationId": "import_aicte_file_api_v1_admin_jobs_import_aicte_file_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_aicte_file_api_v1_admin_jobs_import_aicte_file_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/ai/test": {
       "post": {
         "summary": "Ai Test",
@@ -3613,6 +3670,20 @@
         ],
         "title": "Body_add_attachment_api_v1_complaints__cid__attachments_post"
       },
+      "Body_import_aicte_file_api_v1_admin_jobs_import_aicte_file_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_aicte_file_api_v1_admin_jobs_import_aicte_file_post"
+      },
       "Body_upload_import_api_v1_imports_post": {
         "properties": {
           "file": {
@@ -3821,6 +3892,18 @@
             "type": "string",
             "maxLength": 200,
             "title": "Email"
+          },
+          "captcha_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captcha Token"
           }
         },
         "type": "object",
@@ -4181,6 +4264,18 @@
             "type": "string",
             "maxLength": 200,
             "title": "Password"
+          },
+          "captcha_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captcha Token"
           }
         },
         "type": "object",
@@ -4226,6 +4321,18 @@
             "type": "string",
             "maxLength": 200,
             "title": "Email"
+          },
+          "captcha_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captcha Token"
           }
         },
         "type": "object",

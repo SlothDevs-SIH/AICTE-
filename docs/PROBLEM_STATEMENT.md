@@ -2,7 +2,7 @@
 
 **Organization:** AICTE · **Department:** Regulation Bureau
 **Title (as understood):** Integrated Institution Complaint Monitoring and Status Dashboard
-**PS number:** *not supplied yet — add here when known:* `PS number: ____`
+**PS number:** 26264 (as shown on the Smart India Hackathon portal; supplied by the team on 2026-10-28)
 **Source:** text pasted by the team on 2026-10-27 from the official statement. Wording is preserved; only line breaks and list formatting were added so that requirement IDs can point to exact items.
 
 > Requirement IDs used in the plans (`OBJ-n`, `KFn.m`, `INN`, `OUT-n`, `TU-n`) are defined by the numbering below. Do not renumber without updating `MASTER_PLAN.md` §1.3.

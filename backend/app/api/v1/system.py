@@ -49,6 +49,14 @@ def readyz(db: Session = Depends(get_db)):
     return JSONResponse(body, status_code=200 if database == "ok" else 503)
 
 
+@router.get("/public/config")
+def public_config():
+    """What the sign-up page needs to know before anyone is signed in. No secrets."""
+    from app.adapters import captcha
+
+    return {"captcha": {"provider": "turnstile", "site_key": captcha.site_key()} if captcha.enabled() else None}
+
+
 @router.get("/public/overview")
 def public_overview(db: Session = Depends(get_db)):
     """Landing-page numbers read live from the running database. No personal data, no case text."""

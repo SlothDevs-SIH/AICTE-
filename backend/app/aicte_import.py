@@ -5,6 +5,8 @@ taken from a public extractor script (github.com/practicotech/aicte-india-instit
 from the machine this was written on, so the live fetch is verified only by running it on the deployment; parsing is
 tested against a fixture. Rows can also come from a local JSON file saved from that endpoint.
 """
+import csv
+import io
 import json
 import re
 import threading
@@ -127,4 +129,126 @@ def start_job(states: list[str] | None = None) -> dict:
         JOB.update(state="running", done_states=0, total_states=len(states), added=0, updated=0, skipped=0,
                    errors=[], started_at=datetime.now(UTC).isoformat(), finished_at=None)
     threading.Thread(target=_work, args=(states,), daemon=True).start()
+    return JOB
+
+
+# ---- a list saved from the AICTE dashboard (Excel or CSV) or as JSON, uploaded by an administrator ----
+ID_KEYS = ("aicteid", "aicteidpermanent", "permanentid", "aicteapprovalid", "aicteapplicationid", "institutionid", "id")
+NAME_KEYS = ("institutename", "institutionname", "nameoftheinstitute", "nameoftheinstitution", "instituteinstitutionname", "institute", "name")
+STATE_KEYS = ("state", "statename", "stateut")
+DISTRICT_KEYS = ("district", "districtname", "city")
+TYPE_KEYS = ("institutiontype", "institutetype", "type", "typeofinstitution")
+ADDRESS_KEYS = ("address", "institutionaddress", "instituteaddress", "addressline")
+
+
+def _first(d: dict, keys: tuple, contains: tuple = ()) -> str | None:
+    """The first non-empty value among the known column names, else any column whose name contains all of `contains`."""
+    for k in keys:
+        v = d.get(k)
+        if v not in (None, "") and str(v).strip():
+            return str(v).strip()
+    if contains:
+        for k, v in d.items():
+            if all(c in k for c in contains) and v not in (None, "") and str(v).strip():
+                return str(v).strip()
+    return None
+
+
+def records_from_file(filename: str, data: bytes) -> list[dict]:
+    """Rows of a CSV, Excel (.xlsx) or JSON file as dicts keyed by simplified column names (letters only, lower case)."""
+    name = (filename or "").lower()
+    if name.endswith(".xlsx"):
+        from openpyxl import load_workbook
+
+        out: list[dict] = []
+        wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+        for ws in wb.worksheets:
+            it = ws.iter_rows(values_only=True)
+            head = None
+            for row in it:
+                if head is None:  # the first row that has an institute-name style column is the header
+                    keys = [_key(c) if c is not None else "" for c in row]
+                    if any(k in NAME_KEYS for k in keys):
+                        head = keys
+                    continue
+                if any(v not in (None, "") for v in row):
+                    out.append({head[i]: v for i, v in enumerate(row) if i < len(head) and head[i]})
+        return out
+    if name.endswith(".json"):
+        j = json.loads(data.decode("utf-8-sig"))
+        if isinstance(j, dict):  # {"State": [rows]} as saved from the AICTE endpoint
+            out = []
+            for st, rows in j.items():
+                for r in rows or []:
+                    d = _row_dict(r)
+                    d.setdefault("state", st)
+                    out.append(d)
+            return out
+        return [_row_dict(r) for r in j]
+    text = data.decode("utf-8-sig", errors="replace")
+    return [{_key(k): v for k, v in r.items() if k} for r in csv.DictReader(io.StringIO(text))]
+
+
+def load_records(db: Session, records: list[dict], default_state: str | None = None) -> dict:
+    """Insert or update institutions from keyed rows. Reads the existing IDs once, so it is fast on a remote database."""
+    region_of = {st: code for code, _, sts in REGIONS for st in sts}
+    regions = {r.code: r.id for r in db.scalars(select(Region))}
+    existing = {i.aicte_id: i for i in db.scalars(select(Institution).where(Institution.aicte_id.is_not(None)))}
+    stats = {"added": 0, "updated": 0, "skipped": 0}
+    for d in records:
+        aid = _first(d, ID_KEYS, ("aicte", "id")) or _first(d, (), ("permanent", "id"))
+        name = _first(d, NAME_KEYS, ("name", "institut")) or _first(d, (), ("name", "college"))
+        if not aid or not name:
+            stats["skipped"] += 1
+            continue
+        state = _first(d, STATE_KEYS) or default_state
+        if state:
+            state = next((s for s in ALL_STATES if s.lower() == state.lower()), state.title())
+        fields = dict(canonical_name=name[:300], normalized_name=normalize(name)[:300], type=(_first(d, TYPE_KEYS) or "")[:60] or None,
+                      state=(state or None), district=(_first(d, DISTRICT_KEYS) or "")[:80] or None,
+                      address=_first(d, ADDRESS_KEYS), region_id=regions.get(region_of.get(state or "", "")), is_synthetic=False)
+        inst = existing.get(aid)
+        if inst:
+            for k, v in fields.items():
+                setattr(inst, k, v)
+            stats["updated"] += 1
+        else:
+            inst = Institution(aicte_id=aid[:40], **fields)
+            db.add(inst)
+            existing[aid] = inst
+            stats["added"] += 1
+    db.flush()
+    for inst in existing.values():  # one alias per new institution, so spelling searches find it
+        if inst.id and not db.scalar(select(InstitutionAlias.id).where(InstitutionAlias.institution_id == inst.id).limit(1)):
+            db.add(InstitutionAlias(institution_id=inst.id, alias=inst.canonical_name, normalized_alias=inst.normalized_name, source="import"))
+    db.commit()
+    return stats
+
+
+def start_file_job(filename: str, data: bytes) -> dict:
+    """Parse and load an uploaded list in the background; progress is read from JOB like the web import."""
+    with _lock:
+        if JOB["state"] == "running":
+            return JOB
+        JOB.update(state="running", done_states=0, total_states=1, added=0, updated=0, skipped=0, errors=[],
+                   started_at=datetime.now(UTC).isoformat(), finished_at=None)
+
+    def work():
+        try:
+            records = records_from_file(filename, data)
+            if not records:
+                JOB["errors"].append("No rows found. The file needs a header row with columns such as AICTE ID and Institute Name.")
+            with session_factory()() as db:
+                st = load_records(db, records)
+            for k in ("added", "updated", "skipped"):
+                JOB[k] += st[k]
+            if records and st["added"] + st["updated"] == 0:
+                JOB["errors"].append("No row had both an AICTE ID and an institute name. Check the column headings.")
+        except Exception as e:  # a bad file must show as a message, not a crash
+            JOB["errors"].append(f"{type(e).__name__}: {str(e)[:200]}")
+        JOB["done_states"] = 1
+        JOB["state"] = "finished"
+        JOB["finished_at"] = datetime.now(UTC).isoformat()
+
+    threading.Thread(target=work, daemon=True).start()
     return JOB

@@ -1,6 +1,6 @@
 # SAMANVAY Frontend — Plan & Build Record
 
-**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** not supplied yet (MASTER_PLAN V-M1) · **Official text:** [`../docs/PROBLEM_STATEMENT.md`](../docs/PROBLEM_STATEMENT.md)
+**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** 26264 · **Official text:** [`../docs/PROBLEM_STATEMENT.md`](../docs/PROBLEM_STATEMENT.md)
 **Parent documents:** [`../MASTER_PLAN.md`](../MASTER_PLAN.md) (product) · [`../backend/BACKEND_PLAN.md`](../backend/BACKEND_PLAN.md) (API, data, engine). This document is the source of truth for the web app. When they disagree, fix all three in the same commit.
 **Document date:** 2026-10-27 (v1.1 — reconciled with the official problem statement)
 **Frontend phase:** **F0 — Planning: ✅ this document.** Nothing is built. Next: **F1 — Skeleton.**
@@ -560,7 +560,7 @@ Types are generated from the backend's OpenAPI schema, and CI fails on drift in 
 
 ## 15. Immediate Next Actions (frontend)
 
-1. Add the PS number to `docs/PROBLEM_STATEMENT.md` and to the three plan headers (MASTER_PLAN V-M1). The official text is already saved there and the requirement IDs are mapped.
+1. ~~Add the PS number~~ Done: 26264 is in `docs/PROBLEM_STATEMENT.md` and the three plan headers.
 2. **F1 kickoff:** §7.1 tasks 1–4 (project, tokens, registry, shell) — can start now against fixtures.
 3. Decide the demo machine and test Devanagari rendering on it (V-F3).
 4. Write the seven demo-user role names into the seed docs (passwords live there, not in the UI).

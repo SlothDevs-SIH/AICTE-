@@ -24,6 +24,10 @@
   --color-input: hsl(var(--border));
   --color-ring: var(--ring);
   --font-brand: inherit;
+  --animate-slide-up-fade: slide-up-fade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fade-in 0.2s ease-in-out forwards;
+  @keyframes slide-up-fade { 0% { opacity: 0; transform: translateY(var(--offset, 10px)); } 100% { opacity: 1; transform: translateY(0); } }
+  @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
 }
 :root {
   --background: #f2f5fc; --foreground: #0f1f3d; --card: #ffffff; --card-foreground: #0f1f3d;
@@ -485,3 +489,15 @@ mark.hl { background-size: 0 100%; background-repeat: no-repeat; background-posi
 .side .side-toggle:active, .side .signout:active { transform: scale(.96); }
 .side .signout:hover { background: linear-gradient(135deg, rgba(255, 160, 80, .85), rgba(255, 138, 42, .45)); }
 @media (prefers-reduced-transparency: reduce) { .side .side-toggle, .side .profile, .side .signout { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255, 255, 255, .22); } }
+
+/* what it covers: stacked cards */
+.cover-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 2rem; align-items: center; margin-top: 1rem; }
+.cover-copy .lead { font-size: 1.1rem; color: var(--mute); max-width: 32rem; }
+.cover-hints { list-style: none; margin: 1rem 0 1.2rem; padding: 0; display: grid; gap: .5rem; }
+.cover-hints li { display: flex; align-items: center; gap: .6rem; font-weight: 600; }
+.cover-hints span { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 10px; background: var(--surface-2); color: var(--brand); }
+.cover-deck { min-height: 380px; display: grid; align-content: center; touch-action: pan-y; }
+.cover-deck .rounded-lg.border { border-color: var(--line); box-shadow: 0 10px 24px rgba(26, 63, 168, .14); }
+@media (max-width: 860px) { .cover-wrap { grid-template-columns: 1fr; } }
+.turnstile-box { min-height: 0; }
+.how-grid { align-items: flex-start; }

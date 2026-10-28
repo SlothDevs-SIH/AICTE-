@@ -25,3 +25,7 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      - key: TURNSTILE_SITE_KEY
+        sync: false
+      - key: TURNSTILE_SECRET_KEY
+        sync: false

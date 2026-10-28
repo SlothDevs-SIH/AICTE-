@@ -6,7 +6,9 @@ import { DotBackdrop } from '../components/DotBackdrop'
 import { AuthPanel } from '../components/AuthPanel'
 import { Count, Logo } from '../components/ui'
 import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '@/components/ui/expandable-screen'
-import ExpandableProfileCard from '@/components/ui/expandable-profile-card'
+import { News } from '@/components/ui/sidebar-news'
+import { CoverPopup } from '../components/CoverPopup'
+import { StepWidget } from '../components/StepWidget'
 import { OrganicButton } from '@/components/ui/organic-button'
 import { TextAnimate } from '@/components/ui/text-animate'
 
@@ -103,29 +105,15 @@ const EVIDENCE: { n: number; of: number; title: string; note: string }[] = [
   { n: 13, of: 20, title: 'Misspelled names linked', note: 'Linked automatically. The other 7 go to an officer to confirm, by design.' },
 ]
 
-/** Picture side of a "How it works" card: a numeral over the drawing, on the brand gradient. */
-function HowMedia({ n, art }: { n: number; art: string }) {
+/** The SAMANVAY mark drawing itself, shown when every card has been swiped away. */
+function MarkDraw() {
   return (
-    <div className="relative grid h-full w-full place-items-center bg-linear-to-br from-[#12306f] via-primary to-[#2459d6]">
-      <span className="absolute -right-2 -top-6 select-none text-[9rem] font-black leading-none text-white/10">{n}</span>
-      <div className="relative rounded-2xl bg-white/95 p-3 shadow-xl"><Art k={art} /></div>
-    </div>
+    <svg viewBox="0 0 32 32" width="72" height="72" fill="none" aria-hidden="true" className="text-primary">
+      <path d="M9 21c0-6 5-9 9-9h5M23 12l-3-3m3 3-3 3M9 21h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="60">
+        <animate attributeName="stroke-dashoffset" dur="2500ms" values="60;0;0;0;60" fill="freeze" />
+      </path>
+    </svg>
   )
-}
-
-function Art({ k }: { k: string }) {
-  const b = '#1a3fa8', o = '#ff8a2a', l = '#c9d6f5'
-  const frame = (children: React.ReactNode) => (
-    <svg viewBox="0 0 120 90" width="132" height="99" aria-hidden="true" className="mx-auto">{children}</svg>
-  )
-  switch (k) {
-    case 'dash': return frame(<><rect x="10" y="10" width="100" height="70" rx="8" fill="#fff" stroke={l} /><rect x="20" y="48" width="12" height="22" rx="3" fill={b} /><rect x="38" y="38" width="12" height="32" rx="3" fill={o} /><rect x="56" y="28" width="12" height="42" rx="3" fill={b} /><circle cx="90" cy="38" r="12" fill="none" stroke={l} strokeWidth="6" /><path d="M90 26a12 12 0 0 1 12 12" fill="none" stroke={o} strokeWidth="6" strokeLinecap="round" /></>)
-    case 'track': return frame(<><path d="M24 20v50" stroke={l} strokeWidth="4" strokeLinecap="round" /><circle cx="24" cy="22" r="7" fill={b} /><circle cx="24" cy="45" r="7" fill={o} /><circle cx="24" cy="68" r="7" fill={l} /><rect x="40" y="17" width="60" height="9" rx="4" fill={l} /><rect x="40" y="40" width="46" height="9" rx="4" fill={l} /><rect x="40" y="63" width="54" height="9" rx="4" fill={l} /></>)
-    case 'overlap': return frame(<><circle cx="45" cy="45" r="28" fill={b} opacity=".85" /><circle cx="75" cy="45" r="28" fill={o} opacity=".8" /><path d="M60 22a28 28 0 0 1 0 46 28 28 0 0 1 0-46z" fill="#fff" opacity=".9" /></>)
-    case 'flow': return frame(<><rect x="8" y="32" width="28" height="26" rx="7" fill={b} /><rect x="46" y="32" width="28" height="26" rx="7" fill={o} /><rect x="84" y="32" width="28" height="26" rx="7" fill={b} /><path d="M36 45h10M74 45h10" stroke={b} strokeWidth="3" strokeLinecap="round" /><path d="M22 64v10h76V64" fill="none" stroke={l} strokeWidth="3" strokeLinecap="round" /></>)
-    case 'search': return frame(<><rect x="12" y="14" width="76" height="14" rx="7" fill={l} /><rect x="12" y="36" width="60" height="14" rx="7" fill={l} /><rect x="12" y="58" width="68" height="14" rx="7" fill={l} /><circle cx="86" cy="48" r="17" fill="#fff" stroke={b} strokeWidth="6" /><path d="m99 61 12 12" stroke={o} strokeWidth="7" strokeLinecap="round" /></>)
-    default: return frame(<><rect x="12" y="10" width="80" height="70" rx="8" fill="#fff" stroke={l} /><rect x="22" y="52" width="10" height="18" rx="2" fill={b} /><rect x="38" y="42" width="10" height="28" rx="2" fill={b} /><rect x="54" y="32" width="10" height="38" rx="2" fill={o} /><rect x="70" y="22" width="10" height="48" rx="2" fill={b} /><path d="M96 20v52M96 72h14" stroke={l} strokeWidth="3" strokeLinecap="round" fill="none" /></>)
-  }
 }
 
 function Ring({ pct }: { pct: number }) {
@@ -143,6 +131,9 @@ export default function Landing() {
   const { me } = useAuth()
   const nav = useNavigate()
   const [live, setLive] = useState<any>(null)
+  const [open, setOpen] = useState<(typeof COVERS)[number] | null>(null)
+  const [allGone, setAllGone] = useState(false)
+  const [round, setRound] = useState(0)
   useEffect(() => () => { document.body.style.overflow = '' }, []) // the sign-in panel locks scrolling; leaving the page must release it
   useEffect(() => {
     fetch('/api/v1/public/overview').then((r) => (r.ok ? r.json() : null)).then(setLive).catch(() => setLive(null))
@@ -205,54 +196,52 @@ export default function Landing() {
         <section className="section" id="how">
           <TextAnimate as="h2" animation="blurInUp" by="word" once>How it works</TextAnimate>
           <div className="how-box">
-            <p className="how-lead">Three safeguards sit between an incoming complaint and an officer's decision. Select a step to see how it works.</p>
+            <p className="how-lead">Three safeguards sit between an incoming complaint and an officer's decision. Tap a step to open it.</p>
             <div className="how-grid">
-              {STEPS.map((s, i) => (
-                <ExpandableProfileCard key={s.t} title={s.t} subtitle={`Step ${i + 1}`}
-                  media={<HowMedia n={i + 1} art={['search', 'overlap', 'flow'][i]} />}
-                  content={
-                    <div className="flex flex-col gap-5">
-                      <p className="text-base leading-relaxed text-foreground">{s.sum}</p>
-                      {s.more.map((m, j) => (
-                        <div key={m} className="flex items-start gap-3">
-                          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{j + 1}</span>
-                          <p className="text-muted-foreground">{m}</p>
-                        </div>
-                      ))}
-                    </div>
-                  } />
-              ))}
+              {STEPS.map((st, i) => <StepWidget key={st.t} n={i + 1} title={st.t} summary={st.sum} points={st.more} />)}
             </div>
           </div>
         </section>
 
         <section className="section" id="covers" style={{ paddingTop: 0 }}>
           <TextAnimate as="h2" animation="blurInUp" by="word" once>What it covers</TextAnimate>
-          <div className="sc-grid">
-            {COVERS.map((c) => (
-              <ExpandableProfileCard key={c.t} title={c.t} subtitle={c.tag}
-                media={<img src={`/shots/${c.img}.jpg`} alt={`${c.t}, a screen of the running prototype`} loading="lazy" className="absolute top-0 max-w-none" style={{ width: '200%', left: '-37.5%' }} />}
-                mediaOpen={
-                  <div className="grid h-full w-full place-items-center bg-linear-to-br from-[#12306f] via-primary to-[#2459d6] p-5">
-                    <div className="w-full overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-white/30" style={{ aspectRatio: '0.72' }}>
-                      <img src={`/shots/${c.img}.jpg`} alt={`${c.t}, a screen of the running prototype`} className="block max-w-none" style={{ width: '230%', marginLeft: '-43%' }} />
-                    </div>
-                  </div>
-                }
-                content={
-                  <div className="flex flex-col gap-5">
-                    <p className="text-base leading-relaxed text-foreground">{c.d}</p>
-                    {c.more.map((m, j) => (
-                      <div key={m} className="flex items-start gap-3">
-                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{j + 1}</span>
-                        <p className="text-muted-foreground">{m}</p>
-                      </div>
-                    ))}
-                    <p className="border-t border-border pt-3 text-xs text-muted-foreground">Screen from the running prototype, showing simulated data.</p>
-                  </div>
-                } />
-            ))}
+          <div className="cover-wrap">
+            <div className="cover-copy">
+              <p className="lead">Six screens make up the dashboard. The cards are stacked: <strong>swipe</strong> the top one away to see the next, or <strong>click</strong> it to read what that part does.</p>
+              <ul className="cover-hints">
+                <li><span aria-hidden="true">↔</span> Swipe left or right to dismiss</li>
+                <li><span aria-hidden="true">◉</span> Click to open the details</li>
+              </ul>
+              {allGone && <button type="button" className="btn primary" onClick={() => { setAllGone(false); setRound((r) => r + 1) }}>Show the cards again</button>}
+            </div>
+            <div className="cover-deck">
+              {!allGone && (
+                <News key={round} zoom articles={COVERS.map((c) => ({ href: c.img, title: c.t, summary: c.d, image: `/shots/${c.img}.jpg` }))}
+                  onOpen={(a) => setOpen(COVERS.find((c) => c.img === a.href) ?? null)} onEmpty={() => setAllGone(true)} emptyLogo={<MarkDraw />} />
+              )}
+            </div>
           </div>
+          <CoverPopup open={!!open} onClose={() => setOpen(null)} title={open?.t ?? ''} subtitle={open?.tag ?? ''}
+            media={open && (
+              <div className="grid h-full w-full place-items-center bg-linear-to-br from-[#12306f] via-primary to-[#2459d6] p-5">
+                <div className="w-full overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-white/30" style={{ aspectRatio: '0.72' }}>
+                  <img src={`/shots/${open.img}.jpg`} alt={`${open.t}, a screen of the running prototype`} className="block max-w-none" style={{ width: '230%', marginLeft: '-43%' }} />
+                </div>
+              </div>
+            )}>
+            {open && (
+              <div className="flex flex-col gap-5">
+                <p className="text-base leading-relaxed text-foreground">{open.d}</p>
+                {open.more.map((m, j) => (
+                  <div key={m} className="flex items-start gap-3">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{j + 1}</span>
+                    <p className="text-muted-foreground">{m}</p>
+                  </div>
+                ))}
+                <p className="border-t border-border pt-3 text-xs text-muted-foreground">Screen from the running prototype, showing simulated data.</p>
+              </div>
+            )}
+          </CoverPopup>
         </section>
 
         <section className="section" id="evidence" style={{ paddingTop: 0 }}>

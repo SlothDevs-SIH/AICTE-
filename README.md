@@ -6,6 +6,8 @@ Team **SlothDevs** · Smart India Hackathon · AICTE (Regulation Bureau) problem
 
 ## Status
 
+Smart India Hackathon problem statement **26264** — AICTE (Regulation Bureau): Integrated Institution Complaint Monitoring and Status Dashboard.
+
 🔨 **Working prototype (simulated complaints; real AICTE colleges can be imported).** Every route in the backend plan is built, and 75 backend tests pass (on SQLite; the app was also run end to end against PostgreSQL 18, see below). Built: self sign-up with e-mail verification, then a choice of who you are (complainant with instant access; institution representative or AICTE staff after an administrator approves), a portal for complainants to file and follow complaints, sign-in for seven staff roles, dashboard with live updates and Ask the Dashboard, case tracking and lifecycle, escalation, overlap detection with a Match Receipt, the Action Gate, coordination threads, notifications and time-limit alerts, College 360 with an attention score, Management view, CSV import wizard, reports (CSV, monthly and quarterly), PDF joint brief, admin screen, and a tamper-evident audit chain. Different wording of the same issue is matched through a hand-written concept list (English, Hinglish, Devanagari), by default, and optionally by a Gemini reading of pairs the list cannot place (Admin switch plus `GEMINI_API_KEY`; unit-tested with a stand-in; on 2026-10-28 a connection test reached Gemini from the Render deployment and got a correct answer on one invented pair, so the end-to-end path on real cases is still unmeasured). A neural embedding model could not be downloaded on the build machine. Real AICTE colleges load with `python -m app.cli import-aicte` (the live fetch has not been run: the AICTE site was unreachable from the build machine; parsing is tested on a fixture). AICTE publishes no complaint records, so complaints stay simulated. Not built: neural embeddings, Hindi-script college-name matching, PostgreSQL, a background scheduler (an admin runs the time-limit check), PDF reports, and automated frontend tests. The language-model features (summary, Ask) are off and were never run against the real service. The exact list is in the "Designed vs. Built" tables of the two plans.
 
 ## Run it
@@ -31,7 +33,7 @@ Tests: `cd backend; .\.venv\Scripts\python -m pytest -q`. Evaluation on the plan
 1. Read `MASTER_PLAN.md`, then the two companion plans.
 2. Backend: `BACKEND_PLAN.md` §15, phase **B1**.
 3. Frontend: `FRONTEND_PLAN.md` §7.1, phase **F1**.
-4. Open items: add the PS number to `docs/PROBLEM_STATEMENT.md` and the plan headers (`MASTER_PLAN.md` V-M1); confirm the meaning of "pending" vs "under process" with AICTE officers (`BACKEND_PLAN.md` V-B9).
+4. Open items: confirm the meaning of "pending" vs "under process" with AICTE officers (`BACKEND_PLAN.md` V-B9).
 
 ## Data
 
@@ -57,6 +59,22 @@ PostgreSQL instead (Neon, neon.tech, does not expire; Render's own free database
 reset) was run against a real PostgreSQL 18 engine (PGlite) on the build machine. It has **not** been run against Neon itself,
 and the 75-test suite was only run on SQLite.
 
+### Bot check on sign-up (optional, free)
+
+Cloudflare Turnstile adds a "prove you are a person" check to sign-up and password reset. It is off until both keys exist.
+1. Sign in at dash.cloudflare.com (a free account), open **Turnstile**, and **Add widget**.
+2. Hostname: your Render address, for example `samanvay-f7et.onrender.com`. Mode: Managed.
+3. Copy the **Site key** and the **Secret key** and add them in Render as `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
+The secret key never reaches the browser; if the check service cannot be reached, sign-up is refused rather than let through.
+
+### Real AICTE colleges from a file
+
+If the server cannot reach AICTE's site, save the approved-institutions list from the AICTE dashboard
+(facilities.aicte-india.org, Approved Institutes, then its export or download button) as Excel or CSV and upload it under
+**Admin, Real AICTE colleges, Or upload a list you saved**. It needs a header row with an AICTE ID and an institute name;
+State, District and Type are used when present. Column names are matched loosely and the same list can be loaded again safely.
+Not verified against a real AICTE export: the matching was tested on files laid out the way AICTE's list is described, not on an actual download.
+
 ### Demo accounts
 
 On any start without `DEMO_ACCOUNTS=true` the generated demo logins are switched off (they stay as names in the simulated case
@@ -75,7 +93,6 @@ Render's free tier blocks SMTP ports, so use an HTTPS mail service. The easiest 
 
 `RESEND_API_KEY` or `SMTP_HOST` (with `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`) work too. The link in the mail uses
 `PUBLIC_BASE_URL`, or Render's own address when that is not set. With no mail service the sign-up screen says so; for
-testing only, `DEV_SHOW_VERIFY_LINK=true` shows the link on screen. Password reset works by e-mail (link valid one hour, signs out every device). Not built: rate limiting of
-sign-ups per address or network, CAPTCHA.
+testing only, `DEV_SHOW_VERIFY_LINK=true` shows the link on screen. Password reset works by e-mail (link valid one hour, signs out every device). Sign-up, sign-in and password-reset requests are limited per network and per address (in memory, so counts reset on restart and are not shared between servers).
 
 Optional: set `AICTE_AUTO_IMPORT=true` on the host to load the real AICTE-approved colleges at every start (needs the host to reach facilities.aicte-india.org). Or sign in as admin and press "Load real AICTE colleges". The live AICTE endpoint has not been verified from the build machine; the import reports per-state problems on the Admin page.

@@ -2,7 +2,7 @@
 
 **Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY, Hindi for "coordination" · **Domain:** Governance / Regulatory technology
 **Problem statement:** AICTE (Regulation Bureau) — *Integrated Institution Complaint Monitoring and Status Dashboard*. Official text: [`docs/PROBLEM_STATEMENT.md`](docs/PROBLEM_STATEMENT.md)
-**PS number:** *not supplied yet* (see V-M1)
+**PS number:** 26264 (see V-M1)
 **Document date:** 2026-10-27 (v1.1 — reconciled with the official problem statement)
 **Companion documents:** [`backend/BACKEND_PLAN.md`](backend/BACKEND_PLAN.md) (data, API, engine) · [`frontend/FRONTEND_PLAN.md`](frontend/FRONTEND_PLAN.md) (web app)
 **Project phase:** **M0 — Planning: ✅ this document set.** Nothing is built yet. Next: **M1 — Foundations.**
@@ -16,7 +16,7 @@
 
 | # | Item | Detail | Resolution / action | Status |
 |---|---|---|---|---|
-| V-M1 | Official problem-statement text, and the PS number | Text was supplied on 2026-10-27 and saved in `docs/PROBLEM_STATEMENT.md`. **The PS number was not in the pasted text.** | Text: done. Number: the team adds it to `docs/PROBLEM_STATEMENT.md` and the three plan headers | ✅ Text resolved · ⏳ number open |
+| V-M1 | Official problem-statement text, and the PS number | Text was supplied on 2026-10-27 and saved in `docs/PROBLEM_STATEMENT.md`. The PS number was not in the pasted text; it was given separately (26264). | Text: done. Number 26264 was supplied by the team on 2026-10-28 and added to `docs/PROBLEM_STATEMENT.md` and the three plan headers | ✅ Resolved |
 | V-M2 | Earlier working requirement IDs `R-01…R-11` | They were reconstructed before the official text was available and **missed several official items** (see V-M7) | Replaced everywhere by official IDs (`OBJ-n`, `KFn.m`, `INN`, `OUT-n`, `TU-n`) — §1.3 | ✅ Resolved 2026-10-27 |
 | V-M7 | Gaps found when comparing the earlier plan with the official text | (1) **Escalated** cases were not a status, counter, history item or alert; (2) case fields *last action*, *next action*, *date of last action*, *expected disposal date* were missing, and there was no unique **Case ID**; (3) reports for **status-wise**, **overlapping/duplicate cases**, **institution-wise history** and **monthly/quarterly performance** were missing; (4) **Competent Authority** was not a user type; (5) the dashboard was not defined as **real-time**; (6) **institution-wise case status** was not on the dashboard; (7) *pending case reminders* and *escalation alerts* were not separate alert types | Fixed in this version in all three plans: F-29 to F-32 added, F-17 and F-18 widened, states, tables, routes and screens updated | ✅ Resolved 2026-10-27 |
 | V-M3 | The product name SAMANVAY is a working name | It must be checked for clashes before any public use | Decide before the final presentation | ⏳ Open |
@@ -441,7 +441,7 @@ There is **no time limit** on the build, so phases are ordered by **dependency a
 | R4 | Too many alerts | Medium | Medium | Alert budget (P8), ranking, grouping by institution |
 | R5 | Over-claiming "AI" or "learning" | Medium | High | Only claim what is built; "learning" is roadmap; alias memory is described as what it is |
 | R6 | Scope grows beyond what can be finished | High | Medium | Phases with cut-lines (§12) |
-| R7 | A judge reads the statement differently from us, or the PS number is wrong | Low | Medium | Official text is saved in `docs/PROBLEM_STATEMENT.md`; §1.3 maps every item; add the PS number |
+| R7 | A judge reads the statement differently from us, or the PS number is wrong | Low | Medium | Official text is saved in `docs/PROBLEM_STATEMENT.md`; §1.3 maps every item; PS number 26264 recorded (taken from the team's portal, not independently checked) |
 | R8 | Sensitive-data concerns | Low | High | Synthetic data only; masking; no real data in the repo |
 | R9 | Contract drift between frontend and backend | Medium | Medium | Generated API types plus CI diff check (frontend plan §2.3) |
 | R10 | Hash-chain claims misunderstood (it is tamper-*evident*, not tamper-*proof*) | Medium | Medium | Say "tamper-evident"; document what it does not cover (backend plan §8) |

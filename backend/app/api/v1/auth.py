@@ -1,12 +1,13 @@
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user
 from app.core.config import get_settings
+from app.core import ratelimit
 from app.core.errors import ApiError
 from app.core.security import (
     hash_refresh,
@@ -55,7 +56,8 @@ def _issue(db: Session, user: User) -> dict:
 
 
 @router.post("/auth/login")
-def login(body: LoginIn, db: Session = Depends(get_db)):
+def login(body: LoginIn, request: Request, db: Session = Depends(get_db)):
+    ratelimit.check(f"login:ip:{ratelimit.client_ip(request)}", 40, 600, "sign-in attempts from your network")
     user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
     bad = ApiError(401, "invalid_credentials", "Email or password is incorrect.")
     if user is None or not user.is_active:

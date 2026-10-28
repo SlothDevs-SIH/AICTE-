@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, ApiError } from '../api'
+import { api, ApiError, upload } from '../api'
 import { ROLE_LABEL } from '../auth'
 import { ErrorBox, Loading, useFetch } from '../components/ui'
 
@@ -124,6 +124,17 @@ export default function Admin() {
           </p>
         )}
         <button className="btn" disabled={busy || imp.data?.state === 'running'} onClick={() => wrap(async () => { await api('/admin/jobs/import-aicte', { method: 'POST' }); imp.reload() }, 'Started. Progress shows here.')}>Load real AICTE colleges</button>
+        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed var(--line)' }}>
+          <h3 style={{ fontSize: '1rem' }}>Or upload a list you saved</h3>
+          <p className="muted" style={{ margin: '0 0 .5rem' }}>If the server cannot reach AICTE's site, save the approved-institutions list from the AICTE dashboard (Excel or CSV) and upload it here. It needs a header row with at least an AICTE ID and an institute name; State, District and Type are used when present. Loading the same list again changes nothing.</p>
+          <input type="file" accept=".xlsx,.csv,.json" aria-label="AICTE list file" disabled={busy || imp.data?.state === 'running'} onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (!f) return
+            const fd = new FormData(); fd.append('file', f)
+            wrap(async () => { await upload('/admin/jobs/import-aicte-file', fd); imp.reload() }, 'Uploaded. Progress shows above.')
+            e.target.value = ''
+          }} />
+        </div>
       </section>
 
       <section className="card" style={{ marginTop: '1rem' }}>

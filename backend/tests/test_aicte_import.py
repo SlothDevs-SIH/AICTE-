@@ -42,3 +42,66 @@ def test_import_job_is_admin_only(client, tokens):
     assert client.post("/api/v1/admin/jobs/import-aicte", headers=tokens["officer.rb"]).status_code == 403
     assert client.get("/api/v1/admin/jobs/import-aicte", headers=tokens["officer.rb"]).status_code == 403
     assert client.get("/api/v1/admin/jobs/import-aicte", headers=tokens["admin"]).status_code == 200
+
+
+def _wait_job(client, headers):
+    import time
+
+    for _ in range(100):
+        j = client.get("/api/v1/admin/jobs/import-aicte", headers=headers).json()
+        if j["state"] != "running":
+            return j
+        time.sleep(0.1)
+    raise AssertionError("import did not finish")
+
+
+CSV = ("S.No,AICTE Permanent ID,Name of the Institute,State,District,Institution Type,Address\n"
+       "1,1-900000001,Sample Institute of Technology Alpha,Maharashtra,Pune,Private,Road 1\n"
+       "2,1-900000002,Sample College of Pharmacy Beta,karnataka,Mysuru,Government,Road 2\n"
+       "3,,No id here,Goa,,,\n")
+
+
+def test_uploaded_csv_is_loaded_with_other_column_names(client, tokens):
+    from sqlalchemy import select
+
+    h = tokens["admin"]
+    assert client.post("/api/v1/admin/jobs/import-aicte-file", files={"file": ("list.csv", CSV, "text/csv")}, headers=tokens["officer.rb"]).status_code == 403
+    assert client.post("/api/v1/admin/jobs/import-aicte-file", files={"file": ("list.txt", "x", "text/plain")}, headers=h).status_code == 422
+    assert client.post("/api/v1/admin/jobs/import-aicte-file", files={"file": ("list.csv", CSV, "text/csv")}, headers=h).status_code == 200
+    j = _wait_job(client, h)
+    assert j["added"] == 2 and j["skipped"] == 1 and not j["errors"], j
+    with session_factory()() as db:
+        i = db.scalar(select(Institution).where(Institution.aicte_id == "1-900000002"))
+        assert i.state == "Karnataka" and i.district == "Mysuru" and i.is_synthetic is False and i.region_id
+    client.post("/api/v1/admin/jobs/import-aicte-file", files={"file": ("list.csv", CSV, "text/csv")}, headers=h)
+    again = _wait_job(client, h)
+    assert again["added"] == 0 and again["updated"] == 2  # loading the same list twice changes nothing
+    with session_factory()() as db:
+        for i in db.scalars(select(Institution).where(Institution.aicte_id.in_(["1-900000001", "1-900000002"]))):
+            db.delete(i)
+        db.commit()
+
+
+def test_uploaded_excel_and_a_useless_file(client, tokens):
+    import io
+
+    from openpyxl import Workbook
+    from sqlalchemy import select
+
+    h = tokens["admin"]
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["Report generated on 28 Oct"])  # a title row above the real header
+    ws.append(["AICTE ID", "Institute Name", "State", "District"])
+    ws.append(["1-900000003", "Sample Polytechnic Gamma", "Goa", "North Goa"])
+    buf = io.BytesIO()
+    wb.save(buf)
+    assert client.post("/api/v1/admin/jobs/import-aicte-file", files={"file": ("list.xlsx", buf.getvalue(), "application/octet-stream")}, headers=h).status_code == 200
+    assert _wait_job(client, h)["added"] == 1
+    client.post("/api/v1/admin/jobs/import-aicte-file", files={"file": ("list.csv", "foo,bar\n1,2\n", "text/csv")}, headers=h)
+    bad = _wait_job(client, h)
+    assert bad["errors"] and bad["added"] == 0
+    with session_factory()() as db:
+        for i in db.scalars(select(Institution).where(Institution.aicte_id == "1-900000003")):
+            db.delete(i)
+        db.commit()

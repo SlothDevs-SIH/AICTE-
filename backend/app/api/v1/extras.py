@@ -506,6 +506,24 @@ def import_aicte(db: Session = Depends(get_db), user: User = Depends(require(R.A
     return job
 
 
+@router.post("/admin/jobs/import-aicte-file")
+async def import_aicte_file(file: UploadFile = File(...), db: Session = Depends(get_db), user: User = Depends(require(R.ADMIN))):
+    """Load a list of AICTE-approved institutions that an administrator saved from the AICTE dashboard (xlsx, csv or json)."""
+    from app import aicte_import
+
+    data = await file.read()
+    if len(data) > 25 * 1024 * 1024:
+        raise ApiError(413, "too_large", "The file is larger than 25 MB.")
+    if not (file.filename or "").lower().endswith((".xlsx", ".csv", ".json")):
+        raise ApiError(422, "unsupported_file", "Upload an .xlsx, .csv or .json file.")
+    fresh = aicte_import.JOB["state"] != "running"
+    job = aicte_import.start_file_job(file.filename or "", data)
+    if fresh:
+        write_audit(db, user.id, "AICTE_FILE_IMPORT_STARTED", "institution", "all", {"file": file.filename, "bytes": len(data)})
+        db.commit()
+    return job
+
+
 @router.get("/admin/jobs/import-aicte")
 def import_aicte_status(user: User = Depends(require(R.ADMIN))):
     from app import aicte_import

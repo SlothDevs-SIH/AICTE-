@@ -1,6 +1,6 @@
 # SAMANVAY Backend — Plan & Build Record
 
-**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** not supplied yet (MASTER_PLAN V-M1) · **Official text:** [`../docs/PROBLEM_STATEMENT.md`](../docs/PROBLEM_STATEMENT.md)
+**Team:** SlothDevs (SIH) · **Solution (working name):** SAMANVAY · **Problem statement:** AICTE (Regulation Bureau) — integrated institution complaint monitoring and status dashboard · **PS number:** 26264 · **Official text:** [`../docs/PROBLEM_STATEMENT.md`](../docs/PROBLEM_STATEMENT.md)
 **Parent document:** [`../MASTER_PLAN.md`](../MASTER_PLAN.md) (product). Sibling: [`../frontend/FRONTEND_PLAN.md`](../frontend/FRONTEND_PLAN.md). This document is the source of truth for the API, data and engine. When they disagree, fix all three in the same commit.
 **Document date:** 2026-10-27 (v1.1 — reconciled with the official problem statement)
 **Backend phase:** **B0 — Planning: ✅ this document.** Nothing is built. Next: **B1 — Foundations.**
@@ -760,7 +760,9 @@ All figures are from `python -m app.cli evaluate` on the generated dataset (seed
 | Password reset by e-mail (one hour, single use, signs out every device, clears a lockout) | ✅ | `/auth/forgot-password`, `/auth/reset-password`; `tests/test_accounts.py` |
 | Generated demo logins switched off unless `DEMO_ACCOUNTS=true` | ✅ | `secure_demo_accounts` in `app/bootstrap.py`; `tests/test_accounts.py` |
 | PostgreSQL support (URL forms, pool settings, column migration with dialect-correct defaults) | ✅ run end to end on PostgreSQL 18 (PGlite), **not on Neon or a production host**; test suite itself is SQLite only | `app/db/base.py`, `app/bootstrap.py` |
-| Per-address and per-network sign-up limits, CAPTCHA | 📋 Planned | none |
+| Request limits on sign-up, sign-in, resend and password reset (per network and per address; in memory, one server only) | ✅ | `app/core/ratelimit.py`; `tests/test_limits.py` |
+| CAPTCHA (Cloudflare Turnstile) on sign-up and password reset; fails closed when the service is down | ✅ (verification call unit-tested with a stand-in; **not run against Cloudflare**) | `app/adapters/captcha.py`; `tests/test_limits.py` |
+| Upload of an AICTE institutions list (xlsx, csv, json) with loose column matching, idempotent | ✅ (tested on invented files, **not on a real AICTE export**) | `app/aicte_import.py`; `tests/test_aicte_import.py` |
 
 Known weak spot: if someone signs up with another person's address and the owner then opens that unsolicited link, the
 account is verified with the first person's password. Re-registering the same unverified address replaces the password,

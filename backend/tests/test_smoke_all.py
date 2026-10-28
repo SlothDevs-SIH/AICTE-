@@ -46,7 +46,7 @@ def test_no_read_endpoint_crashes_for_any_staff_role(client, tokens, who):
 
 def test_every_read_endpoint_refuses_anonymous_visitors(client):
     ids = _ids()
-    open_paths = {f"{API}/healthz", f"{API}/readyz", f"{API}/public/overview"}
+    open_paths = {f"{API}/healthz", f"{API}/readyz", f"{API}/public/overview", f"{API}/public/config"}
     leaks = []
     for path in _get_routes():
         if path in open_paths or not path.startswith(API):

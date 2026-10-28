@@ -1,8 +1,9 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, ApiError } from '../api'
 import { useAuth } from '../auth'
 import { OrganicButton } from '@/components/ui/organic-button'
+import { Turnstile } from './Turnstile'
 
 type Mode = 'in' | 'up' | 'sent' | 'forgot' | 'forgot-sent'
 
@@ -29,20 +30,25 @@ export function AuthPanel({ from = '/app', start = 'in' }: { from?: string; star
   const [sent, setSent] = useState<any>(null)
   const [resent, setResent] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
+  const [siteKey, setSiteKey] = useState<string | null>(null)
+  const [captcha, setCaptcha] = useState('')
+  const [round, setRound] = useState(0) // a new check after every failed attempt, because a token works once
+  useEffect(() => { api('/public/config').then((c) => setSiteKey(c?.captcha?.site_key ?? null)).catch(() => setSiteKey(null)) }, [])
+  const needCaptcha = !!siteKey && (mode === 'up' || mode === 'forgot')
 
   const run = (fn: () => Promise<void>) => async (e?: FormEvent) => {
     e?.preventDefault()
     if (busy) return
     setBusy(true); setErr(null); setResent('')
-    try { await fn() } catch (x) { setErr(x as ApiError) } finally { setBusy(false) }
+    try { await fn() } catch (x) { setErr(x as ApiError); if (siteKey) { setCaptcha(''); setRound((r) => r + 1) } } finally { setBusy(false) }
   }
   const signIn = run(async () => { await login(email, pw); nav(from, { replace: true }) })
   const signUp = run(async () => {
-    const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw } })
+    const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw, captcha_token: captcha || null } })
     setSent(r); setMode('sent')
   })
   const forgot = run(async () => {
-    const r = await api('/auth/forgot-password', { method: 'POST', body: { email } })
+    const r = await api('/auth/forgot-password', { method: 'POST', body: { email, captcha_token: captcha || null } })
     setSent(r); setMode('forgot-sent')
   })
   const resend = async () => {
@@ -63,9 +69,10 @@ export function AuthPanel({ from = '/app', start = 'in' }: { from?: string; star
         <label className="f">E-mail
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required autoFocus />
         </label>
+        {needCaptcha && <Turnstile key={round} siteKey={siteKey!} onToken={setCaptcha} />}
         {err && <div className="notice err" role="alert">{err.message}</div>}
         <div style={{ display: 'flex', gap: '.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button className="btn primary" disabled={busy}>{busy ? 'Sending…' : 'Send the link'}</button>
+          <button className="btn primary" disabled={busy || (needCaptcha && !captcha)}>{busy ? 'Sending…' : 'Send the link'}</button>
           <button type="button" className="btn" onClick={() => switchTo('in')}>Back to sign in</button>
         </div>
       </form>
@@ -123,6 +130,7 @@ export function AuthPanel({ from = '/app', start = 'in' }: { from?: string; star
           {mode === 'up' && <small>At least 10 characters, with letters and a digit.</small>}
           {mode === 'in' && <button type="button" className="linkbtn" style={{ justifySelf: 'start', fontWeight: 600, fontSize: '.85rem' }} onClick={() => switchTo('forgot')}>Forgot your password?</button>}
         </label>
+        {needCaptcha && <Turnstile key={round} siteKey={siteKey!} onToken={setCaptcha} />}
         {err && (
           <div className="notice err" role="alert">
             {err.status === 423 ? 'This account is locked for a while after too many attempts. Try again later.'
@@ -132,7 +140,8 @@ export function AuthPanel({ from = '/app', start = 'in' }: { from?: string; star
         )}
         <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
         <div><OrganicButton href="#go" label={busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : 'Create account'}
-          onClick={(e) => { e.preventDefault(); if (!busy) formRef.current?.requestSubmit() }} /></div>
+          onClick={(e) => { e.preventDefault(); if (!busy && !(needCaptcha && !captcha)) formRef.current?.requestSubmit() }} /></div>
+        {needCaptcha && !captcha && <small className="muted">Complete the check above to continue.</small>}
       </form>
       <p className="muted auth-note">
         {mode === 'in'

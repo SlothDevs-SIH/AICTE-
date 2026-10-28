@@ -2,6 +2,7 @@ import os
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key-test-secret-key-0123")
 os.environ.setdefault("PII_ENCRYPTION_KEY", "test-pii-key")
+os.environ["RATE_LIMITS"] = "off"  # tests sign in and sign up far faster than a person; test_limits turns them on
 os.environ["DEMO_ACCOUNTS"] = "true"  # the generated demo logins are what most tests sign in with
 os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL", "sqlite:///./data/test.db")
 
@@ -54,5 +55,5 @@ def _no_real_model(monkeypatch):
     """Tests never call a real model, whatever keys the machine has; a test that needs a key sets its own."""
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    for k in ("BREVO_API_KEY", "RESEND_API_KEY", "SMTP_HOST", "ADMIN_EMAILS", "DEV_SHOW_VERIFY_LINK"):
+    for k in ("TURNSTILE_SECRET_KEY", "TURNSTILE_SITE_KEY", "BREVO_API_KEY", "RESEND_API_KEY", "SMTP_HOST", "ADMIN_EMAILS", "DEV_SHOW_VERIFY_LINK"):
         monkeypatch.delenv(k, raising=False)
