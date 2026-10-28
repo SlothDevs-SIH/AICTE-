@@ -25,7 +25,7 @@ export default function Management() {
               <div className="bars" style={{ marginTop: '.6rem' }} role="img" aria-label={r.components.map((c: any) => `${c.name} ${c.points} points`).join(', ')}>
                 {r.components.map((c: any) => (
                   <div className="bar" key={c.name} style={{ gridTemplateColumns: '120px 1fr 90px' }}>
-                    <span>{c.name.replace('_', ' ')}</span><i style={{ width: `${c.value * 100}%`, background: 'var(--accent)' }} /><span className="muted">{c.points} of {Math.round(c.weight * 100)}</span>
+                    <span>{c.name.replace('_', ' ')}</span><i style={{ width: `${c.value * 100}%`, background: 'var(--brand)' }} /><span className="muted">{c.points} of {Math.round(c.weight * 100)}</span>
                   </div>
                 ))}
               </div>

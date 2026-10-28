@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api'
 import { ROLE_LABEL, useAuth } from '../auth'
-import { InteractiveHoverButton } from './InteractiveHoverButton'
+import { OrganicButton } from '@/components/ui/organic-button'
 
 const DEMO = [
   ['officer.rb', 'unit_officer', 'RB'], ['supervisor.rb', 'unit_supervisor', 'RB'], ['officer.pgrc', 'unit_officer', 'PGRC'],
@@ -19,6 +19,7 @@ export function LoginForm({ from = '/app' }: { from?: string }) {
   const [show, setShow] = useState(false)
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setBusy(true); setErr('')
@@ -28,7 +29,7 @@ export function LoginForm({ from = '/app' }: { from?: string }) {
   }
   return (
     <>
-      <form onSubmit={submit} className="loginform">
+      <form ref={formRef} onSubmit={submit} className="loginform">
         <label className="f">Email
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" required />
         </label>
@@ -39,7 +40,8 @@ export function LoginForm({ from = '/app' }: { from?: string }) {
           </span>
         </label>
         {err && <div className="notice err" role="alert">{err}</div>}
-        <div><InteractiveHoverButton type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</InteractiveHoverButton></div>
+        <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
+        <div><OrganicButton href="#sign-in" label={busy ? 'Signing in…' : 'Sign in'} onClick={(e) => { e.preventDefault(); if (!busy) formRef.current?.requestSubmit() }} /></div>
       </form>
       <p className="muted" style={{ margin: '1.1rem 0 .5rem' }}>Demo accounts (generated). Pick one to fill the email; the demo password is in the project README.</p>
       <div className="chips">

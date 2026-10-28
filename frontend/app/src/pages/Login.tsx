@@ -1,8 +1,8 @@
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { DotBackdrop } from '../components/DotPattern'
+import { DotBackdrop } from '../components/DotBackdrop'
 import { LoginForm } from '../components/LoginForm'
-import { TextAnimate } from '../components/TextAnimate'
+import { TextAnimate } from '@/components/ui/text-animate'
 import { Logo, SyntheticBadge } from '../components/ui'
 
 export default function Login() {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError, openStream } from '../api'
+import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 
 export function Logo({ size = 32 }: { size?: number }) {
   return (
@@ -222,7 +223,7 @@ export function AskBar() {
         <label className="f" style={{ flex: 1, minWidth: 220 }}>Ask the dashboard
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. overdue PGRC cases older than 60 days" maxLength={300} />
         </label>
-        <button className="btn primary" disabled={busy || q.trim().length < 3} style={{ alignSelf: 'end' }}>Find cases</button>
+        <InteractiveHoverButton type="submit" disabled={busy || q.trim().length < 3} style={{ alignSelf: 'end' }}>Find cases</InteractiveHoverButton>
       </div>
       {err && <div className="notice err" role="alert" style={{ marginTop: '.6rem' }}>{err}</div>}
       {res && (

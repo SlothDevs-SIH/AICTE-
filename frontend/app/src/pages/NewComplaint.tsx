@@ -61,7 +61,7 @@ export default function NewComplaint() {
         <label className="f">College name as written in the complaint<input value={f.institution_text_raw} onChange={(e) => { set('institution_text_raw', e.target.value); set('institution_id', '') }} /><small>Spelling variants are fine. The registry is searched as you type.</small></label>
         <label className="f">AICTE permanent ID (if given)<input value={f.aicte_id_raw} onChange={(e) => set('aicte_id_raw', e.target.value)} /></label>
         {sugg.length > 0 && (
-          <fieldset style={{ gridColumn: '1 / -1', border: '1px solid var(--border)', borderRadius: 10 }}>
+          <fieldset style={{ gridColumn: '1 / -1', border: '1px solid var(--line)', borderRadius: 10 }}>
             <legend>Possible registry matches</legend>
             {sugg.map((s) => (
               <label key={s.institution_id} style={{ display: 'flex', gap: '.6rem', padding: '.3rem 0', alignItems: 'center' }}>

@@ -3,7 +3,7 @@ import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 
 import { OFFICER_ROLES, ROLE_LABEL, useAuth } from './auth'
 import { CommandSearch, type CommandItem } from './components/CommandSearch'
 import { TreeMenu, type MenuItem } from './components/TreeMenu'
-import { DotBackdrop } from './components/DotPattern'
+import { DotBackdrop } from './components/DotBackdrop'
 import { Logo, useFetch } from './components/ui'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -33,24 +33,24 @@ type Group = { id: string; label: string; icon: string; to?: string; roles?: str
 const TREE: Group[] = [
   { id: 'dash', label: 'Dashboard', icon: '▦', to: '/app', roles: ALL },
   { id: 'complaints', label: 'Complaints', icon: '☰', children: [
-    { id: 'c-search', label: 'Search complaints', to: '/app/complaints', roles: ALL },
-    { id: 'c-new', label: 'New complaint', to: '/app/new', roles: OFFICE },
-    { id: 'c-import', label: 'Import cases', to: '/app/imports', roles: OFFICE },
+    { id: 'c-search', icon: '⌕', label: 'Search complaints', to: '/app/complaints', roles: ALL },
+    { id: 'c-new', icon: '＋', label: 'New complaint', to: '/app/new', roles: OFFICE },
+    { id: 'c-import', icon: '⇪', label: 'Import cases', to: '/app/imports', roles: OFFICE },
   ] },
   { id: 'coord', label: 'Overlaps and action', icon: '⇄', children: [
-    { id: 'o-overlaps', label: 'Overlaps', to: '/app/overlaps', roles: OVERSIGHT },
-    { id: 'o-gate', label: 'Action Gate', to: '/app/gate', roles: [...OFFICER_ROLES, 'competent_authority'] },
-    { id: 'o-coord', label: 'Coordination', to: '/app/coordination', roles: OVERSIGHT },
-    { id: 'o-esc', label: 'Escalations', to: '/app/escalations', roles: ['unit_supervisor', 'competent_authority', 'management', 'admin'] },
+    { id: 'o-overlaps', icon: '⇄', label: 'Overlaps', to: '/app/overlaps', roles: OVERSIGHT },
+    { id: 'o-gate', icon: '⛨', label: 'Action Gate', to: '/app/gate', roles: [...OFFICER_ROLES, 'competent_authority'] },
+    { id: 'o-coord', icon: '⇋', label: 'Coordination', to: '/app/coordination', roles: OVERSIGHT },
+    { id: 'o-esc', icon: '↑', label: 'Escalations', to: '/app/escalations', roles: ['unit_supervisor', 'competent_authority', 'management', 'admin'] },
   ] },
   { id: 'colleges', label: 'Colleges', icon: '◧', to: '/app/colleges', roles: ALL },
   { id: 'insight', label: 'Insights', icon: '◈', children: [
-    { id: 'i-mgmt', label: 'Management view', to: '/app/management', roles: ['management', 'competent_authority', 'admin', 'auditor'] },
-    { id: 'i-reports', label: 'Reports', to: '/app/reports', roles: ALL },
+    { id: 'i-mgmt', icon: '◈', label: 'Management view', to: '/app/management', roles: ['management', 'competent_authority', 'admin', 'auditor'] },
+    { id: 'i-reports', icon: '▤', label: 'Reports', to: '/app/reports', roles: ALL },
   ] },
   { id: 'oversight', label: 'Oversight', icon: '✓', children: [
-    { id: 'v-audit', label: 'Audit & Verify', to: '/app/audit', roles: ['auditor', 'admin', 'competent_authority'] },
-    { id: 'v-status', label: 'System status', to: '/app/status', roles: ALL },
+    { id: 'v-audit', icon: '✓', label: 'Audit & Verify', to: '/app/audit', roles: ['auditor', 'admin', 'competent_authority'] },
+    { id: 'v-status', icon: '◉', label: 'System status', to: '/app/status', roles: ALL },
   ] },
   { id: 'admin', label: 'Admin', icon: '⚙', to: '/app/admin', roles: ['admin'] },
 ]
@@ -59,7 +59,7 @@ function menuFor(role: string): MenuItem[] {
   const out: MenuItem[] = []
   for (const g of TREE) {
     if (g.to) { if (g.roles?.includes(role)) out.push({ id: g.id, label: g.label, icon: g.icon, to: g.to }); continue }
-    const kids: MenuItem[] = (g.children ?? []).filter((c) => c.roles.includes(role)).map((c) => ({ id: c.id, label: c.label, to: c.to }))
+    const kids: MenuItem[] = (g.children ?? []).filter((c) => c.roles.includes(role)).map((c) => ({ id: c.id, label: c.label, to: c.to, icon: c.icon }))
     if (kids.length === 1) out.push({ ...kids[0], icon: g.icon })
     else if (kids.length > 1) out.push({ id: g.id, label: g.label, icon: g.icon, children: kids })
   }
@@ -78,6 +78,8 @@ function Shell() {
   const nav = useNavigate()
   const loc = useLocation()
   const [open, setOpen] = useState(false)
+  const [mini, setMini] = useState(() => { try { return localStorage.getItem('side-mini') === '1' } catch { return false } })
+  const toggleMini = (v: boolean) => { setMini(v); try { localStorage.setItem('side-mini', v ? '1' : '0') } catch { /* private window */ } }
   const notes = useFetch<any>(me ? '/notifications' : null, [loc.pathname])
   useEffect(() => setOpen(false), [loc.pathname])
   const menu = useMemo(() => (me ? menuFor(me.role) : []), [me])
@@ -97,11 +99,14 @@ function Shell() {
   if (!ready) return <p style={{ padding: '2rem' }} role="status">Loading…</p>
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
   return (
-    <div className="shell">
+    <div className={`shell ${mini ? 'mini' : ''}`}>
       <DotBackdrop />
       <a className="skip" href="#main">Skip to content</a>
       <aside className={`side ${open ? 'open' : ''}`} aria-label="Primary">
-        <Link to="/" className="brand"><Logo /> SAMANVAY</Link>
+        <div className="side-head">
+          <Link to="/" className="brand"><Logo /><span className="lbl">SAMANVAY</span></Link>
+          <button type="button" className="side-toggle" onClick={() => toggleMini(!mini)} aria-label={mini ? 'Expand the menu' : 'Collapse the menu'} aria-pressed={mini} title={mini ? 'Expand' : 'Collapse'}>‹</button>
+        </div>
         <div className="profile">
           <span className="avatar" aria-hidden="true">{initials(me.name)}</span>
           <div className="who">
@@ -111,7 +116,7 @@ function Shell() {
           <button type="button" className="signout" onClick={async () => { await logout(); nav('/') }} aria-label="Sign out" title="Sign out">⏻</button>
         </div>
         <nav aria-label="Pages">
-          <TreeMenu menuData={menu} activeId={activeLeaf(menu, loc.pathname)} onSelect={(i) => i.to && nav(i.to)} />
+          <TreeMenu menuData={menu} activeId={activeLeaf(menu, loc.pathname)} onSelect={(i) => i.to && nav(i.to)} onGroupOpen={() => mini && toggleMini(false)} />
         </nav>
       </aside>
       <div className="main">

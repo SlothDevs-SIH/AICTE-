@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '../components/ExpandableScreen'
-import { ShiftCard } from '../components/ShiftCard'
-import { DotBackdrop } from '../components/DotPattern'
-import { InteractiveHoverButton } from '../components/InteractiveHoverButton'
-import { TextAnimate } from '../components/TextAnimate'
-import { Expandable, ExpandableCard, ExpandableCardContent, ExpandableCardHeader, ExpandableContent, ExpandableTrigger } from '../components/Expandable'
+import { DotBackdrop } from '../components/DotBackdrop'
 import { LoginForm } from '../components/LoginForm'
 import { Count, Logo } from '../components/ui'
+import { Expandable, ExpandableCard, ExpandableCardContent, ExpandableCardHeader, ExpandableContent, ExpandableTrigger } from '@/components/ui/expandable'
+import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '@/components/ui/expandable-screen'
+import { OrganicButton } from '@/components/ui/organic-button'
+import { ShiftCard } from '@/components/ui/shift-card'
+import { TextAnimate } from '@/components/ui/text-animate'
 
 function SkylineArt() {
   // Abstract campus-and-city illustration drawn in SVG (no photos, so nothing is borrowed).
@@ -41,156 +41,245 @@ function SkylineArt() {
   )
 }
 
+const STEPS: { t: string; sum: string; more: string[]; h: number; c: number }[] = [
+  {
+    t: 'Unified institution register',
+    sum: 'Each complaint is resolved to one verified AICTE institution record, so the Bureau, the PGRC and regional offices work from the same college and the same history.',
+    more: [
+      'Matching starts from the AICTE ID, then the normalised name with district and state. Spelling variants, abbreviations and renamed colleges resolve to one record.',
+      'Look-alike names in the same city are held for an officer to confirm and are never merged automatically.',
+      'Every merge, link and correction is attributed to a named officer and written to the audit log.',
+    ],
+    h: 703, c: 319,
+  },
+  {
+    t: 'Cross-unit overlap detection',
+    sum: 'Open cases on the same institution are compared across units. Every alert carries a Match Receipt that shows exactly which rules fired.',
+    more: [
+      'Four layers are scored and shown separately: institution identity, name similarity, issue similarity and conflict rules.',
+      'Issue similarity reads English, Hinglish and Devanagari text through a concept list. An optional model reading is added only when enabled and is labelled as AI-written.',
+      'Alerts are capped per officer per day, so priority cases are not buried.',
+    ],
+    h: 660, c: 296,
+  },
+  {
+    t: 'Action Gate before every step',
+    sum: 'Before a notice, closure or transfer is issued, the officer sees what other units have pending against the same institution.',
+    more: [
+      'The officer can request coordination, link the cases, or proceed with a written justification.',
+      'Pairs of actions that contradict each other are classified as Conflict and need a recorded reason to proceed.',
+      'Each decision is chained into a tamper-evident audit trail that an auditor can verify.',
+    ],
+    h: 595, c: 273,
+  },
+]
+
+const COVERS: { t: string; art: string; d: string }[] = [
+  { t: 'Single-window dashboard', art: 'dash', d: 'Received, pending, under process, disposed, transferred, escalated and beyond-timeline cases, with institution-wise and unit-wise views.' },
+  { t: 'Case tracking', art: 'track', d: 'Unique case ID, category, status, current unit and officer, last action, next action and expected disposal date.' },
+  { t: 'Overlap detection', art: 'overlap', d: 'Rule-based matching on institution identity and name variants, with a plain-language receipt for every flag.' },
+  { t: 'Workflow history', art: 'flow', d: 'Every transfer, escalation and remark with who, when and why, kept in a tamper-evident audit chain.' },
+  { t: 'Search and filters', art: 'search', d: 'By college, AICTE ID, case ID, unit, region, category, status and date. Filters live in the page address, so a view can be shared.' },
+  { t: 'Reports', art: 'report', d: 'Unit-wise, region-wise, status-wise and institution-wise reports, ageing, disposal rate and the overlap list, with CSV export.' },
+]
+
+const EVIDENCE: { n: number; of: number; title: string; note: string }[] = [
+  { n: 8, of: 8, title: 'Conflicting actions caught', note: 'Planted pairs of contradictory actions, all flagged as Conflict.' },
+  { n: 10, of: 10, title: 'Look-alike colleges kept apart', note: 'Colleges with a similar name in the same city; none was wrongly merged.' },
+  { n: 13, of: 20, title: 'Misspelled names linked', note: 'Linked automatically. The other 7 go to an officer to confirm, by design.' },
+]
+
+function Art({ k }: { k: string }) {
+  const b = '#1a3fa8', o = '#ff8a2a', l = '#c9d6f5'
+  const frame = (children: React.ReactNode) => (
+    <svg viewBox="0 0 120 90" width="132" height="99" aria-hidden="true" className="mx-auto">{children}</svg>
+  )
+  switch (k) {
+    case 'dash': return frame(<><rect x="10" y="10" width="100" height="70" rx="8" fill="#fff" stroke={l} /><rect x="20" y="48" width="12" height="22" rx="3" fill={b} /><rect x="38" y="38" width="12" height="32" rx="3" fill={o} /><rect x="56" y="28" width="12" height="42" rx="3" fill={b} /><circle cx="90" cy="38" r="12" fill="none" stroke={l} strokeWidth="6" /><path d="M90 26a12 12 0 0 1 12 12" fill="none" stroke={o} strokeWidth="6" strokeLinecap="round" /></>)
+    case 'track': return frame(<><path d="M24 20v50" stroke={l} strokeWidth="4" strokeLinecap="round" /><circle cx="24" cy="22" r="7" fill={b} /><circle cx="24" cy="45" r="7" fill={o} /><circle cx="24" cy="68" r="7" fill={l} /><rect x="40" y="17" width="60" height="9" rx="4" fill={l} /><rect x="40" y="40" width="46" height="9" rx="4" fill={l} /><rect x="40" y="63" width="54" height="9" rx="4" fill={l} /></>)
+    case 'overlap': return frame(<><circle cx="45" cy="45" r="28" fill={b} opacity=".85" /><circle cx="75" cy="45" r="28" fill={o} opacity=".8" /><path d="M60 22a28 28 0 0 1 0 46 28 28 0 0 1 0-46z" fill="#fff" opacity=".9" /></>)
+    case 'flow': return frame(<><rect x="8" y="32" width="28" height="26" rx="7" fill={b} /><rect x="46" y="32" width="28" height="26" rx="7" fill={o} /><rect x="84" y="32" width="28" height="26" rx="7" fill={b} /><path d="M36 45h10M74 45h10" stroke={b} strokeWidth="3" strokeLinecap="round" /><path d="M22 64v10h76V64" fill="none" stroke={l} strokeWidth="3" strokeLinecap="round" /></>)
+    case 'search': return frame(<><rect x="12" y="14" width="76" height="14" rx="7" fill={l} /><rect x="12" y="36" width="60" height="14" rx="7" fill={l} /><rect x="12" y="58" width="68" height="14" rx="7" fill={l} /><circle cx="86" cy="48" r="17" fill="#fff" stroke={b} strokeWidth="6" /><path d="m99 61 12 12" stroke={o} strokeWidth="7" strokeLinecap="round" /></>)
+    default: return frame(<><rect x="12" y="10" width="80" height="70" rx="8" fill="#fff" stroke={l} /><rect x="22" y="52" width="10" height="18" rx="2" fill={b} /><rect x="38" y="42" width="10" height="28" rx="2" fill={b} /><rect x="54" y="32" width="10" height="38" rx="2" fill={o} /><rect x="70" y="22" width="10" height="48" rx="2" fill={b} /><path d="M96 20v52M96 72h14" stroke={l} strokeWidth="3" strokeLinecap="round" fill="none" /></>)
+  }
+}
+
+function Ring({ pct }: { pct: number }) {
+  return (
+    <svg viewBox="0 0 120 120" width="124" height="124" aria-hidden="true" className="evi-ring">
+      <circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface-2)" strokeWidth="12" />
+      <motion.circle cx="60" cy="60" r="50" fill="none" stroke="#1a3fa8" strokeWidth="12" strokeLinecap="round" transform="rotate(-90 60 60)"
+        initial={{ pathLength: 0 }} whileInView={{ pathLength: pct }} viewport={{ once: true }} transition={{ duration: 1.4, ease: 'easeOut' }} />
+      <defs><linearGradient id="evg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#1a3fa8" /><stop offset="1" stopColor="#ff8a2a" /></linearGradient></defs>
+    </svg>
+  )
+}
+
 export default function Landing() {
   const { me } = useAuth()
+  const nav = useNavigate()
   const [live, setLive] = useState<any>(null)
   useEffect(() => {
     fetch('/api/v1/public/overview').then((r) => (r.ok ? r.json() : null)).then(setLive).catch(() => setLive(null))
   }, [])
   return (
-    <div className="land">
-      <DotBackdrop />
-      <header className="lnav">
-        <Link to="/" className="brand"><Logo /> SAMANVAY</Link>
-        <nav aria-label="Sections">
-          <a href="#how">How it works</a>
-          <a href="#covers">What it covers</a>
-          <a href="#evidence">Evidence</a>
-          <Link to="/login">Dashboard</Link>
-        </nav>
-      </header>
+    <ExpandableScreen layoutId="cta-card" triggerRadius="100px" contentRadius="24px">
+      <div className="land">
+        <DotBackdrop />
+        <header className="lnav">
+          <Link to="/" className="brand"><Logo /> SAMANVAY</Link>
+          <nav aria-label="Sections">
+            <a href="#how">How it works</a>
+            <a href="#covers">What it covers</a>
+            <a href="#evidence">Evidence</a>
+            <Link to="/login">Dashboard</Link>
+          </nav>
+        </header>
 
-      <section className="hero" aria-labelledby="h">
-        <div className="hero-art"><SkylineArt /></div>
-        <div className="hero-copy">
-          <h1 id="h"><TextAnimate as="span" animation="blurInUp" by="word">Coordinate</TextAnimate> <mark className="hl"><TextAnimate as="span" animation="blurInUp" by="word" delay={0.2}>before</TextAnimate></mark> <TextAnimate as="span" animation="blurInUp" by="word" delay={0.35}>you act.</TextAnimate></h1>
-          <TextAnimate as="p" animation="blurInUp" by="word" delay={0.5} duration={1.2} className="lead">AICTE complaints reach the Regulation Bureau, the Public Grievance Redressal Cell and regional offices separately. SAMANVAY puts them in one place, warns an officer when another unit is already handling the same college, and shows exactly why.</TextAnimate>
-          {me ? <InteractiveHoverButton to="/app" className="ihb-lg">Open the dashboard</InteractiveHoverButton> : (
-            <ExpandableScreen layoutId="cta-card" triggerRadius="100px" contentRadius="24px">
+        <section className="hero" aria-labelledby="h">
+          <div className="hero-art"><SkylineArt /></div>
+          <div className="hero-copy">
+            <h1 id="h"><TextAnimate as="span" animation="blurInUp" by="word">Coordinate</TextAnimate> <mark className="hl"><TextAnimate as="span" animation="blurInUp" by="word" delay={0.2}>before</TextAnimate></mark> <TextAnimate as="span" animation="blurInUp" by="word" delay={0.35}>you act.</TextAnimate></h1>
+            <TextAnimate as="p" animation="blurInUp" by="line" delay={0.5} className="lead">
+              AICTE complaints reach the Regulation Bureau, the Public Grievance Redressal Cell and regional offices separately. SAMANVAY puts them in one place, warns an officer when another unit is already handling the same college, and shows exactly why.
+            </TextAnimate>
+            {me ? (
+              <OrganicButton href="/app" size="lg" label="Open the dashboard" onClick={(e) => { e.preventDefault(); nav('/app') }} />
+            ) : (
               <ExpandableScreenTrigger>
-                <InteractiveHoverButton as="span" className="ihb-lg">Get started</InteractiveHoverButton>
+                <OrganicButton href="#get-started" size="lg" label="Get started" onClick={(e) => e.preventDefault()} />
               </ExpandableScreenTrigger>
-              <ExpandableScreenContent className="xs-content">
-                <div className="xs-grid">
-                  <div className="xs-left">
-                    <h2>Sign in to SAMANVAY</h2>
-                    <ul className="xs-points">
-                      <li><span aria-hidden="true">✓</span>One place for complaints that reach the Bureau, the Cell and regional offices separately.</li>
-                      <li><span aria-hidden="true">⇄</span>A warning when another unit already handles the same college, with the evidence shown.</li>
-                      <li><span aria-hidden="true">☑</span>An officer always decides. The system only suggests.</li>
-                    </ul>
-                    {live && <div className="xs-stats"><div><b><Count to={live.complaints} /></b><span>simulated cases</span></div><div><b><Count to={live.colleges} /></b><span>colleges</span></div><div><b><Count to={live.open_overlaps} /></b><span>open overlaps</span></div></div>}
-                  </div>
-                  <div className="xs-right"><LoginForm /></div>
+            )}
+            <p className="small">An officer always decides. The system only suggests, and every suggestion comes with its evidence.</p>
+          </div>
+
+          <div className="floatcard" aria-live="polite">
+            {live ? (
+              <>
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <strong>Potential Overlapping Cases – Coordination Required</strong>
+                  <span className="badge b-danger">Conflict</span>
                 </div>
-              </ExpandableScreenContent>
-            </ExpandableScreen>
-          )}
-          <p className="small">An officer always decides. The system only suggests, and every suggestion comes with its evidence.</p>
-        </div>
+                {live.sample_conflict ? (
+                  <>
+                    <p style={{ margin: '.5rem 0 .2rem' }}><strong>{live.sample_conflict.institution}</strong></p>
+                    <p className="muted" style={{ margin: 0 }}>Open with {live.sample_conflict.units.join(' and ')}</p>
+                    <p className="muted" style={{ margin: '.6rem 0 0', fontSize: '.85rem' }}>Why: {live.sample_conflict.reasons.join(' · ').toLowerCase()}.</p>
+                  </>
+                ) : <p className="muted">No conflict is open right now.</p>}
+                <div className="livestats">
+                  <div><span className="n"><Count to={live.complaints} /></span><span className="l">cases tracked</span></div>
+                  <div><span className="n"><Count to={live.colleges} /></span><span className="l">colleges in the registry</span></div>
+                  <div><span className="n"><Count to={live.open_overlaps} /></span><span className="l">open overlaps</span></div>
+                </div>
+              </>
+            ) : <p className="muted">Reading the running system…</p>}
+          </div>
+        </section>
 
-        <div className="floatcard" aria-live="polite">
-          {live ? (
-            <>
-              <div className="row" style={{ justifyContent: 'space-between' }}>
-                <strong>Potential Overlapping Cases – Coordination Required</strong>
-                <span className="badge b-danger">Conflict</span>
-              </div>
-              {live.sample_conflict ? (
-                <>
-                  <p style={{ margin: '.5rem 0 .2rem' }}><strong>{live.sample_conflict.institution}</strong></p>
-                  <p className="muted" style={{ margin: 0 }}>Open with {live.sample_conflict.units.join(' and ')}</p>
-                  <p className="muted" style={{ margin: '.6rem 0 0', fontSize: '.85rem' }}>Why: {live.sample_conflict.reasons.join(' · ').toLowerCase()}.</p>
-                </>
-              ) : <p className="muted">No conflict is open right now.</p>}
-              <div className="livestats">
-                <div><span className="n"><Count to={live.complaints} /></span><span className="l">cases tracked</span></div>
-                <div><span className="n"><Count to={live.colleges} /></span><span className="l">colleges in the registry</span></div>
-                <div><span className="n"><Count to={live.open_overlaps} /></span><span className="l">open overlaps</span></div>
-              </div>
-            </>
-          ) : <p className="muted">Reading the running system…</p>}
-        </div>
-        <div className="pill">
-          {live ? `Live from this running system. ${live.complaints_simulated === live.complaints ? 'Cases are simulated' : 'Some cases are simulated'}; ${live.colleges_real > 0 ? `${live.colleges_real.toLocaleString('en-IN')} colleges are real AICTE records` : 'the college list is not yet real AICTE data'}.` : 'Reading the running system…'}
-        </div>
-      </section>
+        <section className="section" id="how">
+          <TextAnimate as="h2" animation="blurInUp" by="word" once>How it works</TextAnimate>
+          <div className="how-box">
+            <p className="how-lead">Three safeguards sit between an incoming complaint and an officer's decision. Select a step to see how it works.</p>
+            <div className="how-grid">
+              {STEPS.map((s, i) => (
+                <Expandable key={s.t} expandDirection="vertical" expandBehavior="push" onExpandStart={() => undefined} onCollapseStart={() => undefined}>
+                  <ExpandableCard className="w-full relative" collapsedSize={{ width: 320, height: s.c }} expandedSize={{ width: 320, height: s.h }}>
+                    <ExpandableTrigger>
+                      <ExpandableCardHeader className="p-2">
+                        <div>
+                          <span className="how-n">{i + 1}</span>
+                          <h3 className="how-t">{s.t}</h3>
+                        </div>
+                        <span className="how-plus" aria-hidden="true">+</span>
+                      </ExpandableCardHeader>
+                      <ExpandableCardContent className="px-2 pb-2">
+                        <p className="how-sum">{s.sum}</p>
+                      </ExpandableCardContent>
+                    </ExpandableTrigger>
+                    <ExpandableContent preset="blur-md" stagger>
+                      <ul className="how-more">{s.more.map((m) => <li key={m}>{m}</li>)}</ul>
+                    </ExpandableContent>
+                  </ExpandableCard>
+                </Expandable>
+              ))}
+            </div>
+          </div>
+        </section>
 
-      <section className="section" id="how">
-        <TextAnimate as="h2" animation="blurInUp" by="word" once>How it works</TextAnimate>
-        <div className="how-box">
-          <p className="how-lead">Three safeguards sit between an incoming complaint and an officer's decision. Select a step to see what it does.</p>
-          <div className="how-grid">
-            {[
-              ['One verified record per institution', 'Every complaint, from every Bureau and Cell, resolves to a single AICTE institution record.', [
-                'Spelling variants, abbreviations and renamed colleges are matched on name, district and AICTE ID.',
-                'Look-alike colleges in one city are never merged automatically; uncertain matches go to an officer to confirm.',
-                'Each link records who confirmed it, when, and why.']],
-              ['Early warning, with the evidence', 'When two units hold open cases on the same college, the officer sees why before acting.', [
-                'A Match Receipt lists every rule that fired: same college, same issue, conflicting actions.',
-                'The same problem described in different words (English, Hinglish, Devanagari) is matched by concept, with an optional, clearly labelled AI reading.',
-                'No alert without an explanation, and each officer has a daily alert limit.']],
-              ['A gate before every action', 'Notices, closures and transfers pass an Action Gate that shows what the other unit is doing.', [
-                'The officer can request coordination, link the cases, or proceed with a written reason.',
-                'Conflicting actions on one college are flagged for a second look; the system only suggests, a person decides.',
-                'Every decision is written to a tamper-evident audit chain.']],
-            ].map(([t, sum, more], i) => (
-              <Expandable key={t as string} expandDirection="vertical" expandBehavior="push">
-                <ExpandableCard collapsedSize={{ width: 310, height: 215 }} expandedSize={{ width: 310, height: undefined }}>
-                  <ExpandableTrigger>
-                    <ExpandableCardHeader>
-                      <div><span className="how-n">{i + 1}</span><h3>{t as string}</h3></div>
-                      <span className="how-plus" aria-hidden="true">+</span>
-                    </ExpandableCardHeader>
-                    <ExpandableCardContent><p>{sum as string}</p></ExpandableCardContent>
-                  </ExpandableTrigger>
-                  <ExpandableContent preset="blur-md" stagger>
-                    <ul className="how-more">{(more as string[]).map((m) => <li key={m}>{m}</li>)}</ul>
-                  </ExpandableContent>
-                </ExpandableCard>
-              </Expandable>
+        <section className="section" id="covers" style={{ paddingTop: 0 }}>
+          <TextAnimate as="h2" animation="blurInUp" by="word" once>What it covers</TextAnimate>
+          <div className="sc-grid">
+            {COVERS.map((c) => (
+              <ShiftCard key={c.t} className="bg-card"
+                topContent={
+                  <div className="bg-accent text-primary rounded-md shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_0px_0px_1px_rgba(26,63,168,0.12)_inset]">
+                    <h3 className="flex items-center gap-2 p-3 text-base font-semibold"><span className="sc-dot" aria-hidden="true" />{c.t}</h3>
+                  </div>
+                }
+                topAnimateContent={
+                  <motion.div className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-dashed border-primary/60"
+                    initial={{ opacity: 0, scale: 1.08, filter: 'blur(4px)' }} animate={{ opacity: 1, scale: 1, filter: 'blur(0px)', transition: { delay: 0.2, duration: 0.2 } }} exit={{ opacity: 0, transition: { duration: 0 } }} />
+                }
+                middleContent={
+                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="pt-3 text-center">
+                    <Art k={c.art} />
+                    <span className="mt-3 block text-xs font-medium text-muted-foreground">Hover for detail</span>
+                  </motion.div>
+                }
+                bottomContent={
+                  <div className="bg-primary flex h-[194px] w-full flex-col items-center rounded-t-xs border-t border-t-black/10 px-4 text-center">
+                    <div className="flex h-[32px] shrink-0 items-center justify-center gap-2 text-[14px] font-semibold text-white"><span className="sc-dot" aria-hidden="true" />{c.t}</div>
+                    <p className="flex flex-1 items-center justify-center pb-8 text-[13px] leading-5 text-pretty text-white/85">{c.d}</p>
+                  </div>
+                } />
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="section" id="covers" style={{ paddingTop: 0 }}>
-        <TextAnimate as="h2" animation="blurInUp" by="word" once>What it covers</TextAnimate>
-        <div className="sc-grid">
-          {[
-            ['Single-window dashboard', '▦', 'Received, pending, under process, disposed, transferred, escalated and beyond-timeline cases, with institution-wise and unit-wise views.'],
-            ['Case tracking', '☰', 'Unique case ID, category, status, current unit and officer, last action, next action, and expected disposal date.'],
-            ['Overlap detection', '⇄', 'Rule-based matching on institution identity and name variants, with a plain-language receipt.'],
-            ['Workflow history', '◷', 'Every transfer, escalation and remark with who, when and why. Tamper-evident audit chain.'],
-            ['Search and filters', '⌕', 'By college, AICTE ID, case ID, unit, region, category, status and date. Filters live in the page address, so a view can be shared.'],
-            ['Reports', '▤', 'Unit-wise, region-wise, status-wise and institution-wise reports, ageing, disposal rate, and overlap list, with CSV export.'],
-          ].map(([t, ic, d]) => (
-            <ShiftCard key={t}
-              topContent={<div className="sc-slab"><h3><i aria-hidden="true">{ic}</i>{t}</h3></div>}
-              middleContent={<motion.div key="m" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}><span className="sc-big" aria-hidden="true">{ic}</span><span className="sc-hint">Hover or tap for detail</span></motion.div>}
-              bottomContent={<><b>{t}</b><p>{d}</p></>} />
-          ))}
-        </div>
-      </section>
+        <section className="section" id="evidence" style={{ paddingTop: 0 }}>
+          <TextAnimate as="h2" animation="blurInUp" by="word" once>What we have measured, and what we have not</TextAnimate>
+          <p className="muted" style={{ maxWidth: '46rem' }}>
+            AICTE does not publish complaint records, so the complaints in this prototype are simulated; the college registry can be loaded with real AICTE
+            approved institutions. The results below come from planted test scenarios that we created ourselves, so they show that the rules work as designed.
+            They are not a promise about real AICTE data.
+          </p>
+          <div className="evi-grid">
+            {EVIDENCE.map((e) => (
+              <div className="evi" key={e.title}>
+                <div className="evi-ringwrap">
+                  <Ring pct={e.n / e.of} />
+                  <div className="evi-num"><b><Count to={e.n} /></b><span>of {e.of}</span></div>
+                </div>
+                <h3>{e.title}</h3>
+                <p>{e.note}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <section className="section" id="evidence" style={{ paddingTop: 0 }}>
-        <TextAnimate as="h2" animation="blurInUp" by="word" once>What we have measured, and what we have not</TextAnimate>
-        <p className="muted" style={{ maxWidth: '46rem' }}>
-          AICTE does not publish complaint records, so the complaints in this prototype are simulated; the college registry can be loaded with real AICTE
-          approved institutions. The numbers below come from planted test scenarios that we created ourselves, so they show the rules work as designed.
-          They are not a promise about real AICTE data.
-        </p>
-        <div className="feat">
-          <div className="card"><div className="stat">8 of 8</div><p className="muted" style={{ margin: 0 }}>planted conflicting-action pairs flagged as Conflict.</p></div>
-          <div className="card"><div className="stat">0 of 10</div><p className="muted" style={{ margin: 0 }}>look-alike colleges wrongly merged with a similar name in the same city.</p></div>
-          <div className="card"><div className="stat">13 of 20</div><p className="muted" style={{ margin: 0 }}>misspelled names linked automatically. The other 7 are sent to an officer to confirm, by design.</p></div>
-        </div>
-      </section>
+        <footer className="lfoot">
+          <span>SAMANVAY · Team SlothDevs · Smart India Hackathon · AICTE (Regulation Bureau) problem statement</span>
+          <span><Link to="/login">Sign in</Link> · Complaints are simulated</span>
+        </footer>
 
-      <footer className="lfoot">
-        <span>SAMANVAY · Team SlothDevs · Smart India Hackathon · AICTE (Regulation Bureau) problem statement</span>
-        <span><Link to="/login">Sign in</Link> · Complaints are simulated</span>
-      </footer>
-    </div>
+        <ExpandableScreenContent className="xs-content">
+          <div className="xs-center">
+            <div className="xs-grid">
+              <div className="xs-left">
+                <TextAnimate as="h2" animation="blurInUp" by="word">Sign in to SAMANVAY</TextAnimate>
+                <ul className="xs-points">
+                  <li><span aria-hidden="true">✓</span>One place for complaints that reach the Bureau, the Cell and regional offices separately.</li>
+                  <li><span aria-hidden="true">⇄</span>A warning when another unit already handles the same college, with the evidence shown.</li>
+                  <li><span aria-hidden="true">☑</span>An officer always decides. The system only suggests.</li>
+                </ul>
+                {live && <div className="xs-stats"><div><b><Count to={live.complaints} /></b><span>simulated cases</span></div><div><b><Count to={live.colleges} /></b><span>colleges</span></div><div><b><Count to={live.open_overlaps} /></b><span>open overlaps</span></div></div>}
+              </div>
+              <div className="xs-right"><LoginForm /></div>
+            </div>
+          </div>
+        </ExpandableScreenContent>
+      </div>
+    </ExpandableScreen>
   )
 }

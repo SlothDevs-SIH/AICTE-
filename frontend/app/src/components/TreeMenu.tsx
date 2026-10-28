@@ -18,7 +18,7 @@ const pathTo = (items: MenuItem[], id: string, acc: MenuItem[] = []): MenuItem[]
 }
 
 /** Drill-in menu: choosing a group slides its items in and the rest away; the breadcrumb above steps back out. */
-export function TreeMenu({ menuData, activeId, onSelect }: { menuData: MenuItem[]; activeId: string | null; onSelect: (item: MenuItem) => void }) {
+export function TreeMenu({ menuData, activeId, onSelect, onGroupOpen }: { menuData: MenuItem[]; activeId: string | null; onSelect: (item: MenuItem) => void; onGroupOpen?: () => void }) {
   const [path, setPath] = useState<MenuItem[]>(() => (activeId ? pathTo(menuData, activeId) ?? [] : []))
   const clicked = useRef<number | null>(null)
 
@@ -33,7 +33,7 @@ export function TreeMenu({ menuData, activeId, onSelect }: { menuData: MenuItem[
   const items = path.length === 0 ? menuData : path[path.length - 1].children || []
 
   const forward = (item: MenuItem, index: number) => {
-    if (item.children?.length) { clicked.current = index; setPath((p) => [...p, item]) }
+    if (item.children?.length) { clicked.current = index; setPath((p) => [...p, item]); onGroupOpen?.() }
     else onSelect(item)
   }
   const back = (index: number) => { clicked.current = null; setPath((p) => p.slice(0, index)) }
@@ -73,9 +73,9 @@ export function TreeMenu({ menuData, activeId, onSelect }: { menuData: MenuItem[
               const group = !!item.children?.length
               return (
                 <motion.li key={item.id} custom={index} variants={row}>
-                  <button type="button" className={`tree-btn ${group ? 'group' : ''} ${activeId === item.id ? 'on' : ''}`} onClick={() => forward(item, index)} aria-current={activeId === item.id ? 'page' : undefined}>
+                  <button type="button" className={`tree-btn ${group ? 'group' : ''} ${activeId === item.id ? 'on' : ''}`} onClick={() => forward(item, index)} aria-current={activeId === item.id ? 'page' : undefined} title={item.label}>
                     {item.icon && <span className="tree-ic" aria-hidden="true">{item.icon}</span>}
-                    <motion.span layoutId={group ? `name-${item.id}` : undefined}>{item.label}</motion.span>
+                    <motion.span className="tree-lbl" layoutId={group ? `name-${item.id}` : undefined}>{item.label}</motion.span>
                     {group && <span className="tree-more" aria-hidden="true">›</span>}
                   </button>
                 </motion.li>

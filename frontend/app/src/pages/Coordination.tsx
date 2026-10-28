@@ -76,7 +76,7 @@ export function CoordinationThread() {
           <>
             <label className="f">Add a note<textarea value={body} onChange={(e) => setBody(e.target.value)} /></label>
             <p><button className="btn primary" disabled={!body.trim()} onClick={send}>Post note</button></p>
-            <hr style={{ border: 0, borderTop: '1px solid var(--border)' }} />
+            <hr style={{ border: 0, borderTop: '1px solid var(--line)' }} />
             <h3>Record the outcome</h3>
             <label className="f">Outcome<select value={outcome} onChange={(e) => setOutcome(e.target.value)}>{OUTCOMES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
             <label className="f">Note (required)<textarea value={note} onChange={(e) => setNote(e.target.value)} /></label>
