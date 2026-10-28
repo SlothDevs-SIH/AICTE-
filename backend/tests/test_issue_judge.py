@@ -154,3 +154,31 @@ def test_gemini_retries_without_thinking_setting_on_400(monkeypatch):
 
     monkeypatch.setattr(llm.httpx, "post", fake_post)
     assert llm.complete("s", "u") == "OK" and calls == [True, False]
+
+
+def test_gemini_retries_when_busy_then_succeeds_or_gives_up(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setattr(llm.time, "sleep", lambda s: None)
+
+    def make(codes):
+        calls = []
+
+        class Resp:
+            def __init__(self, code): self.status_code, self.text = code, "busy"
+            def raise_for_status(self):
+                if self.status_code >= 400:
+                    raise llm.httpx.HTTPStatusError("x", request=None, response=self)
+            def json(self): return {"candidates": [{"content": {"parts": [{"text": "OK"}]}}]}
+
+        def fake_post(url, headers=None, json=None, timeout=None):
+            calls.append(1)
+            return Resp(codes[min(len(calls) - 1, len(codes) - 1)])
+
+        return fake_post, calls
+
+    post, calls = make([503, 503, 200])
+    monkeypatch.setattr(llm.httpx, "post", post)
+    assert llm.complete("s", "u") == "OK" and len(calls) == 3
+    post, calls = make([503])
+    monkeypatch.setattr(llm.httpx, "post", post)
+    assert llm.complete("s", "u") is None and len(calls) == 4 and "503" in llm.last_error()

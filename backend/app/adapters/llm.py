@@ -5,6 +5,7 @@ Every caller must have a deterministic fallback and must validate what comes bac
 Not exercised against a real service in this repository (no key was available); the tests use fakes.
 """
 import os
+import time
 
 import httpx
 
@@ -41,9 +42,16 @@ def _gemini(system: str, user: str, max_tokens: int) -> str:
             timeout=40,
         )
 
-    r = call(True)
-    if r.status_code == 400:  # some models do not accept that setting; ask again without it
-        r = call(False)
+    thinking_off = True
+    for attempt in range(4):
+        r = call(thinking_off)
+        if r.status_code == 400 and thinking_off:  # some models do not accept that setting; ask again without it
+            thinking_off = False
+            continue
+        if r.status_code in (429, 500, 502, 503, 504) and attempt < 3:  # busy or briefly down: wait and retry
+            time.sleep(1.5 * (attempt + 1))
+            continue
+        break
     r.raise_for_status()
     parts = r.json()["candidates"][0]["content"]["parts"]
     return "".join(p.get("text", "") for p in parts)
