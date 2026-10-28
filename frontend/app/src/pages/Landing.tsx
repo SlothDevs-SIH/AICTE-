@@ -8,7 +8,6 @@ import { Count, Logo } from '../components/ui'
 import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '@/components/ui/expandable-screen'
 import ExpandableProfileCard from '@/components/ui/expandable-profile-card'
 import { OrganicButton } from '@/components/ui/organic-button'
-import { ShiftCard } from '@/components/ui/shift-card'
 import { TextAnimate } from '@/components/ui/text-animate'
 
 function SkylineArt() {
@@ -71,13 +70,31 @@ const STEPS: { t: string; sum: string; more: string[] }[] = [
   },
 ]
 
-const COVERS: { t: string; art: string; d: string }[] = [
-  { t: 'Single-window dashboard', art: 'dash', d: 'Received, pending, under process, disposed, transferred, escalated and beyond-timeline cases, with institution-wise and unit-wise views.' },
-  { t: 'Case tracking', art: 'track', d: 'Unique case ID, category, status, current unit and officer, last action, next action and expected disposal date.' },
-  { t: 'Overlap detection', art: 'overlap', d: 'Rule-based matching on institution identity and name variants, with a plain-language receipt for every flag.' },
-  { t: 'Workflow history', art: 'flow', d: 'Every transfer, escalation and remark with who, when and why, kept in a tamper-evident audit chain.' },
-  { t: 'Search and filters', art: 'search', d: 'By college, AICTE ID, case ID, unit, region, category, status and date. Filters live in the page address, so a view can be shared.' },
-  { t: 'Reports', art: 'report', d: 'Unit-wise, region-wise, status-wise and institution-wise reports, ageing, disposal rate and the overlap list, with CSV export.' },
+const COVERS: { t: string; tag: string; img: string; d: string; more: string[] }[] = [
+  { t: 'Single-window dashboard', tag: 'Overview', img: 'dash', d: 'Every case, by status, unit and institution, on one screen.', more: [
+    'Counts for received, pending, under process, disposed, transferred, escalated and beyond-timeline cases, updated live.',
+    'Institution-wise and unit-wise views, with cases due within seven days called out.',
+    'Role-aware: an officer sees their own unit, management and the Competent Authority see everything.'] },
+  { t: 'Case tracking', tag: 'Tracking', img: 'track', d: 'One record per case, from receipt to disposal.', more: [
+    'A unique case ID and the reference number from the source, with category, status, current unit and officer.',
+    'Last action, next action and expected disposal date in one place, checked against the category time limit.',
+    'Every transfer, escalation and remark is attached to the case with who, when and why.'] },
+  { t: 'Overlap detection', tag: 'Detection', img: 'overlap', d: 'Warns when two units hold open cases on the same college.', more: [
+    'Matches on the AICTE ID first, then on name variants, issue wording and conflicting actions.',
+    'Every flag comes with a Match Receipt: which layers fired, the score, and the reasons in plain language.',
+    'Officers confirm, dismiss or link. Nothing is merged, linked or closed automatically.'] },
+  { t: 'Workflow history', tag: 'Audit', img: 'flow', d: 'A tamper-evident record of every action taken.', more: [
+    'Each audit entry carries the hash of the one before it, so edits, deletions and reordering show up.',
+    'An auditor can re-compute the whole chain with one click and see the head hash.',
+    'Entries name the person, the action and the record, so responsibility is never unclear.'] },
+  { t: 'Search and filters', tag: 'Search', img: 'search', d: 'Find a case by college, ID, unit, status or date.', more: [
+    'Filters for college, AICTE ID, case ID, unit, region, category, status, date range, overdue, escalated and overlap.',
+    'College search tolerates spelling variants and word order.',
+    'Filters live in the page address, so a filtered view can be shared as a link.'] },
+  { t: 'Reports', tag: 'Reporting', img: 'report', d: 'Unit, region, status and institution reports with export.', more: [
+    'Unit-wise, region-wise, status-wise and institution-wise reports, with ageing and disposal rate.',
+    'The overlap list and a one-page brief for any overlap, ready to print.',
+    'CSV export for every report.'] },
 ]
 
 const EVIDENCE: { n: number; of: number; title: string; note: string }[] = [
@@ -213,26 +230,25 @@ export default function Landing() {
           <TextAnimate as="h2" animation="blurInUp" by="word" once>What it covers</TextAnimate>
           <div className="sc-grid">
             {COVERS.map((c) => (
-              <ShiftCard key={c.t} className="bg-card"
-                topContent={
-                  <div className="bg-accent text-primary rounded-md shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_0px_0px_1px_rgba(26,63,168,0.12)_inset]">
-                    <h3 className="flex items-center gap-2 p-3 text-base font-semibold"><span className="sc-dot" aria-hidden="true" />{c.t}</h3>
+              <ExpandableProfileCard key={c.t} title={c.t} subtitle={c.tag}
+                media={<img src={`/shots/${c.img}.jpg`} alt={`${c.t}, a screen of the running prototype`} loading="lazy" className="absolute top-0 max-w-none" style={{ width: '200%', left: '-37.5%' }} />}
+                mediaOpen={
+                  <div className="grid h-full w-full place-items-center bg-linear-to-br from-[#12306f] via-primary to-[#2459d6] p-5">
+                    <div className="w-full overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-white/30" style={{ aspectRatio: '0.72' }}>
+                      <img src={`/shots/${c.img}.jpg`} alt={`${c.t}, a screen of the running prototype`} className="block max-w-none" style={{ width: '230%', marginLeft: '-43%' }} />
+                    </div>
                   </div>
                 }
-                topAnimateContent={
-                  <motion.div className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-dashed border-primary/60"
-                    initial={{ opacity: 0, scale: 1.08, filter: 'blur(4px)' }} animate={{ opacity: 1, scale: 1, filter: 'blur(0px)', transition: { delay: 0.2, duration: 0.2 } }} exit={{ opacity: 0, transition: { duration: 0 } }} />
-                }
-                middleContent={
-                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="pt-3 text-center">
-                    <Art k={c.art} />
-                    <span className="mt-3 block text-xs font-medium text-muted-foreground">Hover for detail</span>
-                  </motion.div>
-                }
-                bottomContent={
-                  <div className="bg-primary flex h-[194px] w-full flex-col items-center rounded-t-xs border-t border-t-black/10 px-4 text-center">
-                    <div className="flex h-[32px] shrink-0 items-center justify-center gap-2 text-[14px] font-semibold text-white"><span className="sc-dot" aria-hidden="true" />{c.t}</div>
-                    <p className="flex flex-1 items-center justify-center pb-8 text-[13px] leading-5 text-pretty text-white/85">{c.d}</p>
+                content={
+                  <div className="flex flex-col gap-5">
+                    <p className="text-base leading-relaxed text-foreground">{c.d}</p>
+                    {c.more.map((m, j) => (
+                      <div key={m} className="flex items-start gap-3">
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{j + 1}</span>
+                        <p className="text-muted-foreground">{m}</p>
+                      </div>
+                    ))}
+                    <p className="border-t border-border pt-3 text-xs text-muted-foreground">Screen from the running prototype, showing simulated data.</p>
                   </div>
                 } />
             ))}

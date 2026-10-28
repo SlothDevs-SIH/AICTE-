@@ -7,12 +7,13 @@ import { motion, AnimatePresence } from 'motion/react'
 // cover it, Esc closes it, and page scrolling is locked only while it is open.
 interface ExpandableCardProps {
   media: ReactNode
+  mediaOpen?: ReactNode
   title: string
   subtitle: string
   content: ReactNode
 }
 
-export default function ExpandableProfileCard({ media, title, subtitle, content }: ExpandableCardProps) {
+export default function ExpandableProfileCard({ media, mediaOpen, title, subtitle, content }: ExpandableCardProps) {
   const [isOpen, setIsOpen] = useState(false)
   const layoutId = `expandable-profile-card-${title}`
 
@@ -40,10 +41,10 @@ export default function ExpandableProfileCard({ media, title, subtitle, content 
         <motion.div layoutId={`image-${layoutId}`} className="absolute inset-0 h-full w-full" variants={{ hover: { scale: 1.05 } }}>
           {media}
         </motion.div>
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/45 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
 
         <div className="absolute bottom-0 left-0 p-5 sm:p-6 w-full translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-          <motion.p layoutId={`subtitle-${layoutId}`} className="text-secondary text-xs font-medium tracking-wide uppercase mb-1.5">{subtitle}</motion.p>
+          <motion.p layoutId={`subtitle-${layoutId}`} className="text-white/80 text-xs font-semibold tracking-wide uppercase mb-1.5 drop-shadow">{subtitle}</motion.p>
           <motion.h3 layoutId={`title-${layoutId}`} className="text-lg sm:text-xl font-semibold tracking-tight text-white">{title}</motion.h3>
         </div>
       </motion.div>
@@ -72,7 +73,7 @@ export default function ExpandableProfileCard({ media, title, subtitle, content 
                 </button>
 
                 <div className="relative h-64 w-full shrink-0 overflow-hidden md:h-full md:w-1/2">
-                  <motion.div layoutId={`image-${layoutId}`} className="h-full w-full">{media}</motion.div>
+                  <motion.div layoutId={`image-${layoutId}`} className="h-full w-full">{mediaOpen ?? media}</motion.div>
                   <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent md:hidden" />
                 </div>
 
