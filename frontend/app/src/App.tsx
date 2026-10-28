@@ -23,6 +23,9 @@ import Notifications from './pages/Notifications'
 import Imports from './pages/Imports'
 import Management from './pages/Management'
 import Admin from './pages/Admin'
+import Verify from './pages/Verify'
+import { ChooseRole, Waiting } from './pages/Onboarding'
+import { FileComplaint, InstitutionHome, MyComplaintDetail, MyComplaints } from './pages/Portal'
 
 const ALL = ['unit_officer', 'unit_supervisor', 'regional_officer', 'management', 'competent_authority', 'admin', 'auditor']
 const OFFICE = [...OFFICER_ROLES, 'admin']
@@ -32,6 +35,9 @@ type Group = { id: string; label: string; icon: string; to?: string; roles?: str
 // Related pages sit together so the menu stays short; a group with one visible page collapses into that page.
 const TREE: Group[] = [
   { id: 'dash', label: 'Dashboard', icon: '▦', to: '/app', roles: ALL },
+  { id: 'p-home', label: 'My complaints', icon: '☰', to: '/app', roles: ['complainant'] },
+  { id: 'p-file', label: 'File a complaint', icon: '＋', to: '/app/file', roles: ['complainant'] },
+  { id: 'p-inst', label: 'My institution', icon: '◧', to: '/app', roles: ['institution_rep'] },
   { id: 'complaints', label: 'Complaints', icon: '☰', children: [
     { id: 'c-search', icon: '⌕', label: 'Search complaints', to: '/app/complaints', roles: ALL },
     { id: 'c-new', icon: '＋', label: 'New complaint', to: '/app/new', roles: OFFICE },
@@ -99,6 +105,11 @@ function Shell() {
   ], [nav])
   if (!ready) return <p style={{ padding: '2rem' }} role="status">Loading…</p>
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
+  if (me.role === 'new') return <ChooseRole />
+  if (me.role === 'pending') return <Waiting />
+  const isPublic = me.role === 'complainant' || me.role === 'institution_rep'
+  const publicOk = loc.pathname === '/app' || loc.pathname === '/app/file' || loc.pathname.startsWith('/app/my/') || loc.pathname === '/app/notifications'
+  if (isPublic && !publicOk) return <Navigate to="/app" replace />
   return (
     <div className={`shell ${mini ? 'mini' : ''}`}>
       <DotBackdrop />
@@ -131,13 +142,24 @@ function Shell() {
   )
 }
 
+/** The first screen after sign-in depends on who you are. */
+function Home() {
+  const { me } = useAuth()
+  if (me?.role === 'complainant') return <MyComplaints />
+  if (me?.role === 'institution_rep') return <InstitutionHome />
+  return <Dashboard />
+}
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/verify" element={<Verify />} />
       <Route path="/app" element={<Shell />}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<Home />} />
+        <Route path="file" element={<FileComplaint />} />
+        <Route path="my/:id" element={<MyComplaintDetail />} />
         <Route path="complaints" element={<Complaints />} />
         <Route path="complaints/:id" element={<CaseDetail />} />
         <Route path="new" element={<NewComplaint />} />

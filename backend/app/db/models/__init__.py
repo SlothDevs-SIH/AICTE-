@@ -1,5 +1,5 @@
 from app.db.models.core import (  # noqa: F401
-    Category, Complaint, ComplaintEvent, Institution, InstitutionAlias,
+    Category, Complaint, ComplaintEvent, EmailToken, Institution, InstitutionAlias,
     RefreshToken, Region, Setting, Unit, User,
 )
 from app.db.models.more import (  # noqa: F401

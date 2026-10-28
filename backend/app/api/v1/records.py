@@ -11,7 +11,7 @@ from rapidfuzz import fuzz
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user, require
+from app.api.deps import staff_user, current_user, require
 from app.core import roles as R
 from app.core.audit import verify_chain, write_audit
 from app.core.crypto import decrypt, mask_email, mask_name, mask_phone
@@ -186,7 +186,7 @@ def add_alias(iid: str, body: AliasIn, db: Session = Depends(get_db),
 
 
 @router.get("/institutions/{iid}/360")
-def college_360(iid: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def college_360(iid: str, db: Session = Depends(get_db), user: User = Depends(staff_user)):
     i = db.get(Institution, iid)
     if i is None:
         raise ApiError(404, "not_found", "Institution not found.")
@@ -227,7 +227,7 @@ def list_complaints(
     q: str | None = None, case_id: str | None = None, due_soon: bool | None = None,
     older_than_days: int | None = None,
     limit: int = Query(50, le=200), offset: int = 0,
-    db: Session = Depends(get_db), user: User = Depends(current_user),
+    db: Session = Depends(get_db), user: User = Depends(staff_user),
 ):
     m = _maps(db)
     units, cats, insts, _ = m
@@ -313,7 +313,7 @@ def create_complaint(body: ComplaintIn, db: Session = Depends(get_db),
 
 
 @router.get("/complaints/{cid}")
-def complaint_detail(cid: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def complaint_detail(cid: str, db: Session = Depends(get_db), user: User = Depends(staff_user)):
     c = get_complaint(db, cid)
     m, ov = _maps(db), has_overlap_ids(db)
     row = complaint_row(c, m, ov)
@@ -348,7 +348,7 @@ def reveal_pii(cid: str, body: RevealIn, db: Session = Depends(get_db),
 
 
 @router.get("/complaints/{cid}/events")
-def events(cid: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def events(cid: str, db: Session = Depends(get_db), user: User = Depends(staff_user)):
     c = get_complaint(db, cid)
     if not can_see_detail(db, user, c):
         raise ApiError(403, "forbidden", "Details visible after coordination is accepted.")
@@ -479,17 +479,17 @@ def escalations(db: Session = Depends(get_db),
 
 # ---------- dashboard ----------
 @router.get("/dashboard/summary")
-def d_summary(db: Session = Depends(get_db), user: User = Depends(current_user)):
+def d_summary(db: Session = Depends(get_db), user: User = Depends(staff_user)):
     return dash.summary(db, user)
 
 
 @router.get("/dashboard/by-institution")
-def d_inst(db: Session = Depends(get_db), user: User = Depends(current_user)):
+def d_inst(db: Session = Depends(get_db), user: User = Depends(staff_user)):
     return {"items": dash.by_institution(db, user)}
 
 
 @router.get("/dashboard/ageing")
-def d_age(db: Session = Depends(get_db), user: User = Depends(current_user)):
+def d_age(db: Session = Depends(get_db), user: User = Depends(staff_user)):
     return {"items": dash.ageing(db, user)}
 
 

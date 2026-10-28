@@ -1,16 +1,23 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { api, hasRefresh, restoreSession, setTokens } from './api'
 
-export type Me = { id: string; email: string; name: string; role: string; unit_id: string | null; region_id: string | null }
-type Ctx = { me: Me | null; ready: boolean; login: (e: string, p: string) => Promise<void>; logout: () => Promise<void> }
+export type RoleRequest = { type: 'institution' | 'staff'; status: 'pending' | 'rejected'; role?: string; unit_code?: string | null; region_code?: string | null; institution_name?: string; note?: string | null; reason?: string }
+export type Me = {
+  id: string; email: string; name: string; role: string; unit_id: string | null; region_id: string | null
+  email_verified: boolean; institution_id: string | null; institution_name: string | null; request: RoleRequest | null
+}
+type Ctx = { me: Me | null; ready: boolean; login: (e: string, p: string) => Promise<void>; logout: () => Promise<void>; reloadMe: () => Promise<Me | null> }
 const C = createContext<Ctx>(null as any)
 export const useAuth = () => useContext(C)
 
 export const ROLE_LABEL: Record<string, string> = {
   unit_officer: 'Unit officer', unit_supervisor: 'Unit supervisor', regional_officer: 'Regional officer',
   management: 'Management', competent_authority: 'Competent Authority', admin: 'Admin', auditor: 'Auditor',
+  complainant: 'Complainant', institution_rep: 'Institution representative', new: 'New account', pending: 'Awaiting approval',
 }
 export const OFFICER_ROLES = ['unit_officer', 'unit_supervisor', 'regional_officer']
+export const STAFF_ROLES = ['unit_officer', 'unit_supervisor', 'regional_officer', 'management', 'competent_authority', 'admin', 'auditor']
+export const PUBLIC_ROLES = ['complainant', 'institution_rep']
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null)
@@ -30,5 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokens(null, null)
     setMe(null)
   }
-  return <C.Provider value={{ me, ready, login, logout }}>{children}</C.Provider>
+  const reloadMe = async () => {
+    try { const m = await api<Me>('/me'); setMe(m); return m } catch { return null }
+  }
+  return <C.Provider value={{ me, ready, login, logout, reloadMe }}>{children}</C.Provider>
 }

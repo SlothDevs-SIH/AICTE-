@@ -6,8 +6,10 @@ const KIND: Record<string, [string, string]> = {
   REMINDER: ['b-info', 'Reminder'], SLA_APPROACHING: ['b-warn', 'Time limit close'], SLA_BREACHED: ['b-danger', 'Past time limit'],
   ESCALATION_SUGGESTED: ['b-orange', 'Consider escalating'], COORDINATION_REQUEST: ['b-violet', 'Coordination request'],
   COORDINATION_MESSAGE: ['b-violet', 'Coordination note'], COORDINATION_EXPIRED: ['b-danger', 'Coordination expired'], CONFLICT: ['b-danger', 'Conflict'],
+  ROLE_REQUEST: ['b-warn', 'Access request'], ROLE_DECISION: ['b-info', 'Access decision'],
 }
 export function target(n: any) {
+  if (n.ref_type === 'user') return n.kind === 'ROLE_REQUEST' ? '/app/admin' : '/app'
   return n.ref_type === 'complaint' ? `/app/complaints/${n.ref_id}` : n.ref_type === 'coordination' ? `/app/coordination/${n.ref_id}` : '/app'
 }
 

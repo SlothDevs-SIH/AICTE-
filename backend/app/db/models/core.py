@@ -42,6 +42,18 @@ class User(RowMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=True)  # self sign-ups start False
+    institution_id: Mapped[str | None] = mapped_column(FK("institutions"), nullable=True)  # institution representatives
+    request_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # a pending or rejected role request
+
+
+class EmailToken(RowMixin, Base):
+    __tablename__ = "email_tokens"
+    user_id: Mapped[str] = mapped_column(FK("users"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    purpose: Mapped[str] = mapped_column(String(20), default="verify")
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class RefreshToken(RowMixin, Base):
@@ -111,6 +123,7 @@ class Complaint(RowMixin, Base):
     complainant_phone_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
     complainant_email_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_synthetic: Mapped[bool] = mapped_column(Boolean, default=True)
+    submitted_by_id: Mapped[str | None] = mapped_column(FK("users"), nullable=True)  # filed through the public portal
     __table_args__ = (UniqueConstraint("unit_id", "reference_no"),)
 
 

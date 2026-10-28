@@ -22,6 +22,16 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return user
 
 
+def staff_user(user: User = Depends(current_user)) -> User:
+    """AICTE staff only. People who signed up as complainants, institution representatives or have not chosen yet
+    can reach their own pages, never the case files."""
+    from app.core.roles import ALL_ROLES
+
+    if user.role not in ALL_ROLES:
+        raise ApiError(403, "forbidden", "This area is for AICTE staff.")
+    return user
+
+
 def require(*roles: str):
     """Dependency factory: the backend enforces roles; the UI only hides what a role cannot use."""
 

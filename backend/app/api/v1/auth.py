@@ -70,6 +70,8 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
             user.failed_logins = 0
         db.commit()
         raise bad
+    if not user.email_verified:
+        raise ApiError(403, "email_not_verified", "Verify your e-mail first: open the link we sent you, then sign in.")
     user.failed_logins, user.locked_until = 0, None
     return _issue(db, user)
 
@@ -99,12 +101,7 @@ def logout(body: RefreshIn, db: Session = Depends(get_db), _: User = Depends(cur
 
 
 @router.get("/me")
-def me(user: User = Depends(current_user)):
-    return {
-        "id": user.id,
-        "email": user.email,
-        "name": user.name,
-        "role": user.role,
-        "unit_id": user.unit_id,
-        "region_id": user.region_id,
-    }
+def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    from app.api.v1.accounts import me_payload
+
+    return me_payload(db, user)

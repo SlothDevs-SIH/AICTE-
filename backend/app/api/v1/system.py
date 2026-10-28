@@ -10,7 +10,14 @@ from app.db.models import User
 
 router = APIRouter(tags=["system"])
 
-ADAPTERS = {"concept_matching": "built", "embeddings": "not_built", "llm": "not_built"}
+
+
+def adapters() -> dict:
+    """What this running server can really do right now (no secrets, only whether something is configured)."""
+    from app.adapters import llm, mailer
+
+    return {"concept_matching": "built", "embeddings": "not_built",
+            "llm": llm.provider() or "not_configured", "email": mailer.provider() or "not_configured"}
 
 
 @router.get("/healthz")
@@ -28,7 +35,7 @@ def readyz(db: Session = Depends(get_db)):
     body = {
         "status": "ready" if database == "ok" else "not_ready",
         "checks": {"database": database},
-        "adapters": ADAPTERS,
+        "adapters": adapters(),
     }
     return JSONResponse(body, status_code=200 if database == "ok" else 503)
 
@@ -60,12 +67,17 @@ def public_overview(db: Session = Depends(get_db)):
 
 
 @router.get("/meta")
-def meta(_: User = Depends(current_user)):
+def meta(db: Session = Depends(get_db), _: User = Depends(current_user)):
+    from sqlalchemy import select
+
+    from app.db.models import Complaint
+
     s = get_settings()
+    real = db.scalar(select(Complaint.id).where(Complaint.is_synthetic.is_(False)).limit(1)) is not None
     return {
         "version": s.version,
         "environment": s.environment,
         "phase": s.phase,
-        "data_is_synthetic": True,
-        "adapters": ADAPTERS,
+        "data_is_synthetic": not real,
+        "adapters": adapters(),
     }

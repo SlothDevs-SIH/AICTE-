@@ -38,6 +38,9 @@ def get_engine():
         kw = {"connect_args": {"check_same_thread": False}} if url.startswith("sqlite") else {}
         _engine = create_engine(url, **kw)
         _Session = sessionmaker(_engine, expire_on_commit=False)
+        from app.bootstrap import add_missing_columns  # an older database file gets the newer columns on first use
+
+        add_missing_columns(_engine)
     return _engine
 
 

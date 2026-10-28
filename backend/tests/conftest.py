@@ -53,3 +53,5 @@ def _no_real_model(monkeypatch):
     """Tests never call a real model, whatever keys the machine has; a test that needs a key sets its own."""
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    for k in ("BREVO_API_KEY", "RESEND_API_KEY", "SMTP_HOST", "ADMIN_EMAILS", "DEV_SHOW_VERIFY_LINK"):
+        monkeypatch.delenv(k, raising=False)

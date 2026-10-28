@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user, require
+from app.api.deps import staff_user, current_user, require
 from app.api.v1 import records as rec
 from app.core import roles as R
 from app.core.audit import write_audit
@@ -137,7 +137,7 @@ def open_thread(body: ThreadIn, db: Session = Depends(get_db), user: User = Depe
 
 
 @router.get("/coordination/{tid}")
-def get_thread(tid: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def get_thread(tid: str, db: Session = Depends(get_db), user: User = Depends(staff_user)):
     t = db.get(CoordinationThread, tid)
     if t is None or not _can_see_thread(db, user, t):
         raise ApiError(404, "not_found", "Thread not found.")
@@ -236,7 +236,7 @@ def overlap_brief(oid: str, db: Session = Depends(get_db), user: User = Depends(
 
 
 @router.get("/complaints/{cid}/overlaps")
-def complaint_overlaps(cid: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def complaint_overlaps(cid: str, db: Session = Depends(get_db), user: User = Depends(staff_user)):
     c = rec.get_complaint(db, cid)
     m = rec._maps(db)
     rows = db.scalars(select(Overlap).where(or_(Overlap.complaint_a_id == c.id, Overlap.complaint_b_id == c.id)))
@@ -344,7 +344,7 @@ async def add_attachment(cid: str, file: UploadFile = File(...), db: Session = D
 
 
 @router.get("/complaints/{cid}/attachments")
-def list_attachments(cid: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def list_attachments(cid: str, db: Session = Depends(get_db), user: User = Depends(staff_user)):
     c = rec.get_complaint(db, cid)
     if not rec.can_see_detail(db, user, c):
         raise ApiError(403, "forbidden", "Details visible after coordination is accepted.")
@@ -636,6 +636,6 @@ async def _events(request: Request, user_id: str, max_events: int | None):
 
 
 @router.get("/stream")
-async def stream(request: Request, max_events: int | None = Query(None, le=50), user: User = Depends(current_user)):
+async def stream(request: Request, max_events: int | None = Query(None, le=50), user: User = Depends(staff_user)):
     return StreamingResponse(_events(request, user.id, max_events), media_type="text/event-stream",
                              headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})

@@ -9,6 +9,48 @@ const NUMERIC_HELP: Record<string, string> = {
   coordination_days: 'Days a coordination request stays open', cluster_min_size: 'Cases needed to form a cluster', cluster_window_days: 'Cluster window in days',
 }
 
+function AccessRequests({ units, regions, onDone }: { units: any[]; regions: any[]; onDone: () => void }) {
+  const l = useFetch<any>('/admin/role-requests')
+  const [msg, setMsg] = useState('')
+  const [reason, setReason] = useState<Record<string, string>>({})
+  const act = async (uid: string, kind: 'approve' | 'reject') => {
+    setMsg('')
+    try {
+      await api(`/admin/role-requests/${uid}/${kind}`, { method: 'POST', body: kind === 'reject' ? { reason: reason[uid] ?? '' } : {} })
+      l.reload(); onDone()
+    } catch (e) { setMsg((e as ApiError).message) }
+  }
+  const items = l.data?.items ?? []
+  return (
+    <section className="card" style={{ marginTop: '1rem' }}>
+      <h2>Access requests {items.length > 0 && <span className="badge b-warn">{items.length} waiting</span>}</h2>
+      <p className="muted">People who signed up and asked to be an AICTE officer or an institution representative. Nobody gets access to case files until you approve.</p>
+      {msg && <div className="notice err" role="alert">{msg}</div>}
+      {l.data && items.length === 0 && <p className="muted">No requests are waiting.</p>}
+      <div style={{ display: 'grid', gap: '.8rem' }}>
+        {items.map((r: any) => {
+          const q = r.request
+          return (
+            <div key={r.user_id} className="card" style={{ boxShadow: 'none' }}>
+              <strong>{r.name}</strong> <span className="muted">{r.email}</span>
+              <p style={{ margin: '.4rem 0' }}>
+                {q.type === 'institution' ? <>Institution representative for <strong>{q.institution_name}</strong></> : <>Wants to be <strong>{ROLE_LABEL[q.role]}</strong>{q.unit_code ? <> in <strong>{q.unit_code}</strong></> : null}{q.region_code ? <> in region <strong>{q.region_code}</strong></> : null}</>}
+              </p>
+              {q.note && <p className="muted" style={{ margin: '0 0 .5rem' }}>“{q.note}”</p>}
+              <div className="row">
+                <button className="btn sm primary" onClick={() => act(r.user_id, 'approve')}>Approve</button>
+                <input style={{ maxWidth: '18rem' }} placeholder="Reason, if you decline" value={reason[r.user_id] ?? ''} onChange={(e) => setReason({ ...reason, [r.user_id]: e.target.value })} aria-label={`Reason for declining ${r.name}`} />
+                <button className="btn sm danger" disabled={(reason[r.user_id] ?? '').trim().length < 3} onClick={() => act(r.user_id, 'reject')}>Decline</button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <span hidden>{units.length}{regions.length}</span>
+    </section>
+  )
+}
+
 export default function Admin() {
   const st = useFetch<any>('/admin/settings')
   const users = useFetch<any>('/admin/users')
@@ -39,6 +81,8 @@ export default function Admin() {
           {busy ? 'Working… asking the model can take several seconds.' : msg!.text}
         </div>
       )}
+
+      <AccessRequests units={ref.data?.units ?? []} regions={ref.data?.regions ?? []} onDone={users.reload} />
 
       <section className="card" style={{ marginTop: '1rem' }}>
         <h2>Check existing overlaps</h2>

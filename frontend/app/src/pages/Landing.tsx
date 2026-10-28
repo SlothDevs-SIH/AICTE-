@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { DotBackdrop } from '../components/DotBackdrop'
-import { LoginForm } from '../components/LoginForm'
+import { AuthPanel } from '../components/AuthPanel'
 import { Count, Logo } from '../components/ui'
 import { ExpandableScreen, ExpandableScreenContent, ExpandableScreenTrigger } from '@/components/ui/expandable-screen'
 import ExpandableProfileCard from '@/components/ui/expandable-profile-card'
@@ -285,7 +285,7 @@ export default function Landing() {
           <div className="xs-center">
             <div className="xs-grid">
               <div className="xs-left">
-                <TextAnimate as="h2" animation="blurInUp" by="word">Sign in to SAMANVAY</TextAnimate>
+                <TextAnimate as="h2" animation="blurInUp" by="word">Join or sign in to SAMANVAY</TextAnimate>
                 <ul className="xs-points">
                   <li><span aria-hidden="true">✓</span>One place for complaints that reach the Bureau, the Cell and regional offices separately.</li>
                   <li><span aria-hidden="true">⇄</span>A warning when another unit already handles the same college, with the evidence shown.</li>
@@ -293,7 +293,7 @@ export default function Landing() {
                 </ul>
                 {live && <div className="xs-stats"><div><b><Count to={live.complaints} /></b><span>simulated cases</span></div><div><b><Count to={live.colleges} /></b><span>colleges</span></div><div><b><Count to={live.open_overlaps} /></b><span>open overlaps</span></div></div>}
               </div>
-              <div className="xs-right"><LoginForm /></div>
+              <div className="xs-right"><AuthPanel /></div>
             </div>
           </div>
         </ExpandableScreenContent>

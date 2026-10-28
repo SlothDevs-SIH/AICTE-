@@ -743,3 +743,22 @@ All figures are from `python -m app.cli evaluate` on the generated dataset (seed
 | Automated tests | 25 passed (backend/tests) |
 
 
+
+
+## Appendix: self sign-up and the public portal (added 2026-10-28)
+
+| Item | Status | Where / evidence |
+|---|---|---|
+| Register with e-mail and password, verification link (single use, 24 h), no sign-in until verified | ✅ | `app/api/v1/accounts.py`, `app/api/v1/auth.py`; `tests/test_accounts.py` |
+| E-mail sending through Brevo, Resend or SMTP; failure never breaks sign-up and never leaks the key | ✅ (request shape unit-tested; **no real mail was sent in this repository**) | `app/adapters/mailer.py`; `tests/test_accounts.py` |
+| Choose who you are after the first sign-in: complainant (instant), institution representative or AICTE staff (administrator approves) | ✅ | `POST /me/role`, `/admin/role-requests/*`; `tests/test_accounts.py` |
+| Staff-only data: complainants, institution representatives and people who have not chosen get 403 on every case-file endpoint | ✅ | `staff_user` in `app/api/deps.py`; `tests/test_accounts.py`, `tests/test_smoke_all.py` |
+| Complainant portal: file a complaint (routed to the Grievance Cell), follow only your own, no internal remarks shown | ✅ | `/portal/*`; `tests/test_accounts.py` |
+| Institution representative view: counts and status only, no titles, descriptions or complainant details | ✅ | `/portal/institution/complaints`; `tests/test_accounts.py` |
+| First administrator from `ADMIN_EMAILS` when that address verifies | ✅ | `tests/test_accounts.py` |
+| Every read endpoint, as every staff role, never answers 5xx; anonymous callers get 401 | ✅ | `tests/test_smoke_all.py` (this found and fixed a crash in `GET /meta`) |
+| Password reset by e-mail, per-address and per-network sign-up limits, CAPTCHA | 📋 Planned | none |
+
+Known weak spot: if someone signs up with another person's address and the owner then opens that unsolicited link, the
+account is verified with the first person's password. Re-registering the same unverified address replaces the password,
+which limits this, but it is not removed.

@@ -606,3 +606,11 @@ frontend/
 - Update §6 here and `src/app/screens.ts` in the same commit as the code.
 - Every "✅" cites a file and a test.
 - **Git rule:** every commit and push is authored by Ayush More only; no co-author trailers or tool attribution (see `../CLAUDE.md`).
+
+
+## Appendix: sign-up, role choice and portal (added 2026-10-28)
+
+Built, and checked once by hand in a browser against a local server (no automated frontend tests): Sign in / Create
+account panel (`components/AuthPanel.tsx`), the verification page (`pages/Verify.tsx`), the "Who are you?" screen and the
+waiting screen (`pages/Onboarding.tsx`), the complainant and institution pages (`pages/Portal.tsx`), and Access requests
+on the Admin page. The demo-account buttons were removed from the sign-in screen.
